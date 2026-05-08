@@ -46,8 +46,8 @@ module.exports = (io) => {
 
                 activeGames.set(gameId, {
                     players: [
-                        { dbUserId: opponent.dbUserId, nickname: opponent.nickname, socketId: opponent.socket.id, ready: false },
-                        { dbUserId: data.userId, nickname: data.nickname, socketId: socket.id, ready: false }
+                        { dbUserId: opponent.dbUserId, nickname: opponent.nickname, avatar: opponent.avatar, elo: opponent.elo, socketId: opponent.socket.id, ready: false },
+                        { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socketId: socket.id, ready: false }
                     ],
                     gameState: 'initializing'
                 });
@@ -56,7 +56,7 @@ module.exports = (io) => {
                 io.to(gameId).emit('matchFound', { gameId });
             } else {
                 // Start waiting
-                waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, socket: socket };
+                waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socket: socket };
             }
         });
 
@@ -83,13 +83,14 @@ module.exports = (io) => {
                     // Initialize game state
                     game.round = 1;
                     game.turn = Math.floor(Math.random() * 2); // Random turn
+                    game.startingTurn = game.turn; // Store who started the game
                     game.timer = 30;
 
                     for (let p of game.players) {
                         p.hp = 20;
                         p.energy = 1; 
                         p.maxEnergy = 1;
-                        const cards = await Card.getRandomHand(5);
+                        const cards = await Card.getBalancedInitialHand(5);
                         p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
                         p.field = [];
                     }
@@ -122,10 +123,10 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('endTurn', (data) => {
+        socket.on('endTurn', async (data) => {
             const game = activeGames.get(data.gameId);
             if (game && game.players[game.turn].socketId === socket.id) {
-                switchTurn(data.gameId, io);
+                await switchTurn(data.gameId, io);
             }
         });
 
@@ -152,7 +153,7 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('attack', (data) => {
+        socket.on('attack', async (data) => {
             const game = activeGames.get(data.gameId);
             if (!game) return;
             const attackerPlayer = game.players[game.turn];
@@ -203,9 +204,20 @@ module.exports = (io) => {
                     io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
                     io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
 
-                    // Update stats in DB
-                    User.updateStats(winner.dbUserId, true);
-                    User.updateStats(loser.dbUserId, false);
+                    // Update stats in DB and notify lobby
+                    const winnerStats = await User.updateStats(winner.dbUserId, true);
+                    const loserStats = await User.updateStats(loser.dbUserId, false);
+
+                    io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
+                        elo: winnerStats.elo, 
+                        wins: winnerStats.wins, 
+                        losses: winnerStats.losses 
+                    });
+                    io.to(`user_${loser.dbUserId}`).emit('statsUpdate', { 
+                        elo: loserStats.elo, 
+                        wins: loserStats.wins, 
+                        losses: loserStats.losses 
+                    });
 
                     if (game.interval) clearInterval(game.interval);
                     activeGames.delete(data.gameId);
@@ -218,7 +230,7 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             if (waitingPlayer && waitingPlayer.id === socket.id) {
                 waitingPlayer = null;
             }
@@ -229,7 +241,7 @@ module.exports = (io) => {
                     console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (Grace period started)`);
                     
                     const timeoutKey = `${gameId}_${disconnectedPlayer.nickname}`;
-                    const timeout = setTimeout(() => {
+                    const timeout = setTimeout(async () => {
                         const winner = game.players.find(p => p.socketId !== socket.id);
                         const loser = disconnectedPlayer;
 
@@ -241,8 +253,19 @@ module.exports = (io) => {
                         io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
                         io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
 
-                        User.updateStats(winner.dbUserId, true);
-                        User.updateStats(loser.dbUserId, false);
+                        const winnerStats = await User.updateStats(winner.dbUserId, true);
+                        const loserStats = await User.updateStats(loser.dbUserId, false);
+
+                        io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
+                            elo: winnerStats.elo, 
+                            wins: winnerStats.wins, 
+                            losses: winnerStats.losses 
+                        });
+                        io.to(`user_${loser.dbUserId}`).emit('statsUpdate', { 
+                            elo: loserStats.elo, 
+                            wins: loserStats.wins, 
+                            losses: loserStats.losses 
+                        });
 
                         if (game.interval) clearInterval(game.interval);
                         activeGames.delete(gameId);
@@ -267,7 +290,7 @@ function startTimer(gameId, io) {
         io.to(gameId).emit('timerUpdate', { timer: game.timer });
 
         if (game.timer <= 0) {
-            switchTurn(gameId, io);
+            switchTurn(gameId, io); // Keeping this as fire-and-forget inside setInterval for now, or make it async
         }
     }, 1000);
 }
@@ -278,8 +301,8 @@ async function switchTurn(gameId, io) {
 
     game.turn = game.turn === 0 ? 1 : 0;
     
-    // If it's player 0's turn again, increase round/energy
-    if (game.turn === 0) {
+    // If it's the starting player's turn again, increase round/energy
+    if (game.turn === game.startingTurn) {
         game.round++;
     }
 
@@ -290,7 +313,12 @@ async function switchTurn(gameId, io) {
     // Draw cards to 5
     if (currentPlayer.hand.length < 5) {
         const needed = 5 - currentPlayer.hand.length;
-        const newCards = await Card.getRandomHand(needed);
+        let excludedCosts = [];
+        if (currentPlayer.maxEnergy >= 5) {
+            excludedCosts = [1, 2];
+        }
+        
+        const newCards = await Card.getWeightedRandomCards(needed, currentPlayer.hand, excludedCosts);
         currentPlayer.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
     }
 
@@ -306,6 +334,8 @@ async function switchTurn(gameId, io) {
         players: game.players.map(p => ({
             socketId: p.socketId,
             nickname: p.nickname,
+            avatar: p.avatar,
+            elo: p.elo,
             hp: p.hp,
             energy: p.energy,
             maxEnergy: p.maxEnergy,

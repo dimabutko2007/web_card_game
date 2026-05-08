@@ -96,7 +96,13 @@ function updateStats() {
     if (myHpText) myHpText.textContent = `${myData.hp}/20`;
     if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
     
-    document.getElementById('opp-nickname').textContent = oppData.nickname;
+    document.getElementById('opp-nickname').innerHTML = `${oppData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${oppData.elo})</span>`;
+    document.getElementById('my-nickname').innerHTML = `${myData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${myData.elo})</span>`;
+
+    const myAvatar = document.getElementById('my-avatar');
+    const oppAvatar = document.getElementById('opp-avatar');
+    if (myAvatar && myData.avatar) myAvatar.src = myData.avatar;
+    if (oppAvatar && oppData.avatar) oppAvatar.src = oppData.avatar;
 }
 
 function renderHand() {
@@ -225,9 +231,12 @@ endTurnBtn.addEventListener('click', () => {
 function showCoinFlip(isMeFirst) {
     let frame = 0;
     const duration = 180;
-    let speed = 0.5;
-    let currentAngle = 0;
-    const targetAngle = isMeFirst ? Math.PI / 2 : -Math.PI / 2;
+    const startAngle = 0;
+    // Random number of full rotations (3 to 6)
+    const randomSpins = (3 + Math.floor(Math.random() * 4)) * Math.PI * 2;
+    // Target base angle (PI/2 is down towards me, -PI/2 is up towards opponent)
+    const baseTargetAngle = isMeFirst ? Math.PI / 2 : -Math.PI / 2;
+    const totalRotation = randomSpins + baseTargetAngle;
 
     const interval = setInterval(() => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -244,27 +253,49 @@ function showCoinFlip(isMeFirst) {
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Smooth rotation logic
-        if (frame < 100) {
-            currentAngle += speed;
-        } else if (frame < 150) {
-            // Decelerate and start merging with targetAngle
-            speed *= 0.95;
-            currentAngle += speed;
-        } else {
-            // Final snap without jump (speed is very low here)
-            currentAngle = targetAngle;
-            speed = 0;
-        }
+        // Cubic ease-out: 1 - (1-x)^3
+        const progress = frame / duration;
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentAngle = startAngle + totalRotation * easeOut;
 
         const arrowX = centerX + Math.cos(currentAngle) * (radius - 10);
         const arrowY = centerY + Math.sin(currentAngle) * (radius - 10);
+        
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(arrowX, arrowY);
         ctx.strokeStyle = '#e23636';
         ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
         ctx.stroke();
+
+        // Beautiful, voluminous arrow head
+        ctx.save();
+        ctx.translate(arrowX, arrowY);
+        ctx.rotate(currentAngle);
+        ctx.beginPath();
+        ctx.moveTo(15, 0); // Tip
+        ctx.lineTo(-20, -15); // Top corner
+        ctx.lineTo(-10, 0); // Inner indent
+        ctx.lineTo(-20, 15); // Bottom corner
+        ctx.closePath();
+        
+        // Gradient for volume
+        const gradient = ctx.createLinearGradient(-20, -15, 15, 15);
+        gradient.addColorStop(0, '#ff5a5a');
+        gradient.addColorStop(1, '#8b0000');
+        
+        ctx.fillStyle = gradient;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff0000';
+        ctx.fill();
+        
+        // Stroke for highlight
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.restore();
 
         ctx.font = 'bold 32px Outfit';
         ctx.fillStyle = 'white';
@@ -274,18 +305,20 @@ function showCoinFlip(isMeFirst) {
             ctx.fillText('DETERMINING TURN...', centerX, centerY + 180);
         } else {
             const text = isMeFirst ? 'YOU GO FIRST!' : 'OPPONENT GOES FIRST!';
-            ctx.fillStyle = isMeFirst ? '#f0a500' : '#e23636'; // Gold or Red hex
+            ctx.fillStyle = isMeFirst ? '#f0a500' : '#e23636';
             ctx.font = 'bold 50px Outfit';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 15;
             ctx.shadowColor = ctx.fillStyle;
             ctx.fillText(text, centerX, centerY + 180);
             ctx.shadowBlur = 0;
         }
         
         frame++;
-        if (frame > duration) {
+        if (frame >= duration) {
             clearInterval(interval);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 1000); // Keep result for 1s
         }
     }, 16);
 }

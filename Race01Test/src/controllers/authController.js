@@ -63,7 +63,10 @@ exports.postLogin = async (req, res) => {
             req.session.userId = user.id;
             req.session.nickname = user.nickname;
             console.log(`[AUTH] User logged in: ${user.nickname}`);
-            res.redirect('/lobby');
+            req.session.save((err) => {
+                if (err) console.error('[AUTH] Session save error:', err);
+                res.redirect('/lobby');
+            });
         } else {
             res.render('login', { error: 'Invalid credentials' });
         }
@@ -75,9 +78,12 @@ exports.postLogin = async (req, res) => {
 
 exports.logout = (req, res) => {
     const nickname = req.session.nickname;
-    req.session.destroy();
-    console.log(`[AUTH] User logged out: ${nickname}`);
-    res.redirect('/auth/login');
+    req.session.destroy((err) => {
+        if (err) console.error('[AUTH] Session destroy error:', err);
+        console.log(`[AUTH] User logged out: ${nickname}`);
+        res.clearCookie('connect.sid');
+        res.redirect('/auth/login');
+    });
 };
 
 exports.isAuthenticated = (req, res, next) => {

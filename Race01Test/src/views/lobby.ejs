@@ -91,6 +91,12 @@
             color: var(--marvel-gold);
             height: 24px;
         }
+
+        @keyframes pulse {
+            0% { transform: scale(1); color: var(--marvel-gold); }
+            50% { transform: scale(1.2); color: #fff; text-shadow: 0 0 10px var(--marvel-gold); }
+            100% { transform: scale(1); color: var(--marvel-gold); }
+        }
     </style>
 </head>
 
@@ -105,10 +111,10 @@
             <h1 style="font-size: 3rem; text-transform: uppercase; letter-spacing: 5px;">Lobby</h1>
 
             <div class="user-panel">
-                <img src="/assets/default_avatar.png" alt="Avatar" id="user-avatar">
+                <img src="<%= typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png' %>" alt="Avatar" id="user-avatar">
                 <div class="user-info">
                     <h2>
-                        <%= nickname %> <span style="color: var(--marvel-gold); font-size: 1rem; margin-left: 10px;">(Elo: <%= elo %>)</span>
+                        <%= nickname %> <span id="user-elo-display" style="color: var(--marvel-gold); font-size: 1rem; margin-left: 10px;">(Elo: <%= elo %>)</span>
                     </h2>
                     <p>Ready for battle</p>
                 </div>
@@ -146,6 +152,15 @@
             statusMsg.textContent = 'Previous battle has ended.';
         });
 
+        socket.on('statsUpdate', (data) => {
+            const eloDisplay = document.getElementById('user-elo-display');
+            if (eloDisplay) {
+                eloDisplay.textContent = `(Elo: ${data.elo})`;
+                eloDisplay.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => eloDisplay.style.animation = '', 1000);
+            }
+        });
+
         findMatchBtn.addEventListener('click', () => {
             if (findMatchBtn.classList.contains('searching')) return;
 
@@ -153,7 +168,12 @@
             findMatchBtn.textContent = 'Searching...';
             statusMsg.textContent = 'Waiting for opponent...';
 
-            socket.emit('findMatch', { nickname: '<%= nickname %>', userId: '<%= userId %>' });
+            socket.emit('findMatch', { 
+                nickname: '<%= nickname %>', 
+                userId: '<%= userId %>',
+                avatar: '<%= typeof avatar !== "undefined" ? avatar : "/assets/default_avatar.png" %>',
+                elo: '<%= elo %>'
+            });
         });
 
         socket.on('matchFound', (data) => {

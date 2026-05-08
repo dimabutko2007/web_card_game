@@ -25,34 +25,44 @@ CREATE TABLE IF NOT EXISTS cards (
     has_taunt BOOLEAN DEFAULT FALSE
 );
 
+TRUNCATE TABLE cards;
 INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
-('Iron Man', 5, 5, 5, '/assets/cards/iron_man.png', FALSE),
-('Captain America', 3, 6, 4, '/assets/cards/cap_america.png', TRUE),
-('Thor', 6, 6, 6, '/assets/cards/thor.png', FALSE),
-('Hulk', 8, 9, 8, '/assets/cards/hulk.png', TRUE),
+-- 1 Energy (Stats: 3)
+('Ant-Man', 2, 1, 1, '/assets/cards/ant_man.png', FALSE),
+('Wasp', 1, 2, 1, '/assets/cards/wasp.png', FALSE),
+-- 2 Energy (Stats: 4-5)
 ('Black Widow', 3, 2, 2, '/assets/cards/black_widow.png', FALSE),
 ('Hawkeye', 4, 1, 2, '/assets/cards/hawkeye.png', FALSE),
+('Rocket Raccoon', 3, 2, 2, '/assets/cards/rocket.png', FALSE),
+('Deadpool', 2, 3, 2, '/assets/cards/deadpool.png', FALSE),
+('Luke Cage', 1, 3, 2, '/assets/cards/luke_cage.png', TRUE), -- Taunt
+('Falcon', 2, 2, 2, '/assets/cards/falcon.png', TRUE), -- Taunt
+-- 3 Energy (Stats: 5-7)
 ('Spider-Man', 4, 3, 3, '/assets/cards/spiderman.png', FALSE),
-('Black Panther', 4, 5, 4, '/assets/cards/black_panther.png', FALSE),
-('Doctor Strange', 4, 7, 5, '/assets/cards/dr_strange.png', FALSE),
-('Scarlet Witch', 7, 2, 4, '/assets/cards/scarlet_witch.png', FALSE),
-('Vision', 6, 5, 5, '/assets/cards/vision.png', FALSE),
-('Ant-Man', 1, 2, 1, '/assets/cards/ant_man.png', FALSE),
-('Wasp', 2, 1, 1, '/assets/cards/wasp.png', FALSE),
-('Groot', 2, 10, 6, '/assets/cards/groot.png', TRUE),
-('Rocket Raccoon', 4, 2, 2, '/assets/cards/rocket.png', FALSE),
 ('Star-Lord', 3, 4, 3, '/assets/cards/starlord.png', FALSE),
-('Gamora', 5, 4, 4, '/assets/cards/gamora.png', FALSE),
+('Daredevil', 2, 4, 3, '/assets/cards/daredevil.png', TRUE), -- Taunt
+('Colossus', 2, 4, 3, '/assets/cards/colossus.png', TRUE), -- Taunt
+('Gamora', 5, 2, 3, '/assets/cards/gamora.png', FALSE),
+-- 4 Energy (Stats: 7-9)
+('Captain America', 3, 5, 4, '/assets/cards/cap_america.png', TRUE), -- Taunt
+('Black Panther', 5, 4, 4, '/assets/cards/black_panther.png', FALSE),
+('Scarlet Witch', 6, 3, 4, '/assets/cards/scarlet_witch.png', FALSE),
 ('Drax', 4, 5, 4, '/assets/cards/drax.png', FALSE),
-('Thanos', 12, 12, 10, '/assets/cards/thanos.png', FALSE),
-('Loki', 3, 5, 4, '/assets/cards/loki.png', FALSE),
-('Wolverine', 4, 4, 4, '/assets/cards/wolverine.png', FALSE),
-('Deadpool', 3, 2, 2, '/assets/cards/deadpool.png', FALSE),
-('Colossus', 2, 5, 3, '/assets/cards/colossus.png', TRUE),
-('Luke Cage', 1, 4, 2, '/assets/cards/luke_cage.png', TRUE),
-('Daredevil', 3, 4, 3, '/assets/cards/daredevil.png', TRUE),
-('Falcon', 2, 3, 2, '/assets/cards/falcon.png', TRUE),
-('The Thing', 4, 8, 5, '/assets/cards/thing.png', TRUE),
-('Venom', 5, 5, 5, '/assets/cards/venom.png', FALSE),
-('Doctor Doom', 7, 7, 7, '/assets/cards/dr_doom.png', FALSE),
-('Silver Surfer', 4, 4, 4, '/assets/cards/silver_surfer.png', FALSE);
+('Loki', 4, 5, 4, '/assets/cards/loki.png', FALSE),
+('Wolverine', 4, 5, 4, '/assets/cards/wolverine.png', FALSE),
+('Silver Surfer', 5, 4, 4, '/assets/cards/silver_surfer.png', FALSE),
+-- 5 Energy (Stats: 9-11)
+('Iron Man', 6, 5, 5, '/assets/cards/iron_man.png', FALSE),
+('Doctor Strange', 4, 7, 5, '/assets/cards/dr_strange.png', FALSE),
+('Vision', 5, 6, 5, '/assets/cards/vision.png', FALSE),
+('Venom', 7, 4, 5, '/assets/cards/venom.png', FALSE),
+('The Thing', 4, 6, 5, '/assets/cards/thing.png', TRUE), -- Taunt
+-- 6 Energy (Stats: 11-13)
+('Thor', 7, 6, 6, '/assets/cards/thor.png', FALSE),
+('Groot', 2, 9, 6, '/assets/cards/groot.png', TRUE), -- Taunt
+-- 7 Energy (Stats: 15)
+('Doctor Doom', 8, 7, 7, '/assets/cards/dr_doom.png', FALSE),
+-- 8 Energy (Stats: 17)
+('Hulk', 8, 9, 8, '/assets/cards/hulk.png', TRUE), -- Taunt
+-- 10 Energy (Stats: 21+)
+('Thanos', 12, 12, 10, '/assets/cards/thanos.png', FALSE);

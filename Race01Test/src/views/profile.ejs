@@ -20,13 +20,44 @@
             text-align: center;
         }
 
-        .profile-avatar {
+        .profile-avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
             width: 150px;
             height: 150px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+        }
+
+        .profile-avatar {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             border: 4px solid var(--marvel-red);
-            margin-bottom: 20px;
             object-fit: cover;
+            box-sizing: border-box;
+        }
+
+        .profile-avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-sizing: border-box;
+        }
+
+        .profile-avatar-wrapper:hover .profile-avatar-overlay {
+            opacity: 1;
         }
 
         .stats {
@@ -74,7 +105,16 @@
         <a href="/lobby" style="color: white; text-decoration: none;">← Back to Lobby</a>
 
         <div class="profile-card">
-            <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar">
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div style="color: red; margin-bottom: 15px; font-weight: bold;"><%= error %></div>
+            <% } %>
+
+            <div class="profile-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
+                <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar" id="avatar-preview">
+                <div class="profile-avatar-overlay">
+                    Change
+                </div>
+            </div>
             <h1>
                 <%= user.nickname %>
             </h1>
@@ -112,20 +152,22 @@
                 </div>
             </div>
 
-            <h3>Change Avatar</h3>
-            <div class="avatar-selection">
-                <!-- In a real app, these would be Marvel characters -->
-                <img src="/assets/default_avatar.png" class="avatar-option"
-                    onclick="updateAvatar('/assets/default_avatar.png')">
-                <!-- Add more placeholders -->
-            </div>
+            <form action="/profile/avatar" method="POST" enctype="multipart/form-data" style="margin-top: 20px;" id="avatar-form">
+                <input type="file" name="avatar" id="avatar-input" accept="image/jpeg, image/png, image/gif" style="display: none;" onchange="previewAvatar(event)">
+                <button type="submit" class="btn" style="padding: 10px 20px; font-size: 1rem; background: linear-gradient(45deg, var(--marvel-red), #ff5a5a); border: none; border-radius: 5px; color: white; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold;">Save Profile</button>
+            </form>
         </div>
     </div>
-
     <script>
-        async function updateAvatar(path) {
-            // Simplified: just alert for now or implement a quick POST
-            alert('Avatar change feature is under development. Path: ' + path);
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatar-preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
         }
     </script>
 </body>

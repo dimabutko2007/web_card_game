@@ -33,6 +33,7 @@ class User {
         } else {
             await db.execute('UPDATE users SET losses = losses + 1, elo = elo + ? WHERE id = ?', [eloChange, userId]);
         }
+        return await this.findById(userId);
     }
 
     static async updateAvatar(userId, avatarPath) {
