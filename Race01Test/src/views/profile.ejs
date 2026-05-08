@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Great Battle - Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .profile-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid var(--marvel-red);
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+        }
+
+        .stat-item h4 {
+            color: var(--marvel-gold);
+            font-size: 1.2rem;
+        }
+
+        .stat-item p {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .avatar-selection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .avatar-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.3s;
+        }
+
+        .avatar-option:hover,
+        .avatar-option.selected {
+            border-color: var(--marvel-red);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/lobby" style="color: white; text-decoration: none;">← Back to Lobby</a>
+
+        <div class="profile-card">
+            <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar">
+            <h1>
+                <%= user.nickname %>
+            </h1>
+            <p style="color: #aaa;">
+                <%= user.email %>
+            </p>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <h4>Rating (Elo)</h4>
+                    <p>
+                        <%= user.elo %>
+                    </p>
+                </div>
+                <div class="stat-item">
+                    <h4>Wins</h4>
+                    <p>
+                        <%= user.wins %>
+                    </p>
+                </div>
+                <div class="stat-item">
+                    <h4>Losses</h4>
+                    <p>
+                        <%= user.losses %>
+                    </p>
+                </div>
+                <div class="stat-item">
+                    <h4>Win Rate</h4>
+                    <p>
+                        <% const total=user.wins + user.losses; const winrate=total> 0 ? Math.round((user.wins / total)
+                            * 100) : 0;
+                            %>
+                            <%= winrate %>%
+                    </p>
+                </div>
+            </div>
+
+            <h3>Change Avatar</h3>
+            <div class="avatar-selection">
+                <!-- In a real app, these would be Marvel characters -->
+                <img src="/assets/default_avatar.png" class="avatar-option"
+                    onclick="updateAvatar('/assets/default_avatar.png')">
+                <!-- Add more placeholders -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function updateAvatar(path) {
+            // Simplified: just alert for now or implement a quick POST
+            alert('Avatar change feature is under development. Path: ' + path);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Great Battle - Battle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/game.css?v=1.4">
+</head>
+
+<body>
+    <canvas id="canvas-effects"></canvas>
+
+    <div class="battlefield-container">
+        <!-- Opponent Area -->
+        <div class="player-area opponent-area">
+            <div class="player-info">
+                <img src="/assets/default_avatar.png" alt="Opponent">
+                <div>
+                    <h3 id="opp-nickname">Opponent</h3>
+                    <div class="hp-container" style="display: flex; align-items: center; gap: 10px;">
+                        <div class="hp-bar">
+                            <div id="opp-hp-fill" class="hp-fill"></div>
+                        </div>
+                        <span class="hp-text">20/20</span>
+                    </div>
+                    <span class="energy-display">Energy: <span id="opp-energy">0/0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battlefield -->
+        <div class="battlefield">
+            <div class="field-side" id="opp-field">
+                <!-- Opponent active cards -->
+            </div>
+
+            <div class="battle-center">
+                <div id="turn-indicator" class="turn-indicator">Opponent's Turn</div>
+                <div class="timer-overlay" id="timer">30</div>
+            </div>
+
+            <div class="field-side" id="my-field">
+                <!-- My active cards -->
+            </div>
+        </div>
+
+        <!-- My Area -->
+        <div class="player-area">
+            <div class="hand" id="my-hand">
+                <!-- Cards in hand -->
+            </div>
+            <div class="player-info">
+                <img src="/assets/default_avatar.png" alt="Me">
+                <div>
+                    <h3 id="my-nickname">
+                        <%= nickname %>
+                    </h3>
+                    <div class="hp-container" style="display: flex; align-items: center; gap: 10px;">
+                        <div class="hp-bar">
+                            <div id="my-hp-fill" class="hp-fill"></div>
+                        </div>
+                        <span class="hp-text">20/20</span>
+                    </div>
+                    <span class="energy-display">Energy: <span id="my-energy">0/0</span></span>
+                </div>
+                <button id="end-turn-btn" class="btn" style="width: auto; padding: 10px 20px;">End Turn</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const nickname = "<%= nickname %>";
+    </script>
+    <script src="/js/game.js"></script>
+</body>
+
+</html>

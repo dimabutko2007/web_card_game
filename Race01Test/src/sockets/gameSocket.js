@@ -1,0 +1,318 @@
+const { v4: uuidv4 } = require('uuid');
+const Card = require('../models/Card');
+const User = require('../models/User');
+
+let waitingPlayer = null;
+const activeGames = new Map();
+const disconnectTimeouts = new Map();
+
+module.exports = (io) => {
+    io.on('connection', (socket) => {
+        socket.on('joinUserRoom', (data) => {
+            if (data.userId) {
+                socket.join(`user_${data.userId}`);
+            }
+        });
+
+        socket.on('checkActiveGame', (data) => {
+            for (const [gameId, game] of activeGames.entries()) {
+                const player = game.players.find(p => p.dbUserId === data.userId);
+                if (player) {
+                    socket.emit('activeGameFound', { gameId });
+                    return;
+                }
+            }
+        });
+
+        socket.on('findMatch', (data) => {
+            // Check for active game first
+            for (const [gameId, game] of activeGames.entries()) {
+                const player = game.players.find(p => p.dbUserId === data.userId);
+                if (player) {
+                    socket.emit('matchFound', { gameId });
+                    return;
+                }
+            }
+
+            if (waitingPlayer && waitingPlayer.id !== socket.id) {
+                // Match found
+                const gameId = uuidv4();
+                const opponent = waitingPlayer;
+                waitingPlayer = null;
+
+                // Join both to a room
+                socket.join(gameId);
+                opponent.socket.join(gameId);
+
+                activeGames.set(gameId, {
+                    players: [
+                        { dbUserId: opponent.dbUserId, nickname: opponent.nickname, socketId: opponent.socket.id, ready: false },
+                        { dbUserId: data.userId, nickname: data.nickname, socketId: socket.id, ready: false }
+                    ],
+                    gameState: 'initializing'
+                });
+
+                console.log(`[MATCH] Battle found: ${opponent.nickname} vs ${data.nickname} (GameID: ${gameId})`);
+                io.to(gameId).emit('matchFound', { gameId });
+            } else {
+                // Start waiting
+                waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, socket: socket };
+            }
+        });
+
+        socket.on('joinGame', async (data) => {
+            socket.join(data.gameId);
+            const game = activeGames.get(data.gameId);
+            if (game) {
+                // Update socket ID for the player who just joined (because of page reload)
+                const player = game.players.find(p => p.nickname === data.nickname);
+                if (player) {
+                    player.socketId = socket.id;
+                    player.ready = true;
+                    console.log(`[GAME] Player ${data.nickname} joined the battle (GameID: ${data.gameId})`);
+                }
+
+                // If both players joined, start the game
+                const room = io.sockets.adapter.rooms.get(data.gameId);
+                const allReady = game.players.every(p => p.ready);
+
+                if (room && room.size === 2 && allReady && game.gameState === 'initializing') {
+                    console.log(`[GAME] Battle started (GameID: ${data.gameId})`);
+                    game.gameState = 'active';
+                    
+                    // Initialize game state
+                    game.round = 1;
+                    game.turn = Math.floor(Math.random() * 2); // Random turn
+                    game.timer = 30;
+
+                    for (let p of game.players) {
+                        p.hp = 20;
+                        p.energy = 1; 
+                        p.maxEnergy = 1;
+                        const cards = await Card.getRandomHand(5);
+                        p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
+                        p.field = [];
+                    }
+
+                    io.to(data.gameId).emit('startGame', { 
+                        players: game.players,
+                        turn: game.turn,
+                        round: game.round,
+                        isRejoin: false
+                    });
+
+                    startTimer(data.gameId, io);
+                } else if (room && room.size === 2 && game.gameState === 'active') {
+                    // Rejoining active game
+                    
+                    // Clear disconnect timeout if exists
+                    const timeoutKey = `${data.gameId}_${data.nickname}`;
+                    if (disconnectTimeouts.has(timeoutKey)) {
+                        clearTimeout(disconnectTimeouts.get(timeoutKey));
+                        disconnectTimeouts.delete(timeoutKey);
+                    }
+
+                    socket.emit('startGame', { 
+                        players: game.players,
+                        turn: game.turn,
+                        round: game.round,
+                        isRejoin: true
+                    });
+                }
+            }
+        });
+
+        socket.on('endTurn', (data) => {
+            const game = activeGames.get(data.gameId);
+            if (game && game.players[game.turn].socketId === socket.id) {
+                switchTurn(data.gameId, io);
+            }
+        });
+
+        socket.on('playCard', (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+            const player = game.players[game.turn];
+            if (player.socketId !== socket.id) return;
+
+            const cardIndex = player.hand.findIndex(c => c.instanceId === data.cardInstanceId);
+            if (cardIndex !== -1) {
+                const card = player.hand[cardIndex];
+                if (player.energy >= card.cost) {
+                    player.energy -= card.cost;
+                    const fieldCard = { ...card, currentDefense: card.defense, isSummoning: true };
+                    player.field.push(fieldCard);
+                    player.hand.splice(cardIndex, 1);
+                    
+                    io.to(data.gameId).emit('gameStateUpdate', {
+                        players: game.players,
+                        turn: game.turn
+                    });
+                }
+            }
+        });
+
+        socket.on('attack', (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+            const attackerPlayer = game.players[game.turn];
+            if (attackerPlayer.socketId !== socket.id) return;
+
+            const defenderPlayer = game.players[game.turn === 0 ? 1 : 0];
+            const attackerCard = attackerPlayer.field.find(c => c.instanceId === data.attackerInstanceId);
+
+            if (attackerCard && !attackerCard.isSummoning && attackerCard.canAttack !== false) {
+                if (data.target === 'hero') {
+                    // Check for taunt
+                    const hasTaunt = defenderPlayer.field.some(c => c.has_taunt);
+                    if (!hasTaunt) {
+                        defenderPlayer.hp -= attackerCard.attack;
+                        attackerCard.canAttack = false;
+                    }
+                } else {
+                    // Attack card
+                    const defenderCard = defenderPlayer.field.find(c => c.instanceId === data.targetInstanceId);
+                    const hasTaunt = defenderPlayer.field.some(c => c.has_taunt);
+                    
+                    if (defenderCard && (!hasTaunt || defenderCard.has_taunt)) {
+                        // Trade damage
+                        defenderCard.currentDefense -= attackerCard.attack;
+                        attackerCard.currentDefense -= defenderCard.attack;
+                        attackerCard.canAttack = false;
+
+                        // Remove dead cards
+                        if (defenderCard.currentDefense <= 0) {
+                            defenderPlayer.field = defenderPlayer.field.filter(c => c !== defenderCard);
+                        }
+                        if (attackerCard.currentDefense <= 0) {
+                            attackerPlayer.field = attackerPlayer.field.filter(c => c !== attackerCard);
+                        }
+                    }
+                }
+
+                // Check for victory
+                if (defenderPlayer.hp <= 0) {
+                    const winner = attackerPlayer;
+                    const loser = defenderPlayer;
+
+                    io.to(data.gameId).emit('gameOver', { winner: winner.nickname });
+                    
+                    console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${data.gameId})`);
+
+                    // Notify users that their active game ended
+                    io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
+                    io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
+
+                    // Update stats in DB
+                    User.updateStats(winner.dbUserId, true);
+                    User.updateStats(loser.dbUserId, false);
+
+                    if (game.interval) clearInterval(game.interval);
+                    activeGames.delete(data.gameId);
+                } else {
+                    io.to(data.gameId).emit('gameStateUpdate', {
+                        players: game.players,
+                        turn: game.turn
+                    });
+                }
+            }
+        });
+
+        socket.on('disconnect', () => {
+            if (waitingPlayer && waitingPlayer.id === socket.id) {
+                waitingPlayer = null;
+            }
+            // Cleanup active games if a player disconnects
+            for (const [gameId, game] of activeGames.entries()) {
+                const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);
+                if (disconnectedPlayer && game.gameState === 'active') {
+                    console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (Grace period started)`);
+                    
+                    const timeoutKey = `${gameId}_${disconnectedPlayer.nickname}`;
+                    const timeout = setTimeout(() => {
+                        const winner = game.players.find(p => p.socketId !== socket.id);
+                        const loser = disconnectedPlayer;
+
+                        io.to(gameId).emit('gameOver', { winner: winner.nickname + ' (Opponent disconnected)' });
+                        
+                        console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${gameId})`);
+
+                        // Notify users
+                        io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
+                        io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
+
+                        User.updateStats(winner.dbUserId, true);
+                        User.updateStats(loser.dbUserId, false);
+
+                        if (game.interval) clearInterval(game.interval);
+                        activeGames.delete(gameId);
+                        disconnectTimeouts.delete(timeoutKey);
+                    }, 5000); // 5 second grace period
+
+                    disconnectTimeouts.set(timeoutKey, timeout);
+                }
+            }
+        });
+    });
+};
+function startTimer(gameId, io) {
+    const game = activeGames.get(gameId);
+    if (!game) return;
+
+    if (game.interval) clearInterval(game.interval);
+
+    game.timer = 30;
+    game.interval = setInterval(() => {
+        game.timer--;
+        io.to(gameId).emit('timerUpdate', { timer: game.timer });
+
+        if (game.timer <= 0) {
+            switchTurn(gameId, io);
+        }
+    }, 1000);
+}
+
+async function switchTurn(gameId, io) {
+    const game = activeGames.get(gameId);
+    if (!game) return;
+
+    game.turn = game.turn === 0 ? 1 : 0;
+    
+    // If it's player 0's turn again, increase round/energy
+    if (game.turn === 0) {
+        game.round++;
+    }
+
+    const currentPlayer = game.players[game.turn];
+    currentPlayer.maxEnergy = Math.min(game.round, 10);
+    currentPlayer.energy = currentPlayer.maxEnergy;
+
+    // Draw cards to 5
+    if (currentPlayer.hand.length < 5) {
+        const needed = 5 - currentPlayer.hand.length;
+        const newCards = await Card.getRandomHand(needed);
+        currentPlayer.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
+    }
+
+    // Reset summoning sickness for cards on field
+    currentPlayer.field.forEach(c => {
+        c.canAttack = true;
+        c.isSummoning = false; // Important: Clear summoning sickness
+    });
+
+    io.to(gameId).emit('turnUpdate', {
+        turn: game.turn,
+        round: game.round,
+        players: game.players.map(p => ({
+            socketId: p.socketId,
+            nickname: p.nickname,
+            hp: p.hp,
+            energy: p.energy,
+            maxEnergy: p.maxEnergy,
+            hand: p.hand,
+            field: p.field
+        }))
+    });
+
+    startTimer(gameId, io);
+}

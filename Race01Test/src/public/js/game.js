@@ -1,0 +1,360 @@
+const socket = io();
+const gameId = window.location.pathname.split('/').pop();
+
+let myData = null;
+let oppData = null;
+let isMyTurn = false;
+let selectedFieldCard = null;
+let myPlayerIndex = -1;
+
+const timerEl = document.getElementById('timer');
+const myHandEl = document.getElementById('my-hand');
+const myFieldEl = document.getElementById('my-field');
+const oppFieldEl = document.getElementById('opp-field');
+const myEnergyEl = document.getElementById('my-energy');
+const oppEnergyEl = document.getElementById('opp-energy');
+const myHpFill = document.getElementById('my-hp-fill');
+const oppHpFill = document.getElementById('opp-hp-fill');
+const turnIndicator = document.getElementById('turn-indicator');
+const endTurnBtn = document.getElementById('end-turn-btn');
+const canvas = document.getElementById('canvas-effects');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.onresize = resize;
+resize();
+
+socket.emit('joinGame', { gameId, nickname });
+
+socket.on('startGame', (data) => {
+    myPlayerIndex = data.players.findIndex(p => p.socketId === socket.id);
+    console.log('Game started. My index:', myPlayerIndex);
+    
+    if (!data.isRejoin) {
+        showCoinFlip(data.turn === myPlayerIndex);
+    }
+    processState(data.players, data.turn);
+});
+
+socket.on('timerUpdate', (data) => {
+    timerEl.textContent = data.timer;
+    timerEl.style.color = data.timer <= 5 ? '#f0a500' : 'var(--marvel-red)';
+});
+
+socket.on('turnUpdate', (data) => {
+    console.log('Turn update:', data);
+    processState(data.players, data.turn);
+});
+
+socket.on('gameStateUpdate', (data) => {
+    processState(data.players, data.turn);
+});
+
+
+function processState(players, turnIndex) {
+    if (myPlayerIndex === -1) {
+        myPlayerIndex = players.findIndex(p => p.socketId === socket.id);
+    }
+    
+    myData = players[myPlayerIndex];
+    oppData = players[myPlayerIndex === 0 ? 1 : 0];
+    isMyTurn = turnIndex === myPlayerIndex;
+    
+    renderHand();
+    renderField();
+    updateStats();
+    
+    const turnIndicator = document.getElementById('turn-indicator');
+    const endTurnBtn = document.getElementById('end-turn-btn');
+    
+    if (isMyTurn) {
+        turnIndicator.textContent = 'YOUR TURN';
+        turnIndicator.style.background = '#f0a500'; // Gold
+    } else {
+        turnIndicator.textContent = "OPPONENT'S TURN";
+        turnIndicator.style.background = '#e23636'; // Red
+    }
+    endTurnBtn.disabled = !isMyTurn;
+}
+
+function updateStats() {
+    if (!myData || !oppData) return;
+    
+    myEnergyEl.textContent = `${myData.energy}/${myData.maxEnergy}`;
+    oppEnergyEl.textContent = `${oppData.energy}/${oppData.maxEnergy}`;
+    
+    myHpFill.style.width = (myData.hp / 20 * 100) + '%';
+    oppHpFill.style.width = (oppData.hp / 20 * 100) + '%';
+    
+    // Explicit HP numbers with safer selection
+    const myHpText = document.querySelector('.player-area:not(.opponent-area) .hp-text');
+    const oppHpText = document.querySelector('.opponent-area .hp-text');
+    
+    if (myHpText) myHpText.textContent = `${myData.hp}/20`;
+    if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
+    
+    document.getElementById('opp-nickname').textContent = oppData.nickname;
+}
+
+function renderHand() {
+    myHandEl.innerHTML = '';
+    if (!myData || !myData.hand) return;
+    
+    myData.hand.forEach(card => {
+        const cardEl = createCardElement(card);
+        if (isMyTurn && myData.energy >= card.cost) {
+            cardEl.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+        }
+        
+        cardEl.addEventListener('click', () => {
+            if (!isMyTurn) return;
+            if (myData.energy < card.cost) return;
+            socket.emit('playCard', { gameId, cardInstanceId: card.instanceId });
+        });
+        myHandEl.appendChild(cardEl);
+    });
+}
+
+function renderField() {
+    myFieldEl.innerHTML = '';
+    oppFieldEl.innerHTML = '';
+    if (!myData || !oppData) return;
+    
+    myData.field.forEach(card => {
+        const cardEl = createCardElement(card);
+        if (card.isSummoning) cardEl.classList.add('summoning-sickness');
+        if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) cardEl.classList.add('selected-card');
+        
+        // Add "Ready to Attack" indicator
+        if (isMyTurn && !card.isSummoning && card.canAttack !== false) {
+            cardEl.classList.add('ready-to-attack');
+        }
+        
+        cardEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!isMyTurn || card.isSummoning || card.canAttack === false) return;
+            
+            if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) {
+                selectedFieldCard = null;
+            } else {
+                selectedFieldCard = card;
+            }
+            renderField(); // Re-render to show selection
+        });
+        myFieldEl.appendChild(cardEl);
+    });
+    
+    const hasTaunt = oppData.field.some(c => c.has_taunt);
+    
+    oppData.field.forEach(card => {
+        const cardEl = createCardElement(card);
+        const canHitThis = !hasTaunt || card.has_taunt;
+        
+        if (selectedFieldCard && canHitThis) {
+            cardEl.classList.add('valid-target');
+        }
+
+        if (hasTaunt && !card.has_taunt) cardEl.style.opacity = '0.5';
+        
+        cardEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedFieldCard) {
+                if (hasTaunt && !card.has_taunt) return;
+                
+                console.log(`[BATTLE] Attacking card: ${selectedFieldCard.name} -> ${card.name}`);
+                socket.emit('attack', { 
+                    gameId, 
+                    attackerInstanceId: selectedFieldCard.instanceId, 
+                    targetInstanceId: card.instanceId,
+                    target: 'card'
+                });
+                selectedFieldCard = null;
+                renderField();
+            }
+        });
+        oppFieldEl.appendChild(cardEl);
+    });
+}
+
+// Hero attack
+document.querySelector('.opponent-area .player-info').addEventListener('click', () => {
+    if (selectedFieldCard) {
+        const hasTaunt = oppData.field.some(c => c.has_taunt);
+        if (hasTaunt) {
+            alert('You must destroy the Taunt card first!');
+            return;
+        }
+        
+        console.log(`[BATTLE] Attacking hero: ${selectedFieldCard.name} -> Opponent`);
+        socket.emit('attack', { 
+            gameId, 
+            attackerInstanceId: selectedFieldCard.instanceId, 
+            target: 'hero'
+        });
+        selectedFieldCard = null;
+        renderField();
+    }
+});
+
+function createCardElement(card) {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'card';
+    if (card.has_taunt) cardEl.classList.add('taunt-border');
+    
+    const displayDef = card.currentDefense !== undefined ? card.currentDefense : card.defense;
+
+    cardEl.innerHTML = `
+        <div class="card-cost">${card.cost}</div>
+        <div class="card-image" style="background-image: url('${card.image_url}')"></div>
+        <div class="card-name">${card.name}</div>
+        <div class="card-stats">
+            <span class="card-atk">${card.attack}</span>
+            <span class="card-def">${displayDef}</span>
+        </div>
+    `;
+    return cardEl;
+}
+
+endTurnBtn.addEventListener('click', () => {
+    socket.emit('endTurn', { gameId });
+});
+
+function showCoinFlip(isMeFirst) {
+    let frame = 0;
+    const duration = 180;
+    let speed = 0.5;
+    let currentAngle = 0;
+    const targetAngle = isMeFirst ? Math.PI / 2 : -Math.PI / 2;
+
+    const interval = setInterval(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 100;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Smooth rotation logic
+        if (frame < 100) {
+            currentAngle += speed;
+        } else if (frame < 150) {
+            // Decelerate and start merging with targetAngle
+            speed *= 0.95;
+            currentAngle += speed;
+        } else {
+            // Final snap without jump (speed is very low here)
+            currentAngle = targetAngle;
+            speed = 0;
+        }
+
+        const arrowX = centerX + Math.cos(currentAngle) * (radius - 10);
+        const arrowY = centerY + Math.sin(currentAngle) * (radius - 10);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(arrowX, arrowY);
+        ctx.strokeStyle = '#e23636';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+
+        ctx.font = 'bold 32px Outfit';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+
+        if (frame < 120) {
+            ctx.fillText('DETERMINING TURN...', centerX, centerY + 180);
+        } else {
+            const text = isMeFirst ? 'YOU GO FIRST!' : 'OPPONENT GOES FIRST!';
+            ctx.fillStyle = isMeFirst ? '#f0a500' : '#e23636'; // Gold or Red hex
+            ctx.font = 'bold 50px Outfit';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.fillText(text, centerX, centerY + 180);
+            ctx.shadowBlur = 0;
+        }
+        
+        frame++;
+        if (frame > duration) {
+            clearInterval(interval);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }, 16);
+}
+
+socket.on('gameOver', (data) => {
+    // Check if the winner's nickname is at the start of the message
+    const isWinner = data.winner.startsWith(myData.nickname);
+    showGameOverScreen(isWinner, data.winner);
+});
+
+function showGameOverScreen(isWinner, winnerName) {
+    let frame = 0;
+    const interval = setInterval(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const text = isWinner ? 'YOU WON!' : 'YOU LOST!';
+        const eloText = isWinner ? '+25 Elo' : '-25 Elo';
+        
+        // Use hex colors as Canvas doesn't support var()
+        const mainColor = isWinner ? '#f0a500' : '#e23636';
+        
+        ctx.font = 'bold 60px Outfit'; // Decreased size
+        ctx.fillStyle = mainColor;
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = mainColor;
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
+        
+        ctx.font = 'bold 45px Outfit'; // Decreased size
+        ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 + 30);
+        
+        ctx.shadowBlur = 0;
+        ctx.font = '24px Outfit';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`Winner: ${winnerName}`, canvas.width / 2, canvas.height / 2 + 100);
+        ctx.fillText('Returning to lobby in 5 seconds...', canvas.width / 2, canvas.height / 2 + 140);
+
+        frame++;
+        if (frame > 300) { // 5 seconds
+            clearInterval(interval);
+            window.location.href = '/lobby';
+        }
+    }, 16);
+}
+
+// Add CSS for selected card
+const style = document.createElement('style');
+style.textContent = `
+    .selected-card {
+        border-color: var(--marvel-gold) !important;
+        transform: translateY(-15px) scale(1.1) !important;
+        box-shadow: 0 0 25px var(--marvel-gold) !important;
+        z-index: 100;
+    }
+    .ready-to-attack {
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.5) !important;
+        border-color: #00ff00 !important;
+    }
+    .valid-target {
+        cursor: crosshair;
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.7) !important;
+        border-color: #ff0000 !important;
+    }
+    .opponent-area .player-info:hover {
+        background: rgba(226, 54, 54, 0.2);
+        cursor: pointer;
+    }
+`;
+document.head.appendChild(style);
