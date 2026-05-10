@@ -19,17 +19,9 @@ class Card {
 
         const remainingCount = count - lowCostCards.length;
         let remainingCards = [];
-        
+
         if (remainingCount > 0) {
-            // Use weighted logic for the rest of the hand
-            // We pass the already picked low-cost cards as the "current hand"
-            // And we exclude the already picked IDs to avoid duplicates in the same hand
             const excludedIds = lowCostCards.map(c => c.id);
-            
-            // Actually, we can just use getWeightedRandomCards but we need to ensure we don't pick the same physical card twice if that's a rule.
-            // But currently the game seems to draw from an infinite pool (DB). 
-            // If it's a fixed deck, we'd need more logic. 
-            // For now, let's just use the weighted logic.
             remainingCards = await this.getWeightedRandomCards(remainingCount, lowCostCards);
         }
 
@@ -39,14 +31,14 @@ class Card {
 
     static async getWeightedRandomCards(count, currentHand = [], excludedCosts = []) {
         const [allCards] = await db.query('SELECT * FROM cards');
-        
+
         const results = [];
         const workingHand = [...currentHand];
-        
+
         for (let i = 0; i < count; i++) {
             // Filter candidates
             let candidates = allCards.filter(c => !excludedCosts.includes(c.cost));
-            
+
             if (candidates.length === 0) break;
 
             // Calculate cost counts in working hand
