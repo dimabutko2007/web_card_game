@@ -63,6 +63,10 @@ class User {
             [hashedPassword, userId]
         );
     }
+
+    static async updateNickname(userId, nickname) {
+        await db.execute('UPDATE users SET nickname = ? WHERE id = ?', [nickname, userId]);
+    }
 }
 
 module.exports = User;
