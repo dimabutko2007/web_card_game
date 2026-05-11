@@ -67,6 +67,13 @@ class User {
     static async updateNickname(userId, nickname) {
         await db.execute('UPDATE users SET nickname = ? WHERE id = ?', [nickname, userId]);
     }
+
+    static async getTopPlayers(limit = 10) {
+        const [rows] = await db.execute(
+            `SELECT nickname, avatar, elo, wins, losses FROM users ORDER BY elo DESC LIMIT ${parseInt(limit)}`
+        );
+        return rows;
+    }
 }
 
 module.exports = User;

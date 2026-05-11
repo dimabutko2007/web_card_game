@@ -1,9 +1,9 @@
 :root {
-    --marvel-red: #e23636;
-    --marvel-dark: #151515;
-    --marvel-white: #ffffff;
-    --marvel-grey: #2a2a2a;
-    --marvel-gold: #f0a500;
+    --color-red: #e23636;
+    --color-dark: #151515;
+    --color-white: #ffffff;
+    --color-grey: #2a2a2a;
+    --color-gold: #ff00ea;
     --glass: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
     --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
@@ -17,11 +17,11 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    background: var(--marvel-dark);
-    background-image: 
+    background: var(--color-dark);
+    background-image:
         radial-gradient(circle at 20% 20%, rgba(226, 54, 54, 0.1) 0%, transparent 40%),
         radial-gradient(circle at 80% 80%, rgba(240, 165, 0, 0.05) 0%, transparent 40%);
-    color: var(--marvel-white);
+    color: var(--color-white);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -34,6 +34,26 @@ body {
     width: 100%;
 }
 
+/* Auth Pages — background image only on these pages */
+body.auth-page {
+    background: url('/assets/background1.png') center center / cover no-repeat fixed;
+    position: relative;
+}
+
+body.auth-page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+    z-index: 0;
+}
+
+body.auth-page>* {
+    position: relative;
+    z-index: 1;
+}
+
 /* Auth Pages Styling */
 .auth-wrapper {
     display: flex;
@@ -43,88 +63,176 @@ body {
 }
 
 .auth-card {
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 40px;
+    background: rgba(7, 0, 12, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(140, 60, 200, 0.25);
+    border-radius: 27px;
+    padding: 53px;
     width: 100%;
-    max-width: 450px;
+    max-width: 600px;
     box-shadow: var(--shadow);
     animation: fadeIn 0.8s ease-out;
 }
 
-.auth-card h1 {
+.auth-card h1, .dark-fantasy-title {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 12px;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    background: linear-gradient(45deg, var(--marvel-red), var(--marvel-gold));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-size: 2.5rem;
+    letter-spacing: 8px;
+    font-size: 3.33rem;
+    font-weight: 700;
+    color: #c084fc;
+    text-shadow:
+        0 0 10px rgba(192, 38, 211, 0.9),
+        0 0 25px rgba(147, 51, 234, 0.7),
+        0 0 50px rgba(109, 40, 217, 0.5),
+        0 0 80px rgba(88, 28, 135, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.9);
+    animation: titlePulse 3s ease-in-out infinite alternate;
+    position: relative;
+}
+
+.auth-card h1::after, .dark-fantasy-title::after {
+    content: '';
+    display: block;
+    margin: 14px auto 28px;
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(192, 38, 211, 0.8),
+            rgba(147, 51, 234, 1),
+            rgba(192, 38, 211, 0.8),
+            transparent);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.8);
+}
+
+@keyframes titlePulse {
+    from {
+        text-shadow:
+            0 0 8px rgba(192, 38, 211, 0.8),
+            0 0 20px rgba(147, 51, 234, 0.6),
+            0 0 40px rgba(109, 40, 217, 0.4),
+            0 2px 4px rgba(0, 0, 0, 0.9);
+        color: #c084fc;
+    }
+
+    to {
+        text-shadow:
+            0 0 15px rgba(216, 180, 254, 1),
+            0 0 35px rgba(192, 38, 211, 0.9),
+            0 0 65px rgba(147, 51, 234, 0.6),
+            0 0 100px rgba(109, 40, 217, 0.4),
+            0 2px 4px rgba(0, 0, 0, 0.9);
+        color: #e9d5ff;
+    }
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 27px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
+    margin-bottom: 11px;
+    font-size: 1.2rem;
     color: rgba(255, 255, 255, 0.7);
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: 1px solid var(--glass-border);
-    background: rgba(0, 0, 0, 0.3);
+    padding: 16px 20px;
+    border-radius: 13px;
+    border: 1px solid rgba(140, 60, 200, 0.3);
+    background: rgba(50, 0, 90, 0.25);
     color: white;
     outline: none;
+    font-size: 1.2rem;
     transition: all 0.3s ease;
 }
 
 .form-group input:focus {
-    border-color: var(--marvel-red);
+    border-color: var(--color-red);
     box-shadow: 0 0 10px rgba(226, 54, 54, 0.3);
 }
 
 .btn {
     width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: var(--marvel-red);
-    color: white;
+    padding: 16px;
+    border-radius: 13px;
+    border: 2px solid rgba(255, 120, 30, 0.6);
+    background: url('/assets/lava_button.png') center / cover no-repeat;
+    background-color: #8b1a00;
+    color: #fff8e7;
     font-weight: bold;
+    font-size: 1.2rem;
     text-transform: uppercase;
     cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
-    margin-top: 10px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(255, 80, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+    box-shadow:
+        0 0 12px rgba(255, 80, 0, 0.5),
+        0 0 30px rgba(200, 40, 0, 0.25),
+        inset 0 0 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s, box-shadow 0.3s, filter 0.3s;
+    margin-top: 13px;
+    animation: lavaGlow 2.5s ease-in-out infinite alternate;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+            rgba(255, 160, 60, 0.15) 0%,
+            transparent 50%,
+            rgba(0, 0, 0, 0.3) 100%);
+    border-radius: 11px;
+    pointer-events: none;
 }
 
 .btn:hover {
-    background: #c12d2d;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    filter: brightness(1.25) saturate(1.3);
+    box-shadow:
+        0 0 22px rgba(255, 100, 0, 0.8),
+        0 0 50px rgba(220, 50, 0, 0.4),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn:active {
     transform: translateY(0);
+    filter: brightness(0.9);
+}
+
+@keyframes lavaGlow {
+    from {
+        box-shadow:
+            0 0 10px rgba(255, 80, 0, 0.4),
+            0 0 25px rgba(200, 40, 0, 0.2),
+            inset 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    to {
+        box-shadow:
+            0 0 20px rgba(255, 120, 0, 0.75),
+            0 0 45px rgba(220, 60, 0, 0.4),
+            inset 0 0 20px rgba(0, 0, 0, 0.4);
+    }
 }
 
 .auth-footer {
     text-align: center;
-    margin-top: 20px;
-    font-size: 0.9rem;
+    margin-top: 27px;
+    font-size: 1.2rem;
 }
 
 .auth-footer a {
-    color: var(--marvel-gold);
+    color: var(--color-gold);
     text-decoration: none;
 }
 
@@ -134,14 +242,21 @@ body {
 
 .error-msg {
     background: rgba(226, 54, 54, 0.2);
-    border-left: 4px solid var(--marvel-red);
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-left: 5px solid var(--color-red);
+    padding: 13px;
+    margin-bottom: 27px;
+    border-radius: 5px;
+    font-size: 1.2rem;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

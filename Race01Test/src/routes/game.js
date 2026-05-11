@@ -42,11 +42,13 @@ router.get('/', (req, res) => {
 
 router.get('/lobby', authController.isAuthenticated, async (req, res) => {
     const user = await User.findById(req.session.userId);
+    const leaders = await User.getTopPlayers(25);
     res.render('lobby', { 
         nickname: req.session.nickname, 
         userId: req.session.userId,
         elo: user.elo,
-        avatar: user.avatar
+        avatar: user.avatar,
+        leaders: leaders
     });
 });
 

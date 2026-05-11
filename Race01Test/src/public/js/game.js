@@ -72,10 +72,10 @@ function processState(players, turnIndex) {
     
     if (isMyTurn) {
         turnIndicator.textContent = 'YOUR TURN';
-        turnIndicator.style.background = '#f0a500'; // Gold
+        turnIndicator.className = 'turn-indicator my-turn';
     } else {
         turnIndicator.textContent = "OPPONENT'S TURN";
-        turnIndicator.style.background = '#e23636'; // Red
+        turnIndicator.className = 'turn-indicator opp-turn';
     }
     endTurnBtn.disabled = !isMyTurn;
 }
@@ -112,7 +112,7 @@ function renderHand() {
     myData.hand.forEach(card => {
         const cardEl = createCardElement(card);
         if (isMyTurn && myData.energy >= card.cost) {
-            cardEl.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+            cardEl.classList.add('playable-card');
         }
         
         cardEl.addEventListener('click', () => {

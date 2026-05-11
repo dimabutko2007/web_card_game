@@ -4,17 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Great Battle - Registration</title>
+    <title>Dark Realms - Registration</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
 </head>
 
-<body>
+<body class="auth-page">
+    <canvas id="bg-particles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
     <div class="auth-wrapper">
         <div class="auth-card">
-            <h1>Great Battle</h1>
+            <h1>Dark Realms</h1>
             <p style="text-align: center; margin-bottom: 20px; color: #aaa;">Create your squad of heroes</p>
 
             <% if (locals.error) { %>
@@ -44,6 +45,7 @@
                     </div>
         </div>
     </div>
+    <script src="/js/particles.js"></script>
 </body>
 
 </html>

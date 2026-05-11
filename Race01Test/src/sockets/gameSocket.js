@@ -7,7 +7,17 @@ const activeGames = new Map();
 const disconnectTimeouts = new Map();
 
 module.exports = (io) => {
+    function broadcastLobbyStats() {
+        const onlineCount = io.engine.clientsCount;
+        const searchingCount = waitingPlayer ? 1 : 0;
+        io.emit('lobbyStatsUpdate', {
+            online: onlineCount,
+            searching: searchingCount
+        });
+    }
+
     io.on('connection', (socket) => {
+        broadcastLobbyStats();
         socket.on('joinUserRoom', (data) => {
             if (data.userId) {
                 socket.join(`user_${data.userId}`);
@@ -34,11 +44,12 @@ module.exports = (io) => {
                 }
             }
 
-            if (waitingPlayer && waitingPlayer.id !== socket.id) {
+            if (waitingPlayer && waitingPlayer.socket.id !== socket.id) {
                 // Match found
                 const gameId = uuidv4();
                 const opponent = waitingPlayer;
                 waitingPlayer = null;
+                broadcastLobbyStats();
 
                 // Join both to a room
                 socket.join(gameId);
@@ -57,6 +68,7 @@ module.exports = (io) => {
             } else {
                 // Start waiting
                 waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socket: socket };
+                broadcastLobbyStats();
             }
         });
 
@@ -233,9 +245,10 @@ module.exports = (io) => {
         });
 
         socket.on('disconnect', async () => {
-            if (waitingPlayer && waitingPlayer.id === socket.id) {
+            if (waitingPlayer && waitingPlayer.socket.id === socket.id) {
                 waitingPlayer = null;
             }
+            setTimeout(broadcastLobbyStats, 100);
             // Cleanup active games if a player disconnects
             for (const [gameId, game] of activeGames.entries()) {
                 const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);

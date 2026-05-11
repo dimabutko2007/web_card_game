@@ -4,58 +4,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Great Battle - Login</title>
+    <title>Dark Realms - Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
 </head>
 
-<body>
+<body class="auth-page">
+    <canvas id="bg-particles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
     <div class="auth-wrapper">
         <div class="auth-card">
-            <h1>Great Battle</h1>
+            <h1>Dark Realms</h1>
             <p style="text-align: center; margin-bottom: 20px; color: #aaa;">The battle awaits you</p>
 
             <% if (locals.error) { %>
                 <div class="error-msg">
                     <%= error %>
                 </div>
-            <% } %>
+                <% } %>
 
-            <% if (locals.success) { %>
-                <div style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(46, 204, 113, 0.3);">
-                    <%= success %>
-                </div>
-            <% } %>
-
-                    <form action="/auth/login" method="POST">
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required>
+                    <% if (locals.success) { %>
+                        <div
+                            style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(46, 204, 113, 0.3);">
+                            <%= success %>
                         </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required>
-                        </div>
-                        <button type="submit" class="btn">Enter Battle</button>
-                    </form>
+                        <% } %>
 
-                    <div class="auth-footer" style="margin-top: 10px;">
-                        <a href="/auth/password-reminder" style="font-size: 0.9rem; opacity: 0.7;">Forgot password?</a>
-                    </div>
-                    <div class="auth-footer">
-                        Don't have an account? <a href="/auth/register">Register</a>
-                    </div>
+                            <form action="/auth/login" method="POST">
+                                <div class="form-group">
+                                    <label for="email">Email Address</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input type="password" id="password" name="password" required>
+                                </div>
+                                <button type="submit" class="btn">Enter Battle</button>
+                            </form>
+
+                            <div class="auth-footer" style="margin-top: 10px;">
+                                <a href="/auth/password-reminder" style="font-size: 0.9rem; opacity: 0.7;">Forgot
+                                    password?</a>
+                            </div>
+                            <div class="auth-footer">
+                                Don't have an account? <a href="/auth/register">Register</a>
+                            </div>
         </div>
     </div>
     <script>
         // Clean URL parameters on load to prevent state preservation on refresh
         if (window.history.replaceState) {
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         }
     </script>
+    <script src="/js/particles.js"></script>
 </body>
 
 </html>
