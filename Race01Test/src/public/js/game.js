@@ -27,7 +27,7 @@ function resize() {
 window.onresize = resize;
 resize();
 
-socket.emit('joinGame', { gameId, nickname });
+socket.emit('joinGame', { gameId, nickname, userId: myUserId });
 
 socket.on('startGame', (data) => {
     myPlayerIndex = data.players.findIndex(p => p.socketId === socket.id);

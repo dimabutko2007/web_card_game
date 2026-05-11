@@ -65,10 +65,12 @@ module.exports = (io) => {
             const game = activeGames.get(data.gameId);
             if (game) {
                 // Update socket ID for the player who just joined (because of page reload)
-                const player = game.players.find(p => p.nickname === data.nickname);
+                const player = game.players.find(p => p.dbUserId === data.userId);
                 if (player) {
                     player.socketId = socket.id;
                     player.ready = true;
+                    // Update nickname from session in case it was changed
+                    if (data.nickname) player.nickname = data.nickname;
                     console.log(`[GAME] Player ${data.nickname} joined the battle (GameID: ${data.gameId})`);
                 }
 
@@ -107,7 +109,7 @@ module.exports = (io) => {
                     // Rejoining active game
                     
                     // Clear disconnect timeout if exists
-                    const timeoutKey = `${data.gameId}_${data.nickname}`;
+                    const timeoutKey = `${data.gameId}_${player.dbUserId}`;
                     if (disconnectTimeouts.has(timeoutKey)) {
                         clearTimeout(disconnectTimeouts.get(timeoutKey));
                         disconnectTimeouts.delete(timeoutKey);
@@ -240,7 +242,7 @@ module.exports = (io) => {
                 if (disconnectedPlayer && game.gameState === 'active') {
                     console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (Grace period started)`);
                     
-                    const timeoutKey = `${gameId}_${disconnectedPlayer.nickname}`;
+                    const timeoutKey = `${gameId}_${disconnectedPlayer.dbUserId}`;
                     const timeout = setTimeout(async () => {
                         const winner = game.players.find(p => p.socketId !== socket.id);
                         const loser = disconnectedPlayer;

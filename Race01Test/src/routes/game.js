@@ -52,7 +52,7 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
 
 router.get('/profile', authController.isAuthenticated, async (req, res) => {
     const user = await User.findById(req.session.userId);
-    res.render('profile', { user, error: req.query.error });
+    res.render('profile', { user, error: req.query.error, success: req.query.success });
 });
 
 router.post('/profile/avatar', authController.isAuthenticated, (req, res) => {
@@ -71,7 +71,6 @@ router.post('/profile/avatar', authController.isAuthenticated, (req, res) => {
                 if (fs.existsSync(oldAvatarPath)) {
                     try {
                         fs.unlinkSync(oldAvatarPath);
-                        console.log(`Deleted old avatar: ${oldAvatarPath}`);
                     } catch (err) {
                         console.error(`Failed to delete old avatar: ${oldAvatarPath}`, err);
                     }
@@ -88,8 +87,41 @@ router.post('/profile/avatar', authController.isAuthenticated, (req, res) => {
     });
 });
 
+router.post('/profile/nickname', authController.isAuthenticated, async (req, res) => {
+    const { nickname } = req.body;
+    const nicknameRegex = /^[a-zA-Z0-9_]+$/;
+
+    if (!nickname || nickname.length < 4 || nickname.length > 20 || !nicknameRegex.test(nickname)) {
+        return res.redirect('/profile?error=' + encodeURIComponent('Nickname must be 4-20 characters long and contain only letters, numbers, and underscores (_).'));
+    }
+
+    try {
+        // Check if the new nickname is the same as the current one
+        const currentUser = await User.findById(req.session.userId);
+        if (currentUser.nickname === nickname) {
+            return res.redirect('/profile');
+        }
+
+        // Check uniqueness
+        const existing = await User.findByNickname(nickname);
+        if (existing) {
+            return res.redirect('/profile?error=' + encodeURIComponent('This nickname is already taken.'));
+        }
+
+        await User.updateNickname(req.session.userId, nickname);
+        req.session.nickname = nickname; // Sync session so lobby and game use the new nick
+        req.session.save((err) => {
+            if (err) console.error('[PROFILE] Session save error:', err);
+            res.redirect('/profile?success=' + encodeURIComponent('Nickname changed successfully!'));
+        });
+    } catch (error) {
+        console.error('Database error during nickname update:', error);
+        res.redirect('/profile?error=' + encodeURIComponent('Database error.'));
+    }
+});
+
 router.get('/game/:id', authController.isAuthenticated, (req, res) => {
-    res.render('game', { gameId: req.params.id, nickname: req.session.nickname });
+    res.render('game', { gameId: req.params.id, nickname: req.session.nickname, userId: req.session.userId });
 });
 
 module.exports = router;

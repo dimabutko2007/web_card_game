@@ -77,47 +77,148 @@
             font-weight: bold;
         }
 
-        .avatar-selection {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+        /* Nickname edit styles */
+        .nickname-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
-            margin-top: 20px;
         }
 
-        .avatar-option {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+        .nickname-edit-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.4);
             cursor: pointer;
-            border: 2px solid transparent;
-            transition: border 0.3s;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.3s, transform 0.3s;
+            line-height: 1;
         }
 
-        .avatar-option:hover,
-        .avatar-option.selected {
-            border-color: var(--marvel-red);
+        .nickname-edit-btn:hover {
+            color: var(--marvel-gold);
+            transform: scale(1.2);
+        }
+
+        .nickname-edit-form {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .nickname-edit-form.active {
+            display: flex;
+        }
+
+        .nickname-edit-form input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            width: 200px;
+        }
+
+        .nickname-edit-form input:focus {
+            border-color: var(--marvel-gold);
+        }
+
+        .nickname-edit-form button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .nickname-edit-form button:hover {
+            opacity: 0.85;
+        }
+
+        .nickname-save-btn {
+            background: linear-gradient(45deg, var(--marvel-red), #ff5a5a);
+            color: white;
+        }
+
+        .nickname-cancel-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        .alert-error {
+            color: #ff5a5a;
+            background: rgba(226, 54, 54, 0.15);
+            border: 1px solid rgba(226, 54, 54, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            color: var(--marvel-gold);
+            background: rgba(240, 165, 0, 0.15);
+            border: 1px solid rgba(240, 165, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <a href="/lobby" style="color: white; text-decoration: none;">← Back to Lobby</a>
+        <a href="/lobby" style="color: white; text-decoration: none;">&larr; Back to Lobby</a>
 
         <div class="profile-card">
             <% if (typeof error !== 'undefined' && error) { %>
-                <div style="color: red; margin-bottom: 15px; font-weight: bold;"><%= error %></div>
+                <div class="alert-error"><%= error %></div>
+            <% } %>
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert-success"><%= success %></div>
             <% } %>
 
-            <div class="profile-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
-                <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar" id="avatar-preview">
-                <div class="profile-avatar-overlay">
-                    Change
+            <form action="/profile/avatar" method="POST" enctype="multipart/form-data" id="avatar-form">
+                <div class="profile-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
+                    <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar" id="avatar-preview">
+                    <div class="profile-avatar-overlay">
+                        Change
+                    </div>
                 </div>
+                <input type="file" name="avatar" id="avatar-input" accept="image/jpeg, image/png, image/gif" style="display: none;" onchange="previewAvatar(event)">
+                <button type="submit" class="btn avatar-save-btn" id="avatar-save-btn" style="display: none; margin: 10px auto; padding: 8px 20px; font-size: 0.9rem; background: linear-gradient(45deg, var(--marvel-red), #ff5a5a); border: none; border-radius: 8px; color: white; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold;">Upload Avatar</button>
+            </form>
+
+            <div class="nickname-display">
+                <h1 id="nickname-text"><%= user.nickname %></h1>
+                <button class="nickname-edit-btn" onclick="toggleNicknameEdit()" title="Change nickname">&#9998;</button>
             </div>
-            <h1>
-                <%= user.nickname %>
-            </h1>
+
+            <form action="/profile/nickname" method="POST" class="nickname-edit-form" id="nickname-edit-form">
+                <input type="text" name="nickname" id="nickname-input" value="<%= user.nickname %>"
+                       minlength="4" maxlength="20" pattern="[a-zA-Z0-9_]+" required
+                       placeholder="New nickname">
+                <button type="submit" class="nickname-save-btn">Save</button>
+                <button type="button" class="nickname-cancel-btn" onclick="toggleNicknameEdit()">Cancel</button>
+            </form>
+
             <p style="color: #aaa;">
                 <%= user.email %>
             </p>
@@ -152,10 +253,7 @@
                 </div>
             </div>
 
-            <form action="/profile/avatar" method="POST" enctype="multipart/form-data" style="margin-top: 20px;" id="avatar-form">
-                <input type="file" name="avatar" id="avatar-input" accept="image/jpeg, image/png, image/gif" style="display: none;" onchange="previewAvatar(event)">
-                <button type="submit" class="btn" style="padding: 10px 20px; font-size: 1rem; background: linear-gradient(45deg, var(--marvel-red), #ff5a5a); border: none; border-radius: 5px; color: white; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold;">Save Profile</button>
-            </form>
+
         </div>
     </div>
     <script>
@@ -167,6 +265,17 @@
                     document.getElementById('avatar-preview').src = e.target.result;
                 }
                 reader.readAsDataURL(file);
+                document.getElementById('avatar-save-btn').style.display = 'block';
+            }
+        }
+
+        function toggleNicknameEdit() {
+            const form = document.getElementById('nickname-edit-form');
+            const input = document.getElementById('nickname-input');
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                input.focus();
+                input.select();
             }
         }
     </script>
