@@ -28,41 +28,50 @@ CREATE TABLE IF NOT EXISTS cards (
 TRUNCATE TABLE cards;
 INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 -- 1 Energy (Stats: 3)
-('Ant-Man', 2, 1, 1, '/assets/cards/ant_man.png', FALSE),
-('Wasp', 1, 2, 1, '/assets/cards/wasp.png', FALSE),
+('Endermite', 2, 1, 1, '/assets/cards/endermite.png', FALSE),
+('Silverfish', 1, 2, 1, '/assets/cards/silverfish.png', FALSE),
+('Slime', 1, 2, 1, '/assets/cards/slime.png', FALSE),
 -- 2 Energy (Stats: 4-5)
-('Black Widow', 3, 2, 2, '/assets/cards/black_widow.png', FALSE),
-('Hawkeye', 4, 1, 2, '/assets/cards/hawkeye.png', FALSE),
-('Rocket Raccoon', 3, 2, 2, '/assets/cards/rocket.png', FALSE),
-('Deadpool', 2, 3, 2, '/assets/cards/deadpool.png', FALSE),
-('Luke Cage', 1, 3, 2, '/assets/cards/luke_cage.png', TRUE), -- Taunt
-('Falcon', 2, 2, 2, '/assets/cards/falcon.png', TRUE), -- Taunt
+('Zombie', 2, 3, 2, '/assets/cards/zombie.png', TRUE), -- Taunt
+('Drowned', 3, 2, 2, '/assets/cards/drowned.png', FALSE),
+('Husk', 2, 3, 2, '/assets/cards/husk.png', TRUE), -- Taunt
+('Skeleton', 4, 1, 2, '/assets/cards/skeleton.png', FALSE),
+('Stray', 3, 2, 2, '/assets/cards/stray.png', FALSE),
+('Bogged', 2, 2, 2, '/assets/cards/bogged.png', FALSE),
+('Parched', 3, 1, 2, '/assets/cards/parched.png', FALSE),
+('Zombie Villager', 1, 3, 2, '/assets/cards/zombie_villager.png', TRUE), -- Taunt
 -- 3 Energy (Stats: 5-7)
-('Spider-Man', 4, 3, 3, '/assets/cards/spiderman.png', FALSE),
-('Star-Lord', 3, 4, 3, '/assets/cards/starlord.png', FALSE),
-('Daredevil', 2, 4, 3, '/assets/cards/daredevil.png', TRUE), -- Taunt
-('Colossus', 2, 4, 3, '/assets/cards/colossus.png', TRUE), -- Taunt
-('Gamora', 5, 2, 3, '/assets/cards/gamora.png', FALSE),
+('Spider', 4, 3, 3, '/assets/cards/spider.png', FALSE),
+('Creeper', 5, 1, 3, '/assets/cards/creeper.png', FALSE),
+('Phantom', 4, 2, 3, '/assets/cards/phantom.png', FALSE),
+('Magma Cube', 2, 4, 3, '/assets/cards/magma_cube.png', TRUE), -- Taunt
+('Piglin', 4, 2, 3, '/assets/cards/piglin.png', FALSE),
+('Pillager', 3, 3, 3, '/assets/cards/pillager.png', FALSE),
+('Vex', 5, 2, 3, '/assets/cards/vex.png', FALSE),
 -- 4 Energy (Stats: 7-9)
-('Captain America', 3, 5, 4, '/assets/cards/cap_america.png', TRUE), -- Taunt
-('Black Panther', 5, 4, 4, '/assets/cards/black_panther.png', FALSE),
-('Scarlet Witch', 6, 3, 4, '/assets/cards/scarlet_witch.png', FALSE),
-('Drax', 4, 5, 4, '/assets/cards/drax.png', FALSE),
-('Loki', 4, 5, 4, '/assets/cards/loki.png', FALSE),
-('Wolverine', 4, 5, 4, '/assets/cards/wolverine.png', FALSE),
-('Silver Surfer', 5, 4, 4, '/assets/cards/silver_surfer.png', FALSE),
+('Zombified Piglin', 4, 5, 4, '/assets/cards/zombified_piglin.png', TRUE), -- Taunt
+('Witch', 5, 4, 4, '/assets/cards/witch.png', FALSE),
+('Blaze', 6, 3, 4, '/assets/cards/blaze.png', FALSE),
+('Ghast', 5, 3, 4, '/assets/cards/ghast.png', FALSE),
+('Hoglin', 4, 5, 4, '/assets/cards/hoglin.png', TRUE), -- Taunt
+('Guardian', 4, 4, 4, '/assets/cards/guardian.png', FALSE),
+('Vindicator', 6, 2, 4, '/assets/cards/vindicator.png', FALSE),
+('Shulker', 2, 6, 4, '/assets/cards/shulker.png', TRUE), -- Taunt
+('Zoglin', 6, 3, 4, '/assets/cards/zoglin.png', FALSE),
 -- 5 Energy (Stats: 9-11)
-('Iron Man', 6, 5, 5, '/assets/cards/iron_man.png', FALSE),
-('Doctor Strange', 4, 7, 5, '/assets/cards/dr_strange.png', FALSE),
-('Vision', 5, 6, 5, '/assets/cards/vision.png', FALSE),
-('Venom', 7, 4, 5, '/assets/cards/venom.png', FALSE),
-('The Thing', 4, 6, 5, '/assets/cards/thing.png', TRUE), -- Taunt
+('Piglin Brute', 7, 4, 5, '/assets/cards/piglin_brute.png', FALSE),
+('Evoker', 6, 5, 5, '/assets/cards/evoker.png', FALSE),
+('Ravager', 5, 6, 5, '/assets/cards/ravager.png', TRUE), -- Taunt
+('Breeze', 6, 4, 5, '/assets/cards/breeze.png', FALSE),
+('Creaking', 3, 8, 5, '/assets/cards/creaking.png', TRUE), -- Taunt
+('Enderman', 7, 3, 5, '/assets/cards/enderman.png', FALSE),
 -- 6 Energy (Stats: 11-13)
-('Thor', 7, 6, 6, '/assets/cards/thor.png', FALSE),
-('Groot', 2, 9, 6, '/assets/cards/groot.png', TRUE), -- Taunt
+('Wither Skeleton', 7, 5, 6, '/assets/cards/wither_skeleton.png', FALSE),
+('Elder Guardian', 5, 8, 6, '/assets/cards/elder_guardian.png', TRUE), -- Taunt
+('Giant', 4, 8, 6, '/assets/cards/giant.png', TRUE), -- Taunt
 -- 7 Energy (Stats: 15)
-('Doctor Doom', 8, 7, 7, '/assets/cards/dr_doom.png', FALSE),
+('Wither', 8, 7, 7, '/assets/cards/wither.png', FALSE),
 -- 8 Energy (Stats: 17)
-('Hulk', 8, 9, 8, '/assets/cards/hulk.png', TRUE), -- Taunt
+('Warden', 8, 9, 8, '/assets/cards/warden.png', TRUE), -- Taunt
 -- 10 Energy (Stats: 21+)
-('Thanos', 12, 12, 10, '/assets/cards/thanos.png', FALSE);
+('Ender Dragon', 12, 12, 10, '/assets/cards/ender_dragon.png', FALSE);
