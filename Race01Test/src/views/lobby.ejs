@@ -19,32 +19,38 @@
         }
 
         .user-panel {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            padding: 20px 40px;
-            border-radius: 20px;
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            padding: 30px 60px;
+            border-radius: 27px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 40px;
             animation: fadeIn 0.8s ease-out;
         }
 
         .user-panel img {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 2px solid var(--marvel-red);
+            border: 3px solid rgba(140, 60, 200, 0.7);
+            box-shadow: 0 0 15px rgba(140, 60, 200, 0.5);
             object-fit: cover;
         }
 
         .user-info h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .user-info p {
-            color: rgba(255, 255, 255, 0.6);
-            margin: 0;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 8px 0 0 0;
+            font-size: 1.2rem;
         }
 
         .lobby-actions {
@@ -55,12 +61,11 @@
         .match-btn {
             padding: 20px 60px;
             font-size: 1.5rem;
-            background: linear-gradient(45deg, var(--marvel-red), #ff5a5a);
-            box-shadow: 0 0 20px rgba(226, 54, 54, 0.4);
+            width: 100%;
         }
 
         .match-btn.searching {
-            background: var(--marvel-grey);
+            background: var(--color-grey);
             cursor: not-allowed;
         }
 
@@ -75,53 +80,267 @@
         .nav-links a {
             color: white;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 1.4rem;
             opacity: 0.8;
             transition: opacity 0.3s;
         }
 
         .nav-links a:hover {
             opacity: 1;
-            color: var(--marvel-gold);
+            color: var(--color-gold);
         }
 
         #status-msg {
             margin-top: 20px;
             font-style: italic;
-            color: var(--marvel-gold);
+            color: var(--color-gold);
             height: 24px;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); color: var(--marvel-gold); }
-            50% { transform: scale(1.2); color: #fff; text-shadow: 0 0 10px var(--marvel-gold); }
-            100% { transform: scale(1); color: var(--marvel-gold); }
+            0% {
+                transform: scale(1);
+                color: var(--color-gold);
+            }
+
+            50% {
+                transform: scale(1.2);
+                color: #fff;
+                text-shadow: 0 0 10px var(--color-gold);
+            }
+
+            100% {
+                transform: scale(1);
+                color: var(--color-gold);
+            }
+        }
+
+        .leaderboard-panel {
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 27px;
+            animation: fadeIn 0.8s ease-out;
+            color: white;
+        }
+
+        .leaderboard-panel h3 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 2rem;
+            color: #c084fc;
+            text-shadow: 0 0 10px rgba(147, 51, 234, 0.7);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(140, 60, 200, 0.4);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(140, 60, 200, 0.2);
+        }
+
+        .table-scroll-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+            padding-right: 5px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-track {
+            background: rgba(40, 0, 70, 0.2);
+            border-radius: 4px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(140, 60, 200, 0.5);
+            border-radius: 4px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(140, 60, 200, 0.8);
+        }
+
+        .leaderboard-table th {
+            color: var(--color-gold);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(140, 60, 200, 0.4);
+            position: sticky;
+            top: 0;
+            background: #1a0033;
+            z-index: 10;
+        }
+
+        .leaderboard-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(140, 60, 200, 0.7);
+            object-fit: cover;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        .rank-number {
+            font-weight: bold;
+            color: #e9d5ff;
+            font-size: 1.2rem;
+        }
+
+        .lobby-action-btn {
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.4);
+            color: #e9d5ff;
+            padding: 12px 0;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            flex: 1;
+        }
+
+        .lobby-action-btn:hover {
+            background: rgba(140, 60, 200, 0.4);
+            border-color: #c084fc;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(140, 60, 200, 0.6), inset 0 0 10px rgba(140, 60, 200, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .lobby-action-btn:active {
+            transform: translateY(0);
         }
     </style>
 </head>
 
-<body>
-    <div class="nav-links">
-        <a href="/profile">Profile</a>
-        <a href="/auth/logout">Logout</a>
-    </div>
+<body style="background: url('/assets/background1.png') no-repeat center center fixed; background-size: cover;">
+    <canvas id="bg-particles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
     <div class="container">
         <div class="lobby-content">
-            <h1 style="font-size: 3rem; text-transform: uppercase; letter-spacing: 5px;">Lobby</h1>
+            <h1 class="dark-fantasy-title">Lobby</h1>
 
-            <div class="user-panel">
-                <img src="<%= typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png' %>" alt="Avatar" id="user-avatar">
-                <div class="user-info">
-                    <h2>
-                        <%= nickname %> <span id="user-elo-display" style="color: var(--marvel-gold); font-size: 1rem; margin-left: 10px;">(Elo: <%= elo %>)</span>
-                    </h2>
-                    <p>Ready for battle</p>
+            <div class="lobby-controls"
+                style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; margin-top: 50px;">
+
+                <div class="top-panels"
+                    style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; width: 100%;">
+                    <div class="user-section"
+                        style="display: flex; flex-direction: column; gap: 20px; flex: 1; min-width: 400px;">
+                        <div class="user-panel" style="justify-content: center; width: 100%; margin: 0;">
+                            <img src="<%= typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png' %>"
+                                alt="Avatar" id="user-avatar">
+                            <div class="user-info">
+                                <h2>
+                                    <%= nickname %> <span id="user-elo-display"
+                                            style="color: var(--color-gold); font-size: 1rem; margin-left: 10px;">(Elo:
+                                            <%= elo %>
+                                                )
+                                        </span>
+                                </h2>
+                                <p>Ready for battle</p>
+                            </div>
+                        </div>
+                        <div class="user-actions"
+                            style="display: flex; gap: 20px; justify-content: center; width: 100%;">
+                            <a href="/profile" class="lobby-action-btn">Profile</a>
+                            <a href="/auth/logout" class="lobby-action-btn">Logout</a>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard-panel" style="flex: 1; min-width: 400px;">
+                        <h3>Top Players</h3>
+                        <div class="table-scroll-wrapper">
+                            <table class="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Player</th>
+                                        <th>Elo</th>
+                                        <th>Win %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (typeof leaders !=='undefined' && leaders.length> 0) { %>
+                                        <% leaders.forEach((leader, index)=> {
+                                            const totalGames = leader.wins + leader.losses;
+                                            const winRate = totalGames > 0 ? Math.round((leader.wins / totalGames) *
+                                            100) : 0;
+                                            %>
+                                            <tr>
+                                                <td>
+                                                    <% let rankStyle='' ; if (index===0) {
+                                                        rankStyle='color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); font-size: 1.5rem;'
+                                                        ; } else if (index===1) {
+                                                        rankStyle='color: #c0c0c0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.7); font-size: 1.3rem;'
+                                                        ; } else if (index===2) {
+                                                        rankStyle='color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.7); font-size: 1.3rem;'
+                                                        ; } %>
+                                                        <span class="rank-number" style="<%= rankStyle %>">#<%= index +
+                                                                1 %></span>
+                                                </td>
+                                                <td style="text-align: left;">
+                                                    <img src="<%= leader.avatar || '/assets/default_avatar.png' %>"
+                                                        class="leaderboard-avatar" alt="Avatar">
+                                                    <%= leader.nickname %>
+                                                </td>
+                                                <td style="color: var(--color-gold); font-weight: bold;">
+                                                    <%= leader.elo %>
+                                                </td>
+                                                <td style="color: #e9d5ff;">
+                                                    <%= winRate %>%
+                                                </td>
+                                            </tr>
+                                            <% }) %>
+                                                <% } else { %>
+                                                    <tr>
+                                                        <td colspan="4"
+                                                            style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">
+                                                            No leaders yet</td>
+                                                    </tr>
+                                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <button id="find-match-btn" class="btn match-btn">Search Battle</button>
-            <div id="status-msg"></div>
+                <div class="bottom-actions"
+                    style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 40px;">
+                    <div id="lobby-stats"
+                        style="margin-bottom: 20px; font-size: 1.2rem; color: #e9d5ff; text-shadow: 0 0 10px rgba(147, 51, 234, 0.5); background: rgba(40, 0, 70, 0.4); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(140, 60, 200, 0.3);">
+                        <span style="margin-right: 15px;">🟢 Online: <span id="stat-online">1</span></span>
+                        <span>🔍 Searching: <span id="stat-searching">0</span></span>
+                    </div>
+                    <button id="find-match-btn" class="btn match-btn">Search Battle</button>
+                    <div id="status-msg" style="margin-top: 20px;"></div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -137,6 +356,13 @@
 
         // Check for active game on load
         socket.emit('checkActiveGame', { userId: '<%= userId %>' });
+
+        socket.on('lobbyStatsUpdate', (data) => {
+            const statOnline = document.getElementById('stat-online');
+            const statSearching = document.getElementById('stat-searching');
+            if (statOnline) statOnline.textContent = data.online;
+            if (statSearching) statSearching.textContent = data.searching;
+        });
 
         socket.on('activeGameFound', (data) => {
             hasActiveGame = true;
@@ -168,8 +394,8 @@
             findMatchBtn.textContent = 'Searching...';
             statusMsg.textContent = 'Waiting for opponent...';
 
-            socket.emit('findMatch', { 
-                nickname: '<%= nickname %>', 
+            socket.emit('findMatch', {
+                nickname: '<%= nickname %>',
                 userId: '<%= userId %>',
                 avatar: '<%= typeof avatar !== "undefined" ? avatar : "/assets/default_avatar.png" %>',
                 elo: '<%= elo %>'
@@ -183,6 +409,7 @@
             }, 2000);
         });
     </script>
+    <script src="/js/particles.js"></script>
 </body>
 
 </html>
