@@ -69,13 +69,18 @@
 
         /* Nickname edit styles */
         .nickname-display {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            position: relative;
         }
 
         .nickname-edit-btn {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 10px;
             background: none;
             border: none;
             color: rgba(255, 255, 255, 0.4);
@@ -88,7 +93,7 @@
 
         .nickname-edit-btn:hover {
             color: var(--marvel-gold);
-            transform: scale(1.2);
+            transform: translateY(-50%) scale(1.2);
         }
 
         .nickname-edit-form {
@@ -142,8 +147,10 @@
         }
 
         .nickname-save-btn {
-            background: linear-gradient(45deg, var(--color-red), #ff5a5a);
-            color: white;
+            background: linear-gradient(45deg, #e9d5ff, #a78bfa);
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .nickname-cancel-btn {
@@ -237,16 +244,12 @@
                             </div>
 
                             <form action="/profile/nickname" method="POST" class="nickname-edit-form"
-                                id="nickname-edit-form" style="display: none; margin-top: 15px;">
+                                id="nickname-edit-form" style="margin-top: 15px;">
                                 <input type="text" name="nickname" id="nickname-input" value="<%= user.nickname %>"
                                     minlength="4" maxlength="20" pattern="[a-zA-Z0-9_]+" required
                                     style="padding: 10px; border-radius: 5px; border: 1px solid #e9d5ff; background: rgba(0,0,0,0.5); color: white;">
-                                <div style="margin-top: 10px;">
-                                    <button type="submit" class="btn"
-                                        style="padding: 5px 15px; margin-right: 5px;">Save</button>
-                                    <button type="button" onclick="toggleNicknameEdit()"
-                                        style="padding: 5px 15px; background: none; border: 1px solid #ff5a5a; color: #ff5a5a; border-radius: 5px; cursor: pointer;">Cancel</button>
-                                </div>
+                                <button type="submit" class="nickname-save-btn">Save</button>
+                                <button type="button" class="nickname-cancel-btn" onclick="toggleNicknameEdit()">Cancel</button>
                             </form>
 
                             <p style="color: #aaa; margin-bottom: 25px;">
