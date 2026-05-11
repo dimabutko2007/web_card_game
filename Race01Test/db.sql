@@ -32,7 +32,7 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 ('Silverfish', 1, 2, 1, '/assets/cards/silverfish.png', FALSE),
 ('Slime', 1, 2, 1, '/assets/cards/slime.png', FALSE),
 -- 2 Energy (Stats: 4-5)
-('Zombie', 2, 3, 2, '/assets/cards/zombie.png', TRUE), -- Taunt
+('Zombie', 1, 3, 2, '/assets/cards/zombie.png', TRUE), -- Taunt
 ('Drowned', 3, 2, 2, '/assets/cards/drowned.png', FALSE),
 ('Husk', 2, 3, 2, '/assets/cards/husk.png', TRUE), -- Taunt
 ('Skeleton', 4, 1, 2, '/assets/cards/skeleton.png', FALSE),
@@ -41,29 +41,29 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 ('Parched', 3, 1, 2, '/assets/cards/parched.png', FALSE),
 ('Zombie Villager', 1, 3, 2, '/assets/cards/zombie_villager.png', TRUE), -- Taunt
 -- 3 Energy (Stats: 5-7)
-('Spider', 4, 3, 3, '/assets/cards/spider.png', FALSE),
+('Spider', 3, 3, 3, '/assets/cards/spider.png', FALSE),
 ('Creeper', 5, 1, 3, '/assets/cards/creeper.png', FALSE),
-('Phantom', 4, 2, 3, '/assets/cards/phantom.png', FALSE),
-('Magma Cube', 2, 4, 3, '/assets/cards/magma_cube.png', TRUE), -- Taunt
+('Phantom', 3, 3, 3, '/assets/cards/phantom.png', TRUE), -- Taunt
+('Magma Cube', 1, 4, 3, '/assets/cards/magma_cube.png', TRUE), -- Taunt
 ('Piglin', 4, 2, 3, '/assets/cards/piglin.png', FALSE),
 ('Pillager', 3, 3, 3, '/assets/cards/pillager.png', FALSE),
 ('Vex', 5, 2, 3, '/assets/cards/vex.png', FALSE),
 -- 4 Energy (Stats: 7-9)
-('Zombified Piglin', 4, 5, 4, '/assets/cards/zombified_piglin.png', TRUE), -- Taunt
+('Zombified Piglin', 4, 4, 4, '/assets/cards/zombified_piglin.png', TRUE), -- Taunt
 ('Witch', 5, 4, 4, '/assets/cards/witch.png', FALSE),
 ('Blaze', 6, 3, 4, '/assets/cards/blaze.png', FALSE),
 ('Ghast', 5, 3, 4, '/assets/cards/ghast.png', FALSE),
-('Hoglin', 4, 5, 4, '/assets/cards/hoglin.png', TRUE), -- Taunt
+('Hoglin', 3, 5, 4, '/assets/cards/hoglin.png', TRUE), -- Taunt
 ('Guardian', 4, 4, 4, '/assets/cards/guardian.png', FALSE),
 ('Vindicator', 6, 2, 4, '/assets/cards/vindicator.png', FALSE),
-('Shulker', 2, 6, 4, '/assets/cards/shulker.png', TRUE), -- Taunt
+('Shulker', 1, 6, 4, '/assets/cards/shulker.png', TRUE), -- Taunt
 ('Zoglin', 6, 3, 4, '/assets/cards/zoglin.png', FALSE),
 -- 5 Energy (Stats: 9-11)
 ('Piglin Brute', 7, 4, 5, '/assets/cards/piglin_brute.png', FALSE),
 ('Evoker', 6, 5, 5, '/assets/cards/evoker.png', FALSE),
-('Ravager', 5, 6, 5, '/assets/cards/ravager.png', TRUE), -- Taunt
+('Ravager', 4, 6, 5, '/assets/cards/ravager.png', TRUE), -- Taunt
 ('Breeze', 6, 4, 5, '/assets/cards/breeze.png', FALSE),
-('Creaking', 3, 8, 5, '/assets/cards/creaking.png', TRUE), -- Taunt
+('Creaking', 1, 8, 5, '/assets/cards/creaking.png', TRUE), -- Taunt
 ('Enderman', 7, 3, 5, '/assets/cards/enderman.png', FALSE),
 -- 6 Energy (Stats: 11-13)
 ('Wither Skeleton', 7, 5, 6, '/assets/cards/wither_skeleton.png', FALSE),
