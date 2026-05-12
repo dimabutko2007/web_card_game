@@ -42,29 +42,29 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 ('Endermite', 2, 1, 1, '/assets/cards/endermite.png', FALSE),
 ('Silverfish', 1, 2, 1, '/assets/cards/silverfish.png', FALSE),
 ('Baby Zombie', 1, 2, 1, '/assets/cards/baby_zombie.png', FALSE),
-('Bee', 1, 2, 1, '/assets/cards/bee.png', FALSE),
+('Bee', 2, 1, 1, '/assets/cards/bee.png', FALSE),
 -- 2 Energy (Stats: 4-5)
 ('Zombie', 1, 3, 2, '/assets/cards/zombie.png', TRUE), -- Taunt
 ('Drowned', 3, 2, 2, '/assets/cards/drowned.png', FALSE),
-('Husk', 2, 3, 2, '/assets/cards/husk.png', TRUE), -- Taunt
+('Husk', 2, 2, 2, '/assets/cards/husk.png', TRUE), -- Taunt
 ('Skeleton', 4, 1, 2, '/assets/cards/skeleton.png', FALSE),
 ('Stray', 3, 2, 2, '/assets/cards/stray.png', FALSE),
 ('Bogged', 2, 2, 2, '/assets/cards/bogged.png', FALSE),
 ('Parched', 3, 1, 2, '/assets/cards/parched.png', FALSE),
 ('Zombie Villager', 1, 3, 2, '/assets/cards/zombie_villager.png', TRUE), -- Taunt
-('Slime', 1, 3, 2, '/assets/cards/slime.png', FALSE),
+('Slime', 1, 3, 2, '/assets/cards/slime.png', TRUE), -- Taunt
 ('Wolf', 2, 2, 2, '/assets/cards/wolf.png', FALSE),
 -- 3 Energy (Stats: 5-7)
 ('Spider', 3, 3, 3, '/assets/cards/spider.png', FALSE),
 ('Creeper', 5, 1, 3, '/assets/cards/creeper.png', FALSE),
 ('Phantom', 3, 3, 3, '/assets/cards/phantom.png', TRUE), -- Taunt
 ('Magma Cube', 1, 4, 3, '/assets/cards/magma_cube.png', TRUE), -- Taunt
-('Piglin', 4, 2, 3, '/assets/cards/piglin.png', FALSE),
+('Piglin', 2, 3, 3, '/assets/cards/piglin.png', TRUE), -- Taunt
 ('Pillager', 3, 3, 3, '/assets/cards/pillager.png', FALSE),
 ('Vex', 5, 2, 3, '/assets/cards/vex.png', FALSE),
-('Cave Spider', 3, 2, 3, '/assets/cards/cave_spider.png', FALSE),
+('Cave Spider', 3, 3, 3, '/assets/cards/cave_spider.png', FALSE),
 -- 4 Energy (Stats: 7-9)
-('Zombified Piglin', 4, 4, 4, '/assets/cards/zombified_piglin.png', TRUE), -- Taunt
+('Zombified Piglin', 3, 4, 4, '/assets/cards/zombified_piglin.png', TRUE), -- Taunt
 ('Witch', 5, 4, 4, '/assets/cards/witch.png', FALSE),
 ('Blaze', 6, 3, 4, '/assets/cards/blaze.png', FALSE),
 ('Ghast', 5, 3, 4, '/assets/cards/ghast.png', FALSE),
@@ -84,9 +84,9 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 ('Enderman', 7, 3, 5, '/assets/cards/enderman.png', FALSE),
 ('Iron Golem', 5, 5, 5, '/assets/cards/iron_golem.png', FALSE),
 -- 6 Energy (Stats: 11-13)
-('Wither Skeleton', 7, 5, 6, '/assets/cards/wither_skeleton.png', FALSE),
-('Elder Guardian', 5, 8, 6, '/assets/cards/elder_guardian.png', TRUE), -- Taunt
-('Giant', 4, 8, 6, '/assets/cards/giant.png', TRUE), -- Taunt
+('Wither Skeleton', 8, 5, 6, '/assets/cards/wither_skeleton.png', FALSE),
+('Elder Guardian', 4, 8, 6, '/assets/cards/elder_guardian.png', TRUE), -- Taunt
+('Giant', 2, 9, 6, '/assets/cards/giant.png', TRUE), -- Taunt
 -- 7 Energy (Stats: 15)
 ('Wither', 8, 7, 7, '/assets/cards/wither.png', FALSE),
 -- 8 Energy (Stats: 17)
