@@ -204,6 +204,24 @@
             font-size: 1.2rem;
         }
 
+        .rank-gold {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            font-size: 1.5rem;
+        }
+
+        .rank-silver {
+            color: #c0c0c0;
+            text-shadow: 0 0 10px rgba(192, 192, 192, 0.7);
+            font-size: 1.3rem;
+        }
+
+        .rank-bronze {
+            color: #cd7f32;
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.7);
+            font-size: 1.3rem;
+        }
+
         .lobby-action-btn {
             background: rgba(40, 0, 70, 0.35);
             backdrop-filter: blur(14px);
@@ -318,15 +336,12 @@
                                                             %>
                                                             <tr>
                                                                 <td>
-                                                                    <% let rankStyle='' ; if (index===0) {
-                                                                        rankStyle='color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); font-size: 1.5rem;'
-                                                                        ; } else if (index===1) {
-                                                                        rankStyle='color: #c0c0c0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.7); font-size: 1.3rem;'
-                                                                        ; } else if (index===2) {
-                                                                        rankStyle='color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.7); font-size: 1.3rem;'
-                                                                        ; } %>
-                                                                        <span class="rank-number"
-                                                                            style="<%= rankStyle %>">#<%= index + 1 %>
+                                                                    <% let rankClass='' ; if (index===0)
+                                                                        rankClass='rank-gold' ; else if (index===1)
+                                                                        rankClass='rank-silver' ; else if (index===2)
+                                                                        rankClass='rank-bronze' ; %>
+                                                                        <span class="rank-number <%= rankClass %>">
+                                                                            #<%= index + 1 %>
                                                                         </span>
                                                                 </td>
                                                                 <td style="text-align: left;">
@@ -510,7 +525,7 @@
         }
     </style>
     <script src="/js/volume-controls.js"></script>
-<script src="/js/sounds.js"></script>
+    <script src="/js/sounds.js"></script>
 </body>
 
 </html>

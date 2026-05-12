@@ -3,7 +3,7 @@ module.exports = {
     DB: {
         HOST: 'localhost',
         USER: 'root',
-        PASS: '578234', //change password
+        PASS: 'rootbutko', //change password
         NAME: 'card_game',
         PORT: 3306
     },
