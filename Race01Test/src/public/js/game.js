@@ -1,4 +1,50 @@
 const socket = io();
+
+const duelSound = new Audio('/assets/sounds/duel_sound.mp3');
+duelSound.loop = true;
+window.AudioManager.register(duelSound, 'music', 0.3);
+
+function playDuelSound() {
+    if (duelSound.paused) {
+        const playPromise = duelSound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                if (err.name !== 'NotAllowedError') console.log('Duel sound autoplay prevented:', err);
+            });
+        }
+    }
+}
+playDuelSound();
+
+document.addEventListener('click', playDuelSound, { once: true });
+document.addEventListener('keydown', playDuelSound, { once: true });
+
+// Attack sounds setup
+const attackSound = new Audio('/assets/sounds/attack_sound.mp3');
+window.AudioManager.register(attackSound, 'sfx', 0.6);
+
+const heroDamageSound = new Audio('/assets/sounds/damage_on_main_character_sound.mp3');
+window.AudioManager.register(heroDamageSound, 'sfx', 0.8);
+
+// End game sounds setup
+const victorySound = new Audio('/assets/sounds/victory_sound.mp3');
+window.AudioManager.register(victorySound, 'sfx', 0.7);
+
+const loseSound = new Audio('/assets/sounds/lose_sound.mp3');
+window.AudioManager.register(loseSound, 'sfx', 0.7);
+
+socket.on('attackEvent', (data) => {
+    attackSound.currentTime = 0;
+    attackSound.play().catch(e => {});
+
+    if (data.type === 'hero') {
+        setTimeout(() => {
+            heroDamageSound.currentTime = 0;
+            heroDamageSound.play().catch(e => {});
+        }, 150);
+    }
+});
+
 const gameId = window.location.pathname.split('/').pop();
 
 let myData = null;
@@ -32,7 +78,7 @@ socket.emit('joinGame', { gameId, nickname, userId: myUserId });
 socket.on('startGame', (data) => {
     myPlayerIndex = data.players.findIndex(p => p.socketId === socket.id);
     console.log('Game started. My index:', myPlayerIndex);
-    
+
     if (!data.isRejoin) {
         showCoinFlip(data.turn === myPlayerIndex);
     }
@@ -58,18 +104,18 @@ function processState(players, turnIndex) {
     if (myPlayerIndex === -1) {
         myPlayerIndex = players.findIndex(p => p.socketId === socket.id);
     }
-    
+
     myData = players[myPlayerIndex];
     oppData = players[myPlayerIndex === 0 ? 1 : 0];
     isMyTurn = turnIndex === myPlayerIndex;
-    
+
     renderHand();
     renderField();
     updateStats();
-    
+
     const turnIndicator = document.getElementById('turn-indicator');
     const endTurnBtn = document.getElementById('end-turn-btn');
-    
+
     if (isMyTurn) {
         turnIndicator.textContent = 'YOUR TURN';
         turnIndicator.className = 'turn-indicator my-turn';
@@ -82,20 +128,20 @@ function processState(players, turnIndex) {
 
 function updateStats() {
     if (!myData || !oppData) return;
-    
+
     myEnergyEl.textContent = `${myData.energy}/${myData.maxEnergy}`;
     oppEnergyEl.textContent = `${oppData.energy}/${oppData.maxEnergy}`;
-    
+
     myHpFill.style.width = (myData.hp / 20 * 100) + '%';
     oppHpFill.style.width = (oppData.hp / 20 * 100) + '%';
-    
+
     // Explicit HP numbers with safer selection
     const myHpText = document.querySelector('.player-area:not(.opponent-area) .hp-text');
     const oppHpText = document.querySelector('.opponent-area .hp-text');
-    
+
     if (myHpText) myHpText.textContent = `${myData.hp}/20`;
     if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
-    
+
     const oppRankHtml = oppData.rankIcon ? `<img src="/assets/ranks/${oppData.rankIcon}" title="${oppData.rankName}" class="game-rank-icon">` : '';
     const myRankHtml = myData.rankIcon ? `<img src="/assets/ranks/${myData.rankIcon}" title="${myData.rankName}" class="game-rank-icon">` : '';
 
@@ -111,13 +157,13 @@ function updateStats() {
 function renderHand() {
     myHandEl.innerHTML = '';
     if (!myData || !myData.hand) return;
-    
+
     myData.hand.forEach(card => {
         const cardEl = createCardElement(card);
         if (isMyTurn && myData.energy >= card.cost) {
             cardEl.classList.add('playable-card');
         }
-        
+
         cardEl.addEventListener('click', () => {
             if (!isMyTurn) return;
             if (myData.energy < card.cost) return;
@@ -131,21 +177,21 @@ function renderField() {
     myFieldEl.innerHTML = '';
     oppFieldEl.innerHTML = '';
     if (!myData || !oppData) return;
-    
+
     myData.field.forEach(card => {
         const cardEl = createCardElement(card);
         if (card.isSummoning) cardEl.classList.add('summoning-sickness');
         if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) cardEl.classList.add('selected-card');
-        
+
         // Add "Ready to Attack" indicator
         if (isMyTurn && !card.isSummoning && card.canAttack !== false) {
             cardEl.classList.add('ready-to-attack');
         }
-        
+
         cardEl.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!isMyTurn || card.isSummoning || card.canAttack === false) return;
-            
+
             if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) {
                 selectedFieldCard = null;
             } else {
@@ -155,28 +201,28 @@ function renderField() {
         });
         myFieldEl.appendChild(cardEl);
     });
-    
+
     const hasTaunt = oppData.field.some(c => c.has_taunt);
-    
+
     oppData.field.forEach(card => {
         const cardEl = createCardElement(card);
         const canHitThis = !hasTaunt || card.has_taunt;
-        
+
         if (selectedFieldCard && canHitThis) {
             cardEl.classList.add('valid-target');
         }
 
         if (hasTaunt && !card.has_taunt) cardEl.style.opacity = '0.5';
-        
+
         cardEl.addEventListener('click', (e) => {
             e.stopPropagation();
             if (selectedFieldCard) {
                 if (hasTaunt && !card.has_taunt) return;
-                
+
                 console.log(`[BATTLE] Attacking card: ${selectedFieldCard.name} -> ${card.name}`);
-                socket.emit('attack', { 
-                    gameId, 
-                    attackerInstanceId: selectedFieldCard.instanceId, 
+                socket.emit('attack', {
+                    gameId,
+                    attackerInstanceId: selectedFieldCard.instanceId,
                     targetInstanceId: card.instanceId,
                     target: 'card'
                 });
@@ -196,11 +242,11 @@ document.querySelector('.opponent-area .player-info').addEventListener('click', 
             alert('You must destroy the Taunt card first!');
             return;
         }
-        
+
         console.log(`[BATTLE] Attacking hero: ${selectedFieldCard.name} -> Opponent`);
-        socket.emit('attack', { 
-            gameId, 
-            attackerInstanceId: selectedFieldCard.instanceId, 
+        socket.emit('attack', {
+            gameId,
+            attackerInstanceId: selectedFieldCard.instanceId,
             target: 'hero'
         });
         selectedFieldCard = null;
@@ -212,7 +258,7 @@ function createCardElement(card) {
     const cardEl = document.createElement('div');
     cardEl.className = 'card';
     if (card.has_taunt) cardEl.classList.add('taunt-border');
-    
+
     const displayDef = card.currentDefense !== undefined ? card.currentDefense : card.defense;
 
     cardEl.innerHTML = `
@@ -245,7 +291,7 @@ function showCoinFlip(isMeFirst) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'rgba(0,0,0,0.85)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         const radius = 100;
@@ -263,7 +309,7 @@ function showCoinFlip(isMeFirst) {
 
         const arrowX = centerX + Math.cos(currentAngle) * (radius - 10);
         const arrowY = centerY + Math.sin(currentAngle) * (radius - 10);
-        
+
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(arrowX, arrowY);
@@ -282,22 +328,22 @@ function showCoinFlip(isMeFirst) {
         ctx.lineTo(-10, 0); // Inner indent
         ctx.lineTo(-20, 15); // Bottom corner
         ctx.closePath();
-        
+
         // Gradient for volume
         const gradient = ctx.createLinearGradient(-20, -15, 15, 15);
         gradient.addColorStop(0, '#ff5a5a');
         gradient.addColorStop(1, '#8b0000');
-        
+
         ctx.fillStyle = gradient;
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#ff0000';
         ctx.fill();
-        
+
         // Stroke for highlight
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
-        
+
         ctx.restore();
 
         ctx.font = 'bold 32px Outfit';
@@ -315,7 +361,7 @@ function showCoinFlip(isMeFirst) {
             ctx.fillText(text, centerX, centerY + 180);
             ctx.shadowBlur = 0;
         }
-        
+
         frame++;
         if (frame >= duration) {
             clearInterval(interval);
@@ -329,6 +375,20 @@ function showCoinFlip(isMeFirst) {
 socket.on('gameOver', (data) => {
     // Check if the winner's nickname is at the start of the message
     const isWinner = data.winner.startsWith(myData.nickname);
+    
+    // Stop the duel music
+    duelSound.pause();
+    duelSound.currentTime = 0;
+
+    // Play outcome sound
+    if (isWinner) {
+        victorySound.currentTime = 0;
+        victorySound.play().catch(e => console.log('Victory sound prevented', e));
+    } else {
+        loseSound.currentTime = 0;
+        loseSound.play().catch(e => console.log('Lose sound prevented', e));
+    }
+
     showGameOverScreen(isWinner, data.winner);
 });
 
@@ -336,26 +396,26 @@ function showGameOverScreen(isWinner, winnerName) {
     let frame = 0;
     const interval = setInterval(() => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const text = isWinner ? 'YOU WON!' : 'YOU LOST!';
         const eloText = isWinner ? '+25 Elo' : '-25 Elo';
-        
+
         // Use hex colors as Canvas doesn't support var()
         const mainColor = isWinner ? '#f0a500' : '#e23636';
-        
+
         ctx.font = 'bold 60px Outfit'; // Decreased size
         ctx.fillStyle = mainColor;
         ctx.textAlign = 'center';
         ctx.shadowBlur = 30;
         ctx.shadowColor = mainColor;
         ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
-        
+
         ctx.font = 'bold 45px Outfit'; // Decreased size
         ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 + 30);
-        
+
         ctx.shadowBlur = 0;
         ctx.font = '24px Outfit';
         ctx.fillStyle = '#ffffff';
