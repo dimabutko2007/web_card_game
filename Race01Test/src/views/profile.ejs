@@ -243,8 +243,7 @@
         <div class="auth-card" style="text-align: center; margin: 40px 0;">
 
             <div style="text-align: left; margin-bottom: 20px;">
-                <a href="/lobby" style="color: white; text-decoration: none; font-size: 0.9rem;">&larr; Back to
-                    Lobby</a>
+                <a href="/lobby" style="color: white; text-decoration: none; font-size: 0.9rem;">&larr; Back to Lobby</a>
             </div>
 
             <% if (typeof error !=='undefined' && error) { %>
@@ -258,387 +257,234 @@
                         </div>
                         <% } %>
 
-                            <% const userRank=User.getRank(user.elo); %>
+                             <% const userRank = User.getRank(user.elo); %>
 
-                                <% if (isOwnProfile) { %>
-                                    <form action="/profile/avatar" method="POST" enctype="multipart/form-data"
-                                        id="avatar-form">
-                                        <div class="profile-avatar-wrapper"
-                                            onclick="document.getElementById('avatar-input').click()"
-                                            style="cursor: pointer; position: relative; display: inline-block;">
-                                            <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
-                                                id="avatar-preview"
-                                                style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
-                                            <div class="profile-avatar-overlay">
-                                                Change
-                                            </div>
-                                        </div>
-                                        <input type="file" name="avatar" id="avatar-input"
-                                            accept="image/jpeg, image/png, image/gif" style="display: none;"
-                                            onchange="previewAvatar(event)">
-                                        <button type="submit" class="btn avatar-save-btn" id="avatar-save-btn"
-                                            style="display: none; margin: 15px auto; padding: 8px 20px; background: linear-gradient(45deg, #e9d5ff, #a78bfa); border: none; border-radius: 8px; color: #1a1a1a; cursor: pointer; font-weight: bold;">Upload
-                                            Avatar</button>
-                                    </form>
-                                    <% } else { %>
-                                        <div style="display: block; margin-bottom: 20px;">
-                                            <div class="profile-avatar-wrapper" style="cursor: default;">
-                                                <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
-                                                    style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
-                                            </div>
-                                        </div>
-                                        <% } %>
+                             <% if (isOwnProfile) { %>
+                             <form action="/profile/avatar" method="POST" enctype="multipart/form-data" id="avatar-form">
+                                 <div class="profile-avatar-wrapper"
+                                     onclick="document.getElementById('avatar-input').click()"
+                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                     <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
+                                         id="avatar-preview"
+                                         style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
+                                     <div class="profile-avatar-overlay">
+                                         Change
+                                     </div>
+                                 </div>
+                                 <input type="file" name="avatar" id="avatar-input"
+                                     accept="image/jpeg, image/png, image/gif" style="display: none;"
+                                     onchange="previewAvatar(event)">
+                                 <button type="submit" class="btn avatar-save-btn" id="avatar-save-btn"
+                                     style="display: none; margin: 15px auto; padding: 8px 20px; background: linear-gradient(45deg, #e9d5ff, #a78bfa); border: none; border-radius: 8px; color: #1a1a1a; cursor: pointer; font-weight: bold;">Upload
+                                     Avatar</button>
+                             </form>
+                             <% } else { %>
+                                 <div style="display: block; margin-bottom: 20px;">
+                                     <div class="profile-avatar-wrapper" style="cursor: default;">
+                                         <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
+                                             style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
+                                     </div>
+                                 </div>
+                             <% } %>
 
-                                            <div class="nickname-display" id="nickname-container"
-                                                style="margin-top: 15px; display: flex; align-items: center; justify-content: center;">
-                                                <img src="/assets/ranks/<%= userRank.icon %>" alt="<%= userRank.name %>"
-                                                    title="<%= userRank.name %>" class="rank-icon-large"
-                                                    style="width: 70px; height: 70px; margin-right: 15px; border-radius: 0;">
-                                                <h2 id="nickname-text"
-                                                    style="font-size: 2.5rem; margin-bottom: 5px; color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; display: inline-block;">
-                                                    <%= user.nickname %>
-                                                </h2>
-                                                <% if (isOwnProfile) { %>
-                                                    <button class="nickname-edit-btn" onclick="toggleNicknameEdit()"
-                                                        title="Change nickname"
-                                                        style="background: none; border: none; color: #e9d5ff; cursor: pointer; font-size: 1.2rem; margin-left: 15px; position: static; transform: none;">&#9998;</button>
-                                                    <% } %>
-                                            </div>
+                              <div class="nickname-display" id="nickname-container" style="margin-top: 15px; display: flex; align-items: center; justify-content: center;">
+                                 <img src="/assets/ranks/<%= userRank.icon %>" alt="<%= userRank.name %>" title="<%= userRank.name %>" class="rank-icon-large" style="width: 70px; height: 70px; margin-right: 15px; border-radius: 0;">
+                                 <h2 id="nickname-text"
+                                     style="font-size: 2.5rem; margin-bottom: 5px; color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; display: inline-block;">
+                                     <%= user.nickname %>
+                                 </h2>
+                                 <% if (isOwnProfile) { %>
+                                 <button class="nickname-edit-btn" onclick="toggleNicknameEdit()" title="Change nickname"
+                                     style="background: none; border: none; color: #e9d5ff; cursor: pointer; font-size: 1.2rem; margin-left: 15px; position: static; transform: none;">&#9998;</button>
+                                 <% } %>
+                             </div>
 
-                                            <% if (isOwnProfile) { %>
-                                                <form action="/profile/nickname" method="POST"
-                                                    class="nickname-edit-form" id="nickname-edit-form"
-                                                    style="margin-top: 15px;">
-                                                    <input type="text" name="nickname" id="nickname-input"
-                                                        value="<%= user.nickname %>" minlength="4" maxlength="20"
-                                                        pattern="[a-zA-Z0-9_]+" required
-                                                        style="padding: 10px; border-radius: 5px; border: 1px solid #e9d5ff; background: rgba(0,0,0,0.5); color: white;">
-                                                    <button type="submit" class="nickname-save-btn">Save</button>
-                                                    <button type="button" class="nickname-cancel-btn"
-                                                        onclick="toggleNicknameEdit()">Cancel</button>
-                                                </form>
-                                                <% } %>
+                             <% if (isOwnProfile) { %>
+                             <form action="/profile/nickname" method="POST" class="nickname-edit-form"
+                                 id="nickname-edit-form" style="margin-top: 15px;">
+                                 <input type="text" name="nickname" id="nickname-input" value="<%= user.nickname %>"
+                                     minlength="4" maxlength="20" pattern="[a-zA-Z0-9_]+" required
+                                     style="padding: 10px; border-radius: 5px; border: 1px solid #e9d5ff; background: rgba(0,0,0,0.5); color: white;">
+                                 <button type="submit" class="nickname-save-btn">Save</button>
+                                 <button type="button" class="nickname-cancel-btn" onclick="toggleNicknameEdit()">Cancel</button>
+                             </form>
+                             <% } %>
 
-                                                    <% if (isOwnProfile) { %>
-                                                        <p style="color: #aaa; margin-bottom: 25px;">
-                                                            <%= user.email %>
-                                                        </p>
-                                                        <% } else { %>
-                                                            <% if (typeof relation !=='undefined' ) { %>
-                                                                <div style="margin-bottom: 25px;">
-                                                                    <% if (relation===null) { %>
-                                                                        <!-- No friendship/request: Show Add Friend -->
-                                                                        <form
-                                                                            action="/profile/<%= user.nickname %>/add-friend"
-                                                                            method="POST" style="display: inline;">
-                                                                            <button type="submit" class="btn"
-                                                                                style="background: linear-gradient(45deg, #a78bfa, #7c3aed); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(167, 139, 250, 0.3);"
-                                                                                onmouseover="this.style.transform='translateY(-2px)'"
-                                                                                onmouseout="this.style.transform='none'">
-                                                                                Add Friend
-                                                                            </button>
-                                                                        </form>
-                                                                        <% } else if (relation.status==='accepted' ) {
-                                                                            %>
-                                                                            <!-- Already friends: Show Remove Friend -->
-                                                                            <form
-                                                                                action="/profile/<%= user.nickname %>/remove-friend"
-                                                                                method="POST" style="display: inline;">
-                                                                                <button type="submit" class="btn"
-                                                                                    style="background: linear-gradient(45deg, #ef4444, #b91c1c); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);"
-                                                                                    onmouseover="this.style.transform='translateY(-2px)'"
-                                                                                    onmouseout="this.style.transform='none'">
-                                                                                    Remove Friend
-                                                                                </button>
-                                                                            </form>
-                                                                            <% } else if (relation.status==='pending' &&
-                                                                                relation.sender_id===user.id) { %>
-                                                                                <!-- They sent a request to me: Show Accept / Decline -->
-                                                                                <div
-                                                                                    style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-                                                                                    <form
-                                                                                        action="/profile/<%= user.nickname %>/accept-friend"
-                                                                                        method="POST"
-                                                                                        style="display: inline;">
-                                                                                        <button type="submit"
-                                                                                            class="btn"
-                                                                                            style="background: linear-gradient(45deg, #4ade80, #15803d); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s;"
-                                                                                            onmouseover="this.style.transform='translateY(-2px)'"
-                                                                                            onmouseout="this.style.transform='none'">
-                                                                                            Accept
-                                                                                        </button>
-                                                                                    </form>
-                                                                                    <form
-                                                                                        action="/profile/<%= user.nickname %>/decline-friend"
-                                                                                        method="POST"
-                                                                                        style="display: inline;">
-                                                                                        <button type="submit"
-                                                                                            class="btn"
-                                                                                            style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s;"
-                                                                                            onmouseover="this.style.transform='translateY(-2px)'"
-                                                                                            onmouseout="this.style.transform='none'">
-                                                                                            Decline
-                                                                                        </button>
-                                                                                    </form>
-                                                                                </div>
-                                                                                <% } else if
-                                                                                    (relation.status==='pending' ) { %>
-                                                                                    <!-- I sent a request to them: Show Cancel Request -->
-                                                                                    <div
-                                                                                        style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                                                                        <span
-                                                                                            style="color: #aaa; font-size: 0.9rem; font-style: italic;">Friend
-                                                                                            request pending...</span>
-                                                                                        <form
-                                                                                            action="/profile/<%= user.nickname %>/remove-friend"
-                                                                                            method="POST"
-                                                                                            style="display: inline;">
-                                                                                            <button type="submit"
-                                                                                                class="btn"
-                                                                                                style="background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.2s;"
-                                                                                                onmouseover="this.style.transform='translateY(-2px)'"
-                                                                                                onmouseout="this.style.transform='none'">
-                                                                                                Cancel Request
-                                                                                            </button>
-                                                                                        </form>
-                                                                                    </div>
-                                                                                    <% } %>
-                                                                </div>
-                                                                <% } else { %>
-                                                                    <div style="margin-bottom: 25px;"></div>
-                                                                    <% } %>
-                                                                        <% } %>
+                              <% if (isOwnProfile) { %>
+                             <p style="color: #aaa; margin-bottom: 25px;">
+                                 <%= user.email %>
+                             </p>
+                             <% } else { %>
+                                 <% if (typeof relation !== 'undefined') { %>
+                                     <div style="margin-bottom: 25px;">
+                                         <% if (relation === null) { %>
+                                             <!-- No friendship/request: Show Add Friend -->
+                                             <form action="/profile/<%= user.nickname %>/add-friend" method="POST" style="display: inline;">
+                                                 <button type="submit" class="btn" style="background: linear-gradient(45deg, #a78bfa, #7c3aed); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(167, 139, 250, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                                     Add Friend
+                                                 </button>
+                                             </form>
+                                         <% } else if (relation.status === 'accepted') { %>
+                                             <!-- Already friends: Show Remove Friend -->
+                                             <form action="/profile/<%= user.nickname %>/remove-friend" method="POST" style="display: inline;">
+                                                 <button type="submit" class="btn" style="background: linear-gradient(45deg, #ef4444, #b91c1c); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                                     Remove Friend
+                                                 </button>
+                                             </form>
+                                         <% } else if (relation.status === 'pending' && relation.sender_id === user.id) { %>
+                                             <!-- They sent a request to me: Show Accept / Decline -->
+                                             <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                                                 <form action="/profile/<%= user.nickname %>/accept-friend" method="POST" style="display: inline;">
+                                                     <button type="submit" class="btn" style="background: linear-gradient(45deg, #4ade80, #15803d); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                                         Accept
+                                                     </button>
+                                                 </form>
+                                                 <form action="/profile/<%= user.nickname %>/decline-friend" method="POST" style="display: inline;">
+                                                     <button type="submit" class="btn" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                                         Decline
+                                                     </button>
+                                                 </form>
+                                             </div>
+                                         <% } else if (relation.status === 'pending') { %>
+                                             <!-- I sent a request to them: Show Cancel Request -->
+                                             <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                                 <span style="color: #aaa; font-size: 0.9rem; font-style: italic;">Friend request pending...</span>
+                                                 <form action="/profile/<%= user.nickname %>/remove-friend" method="POST" style="display: inline;">
+                                                     <button type="submit" class="btn" style="background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                                         Cancel Request
+                                                     </button>
+                                                 </form>
+                                             </div>
+                                         <% } %>
+                                     </div>
+                                 <% } else { %>
+                                     <div style="margin-bottom: 25px;"></div>
+                                 <% } %>
+                             <% } %>
 
-                                                                            <div class="stats"
-                                                                                style="display: flex; justify-content: space-around; gap: 10px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;">
-                                                                                <div class="stat-item">
-                                                                                    <h4
-                                                                                        style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">
-                                                                                        Rating (Elo)</h4>
-                                                                                    <p
-                                                                                        style="font-size: 1.2rem; font-weight: bold;">
-                                                                                        <%= user.elo %>
-                                                                                    </p>
-                                                                                </div>
-                                                                                <div class="stat-item">
-                                                                                    <h4
-                                                                                        style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">
-                                                                                        Wins</h4>
-                                                                                    <p
-                                                                                        style="font-size: 1.2rem; font-weight: bold;">
-                                                                                        <%= user.wins %>
-                                                                                    </p>
-                                                                                </div>
-                                                                                <div class="stat-item">
-                                                                                    <h4
-                                                                                        style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">
-                                                                                        Losses</h4>
-                                                                                    <p
-                                                                                        style="font-size: 1.2rem; font-weight: bold;">
-                                                                                        <%= user.losses %>
-                                                                                    </p>
-                                                                                </div>
-                                                                                <div class="stat-item">
-                                                                                    <h4
-                                                                                        style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">
-                                                                                        Win Rate</h4>
-                                                                                    <p
-                                                                                        style="font-size: 1.2rem; font-weight: bold;">
-                                                                                        <% const total=user.wins +
-                                                                                            user.losses; const
-                                                                                            winrate=total> 0 ?
-                                                                                            Math.round((user.wins /
-                                                                                            total) * 100) : 0;
-                                                                                            %>
-                                                                                            <%= winrate %>%
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
+                             <div class="stats"
+                                 style="display: flex; justify-content: space-around; gap: 10px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;">
+                                 <div class="stat-item">
+                                     <h4 style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">Rating (Elo)</h4>
+                                     <p style="font-size: 1.2rem; font-weight: bold;">
+                                         <%= user.elo %>
+                                     </p>
+                                 </div>
+                                 <div class="stat-item">
+                                     <h4 style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">Wins</h4>
+                                     <p style="font-size: 1.2rem; font-weight: bold;">
+                                         <%= user.wins %>
+                                     </p>
+                                 </div>
+                                 <div class="stat-item">
+                                     <h4 style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">Losses</h4>
+                                     <p style="font-size: 1.2rem; font-weight: bold;">
+                                         <%= user.losses %>
+                                     </p>
+                                 </div>
+                                 <div class="stat-item">
+                                     <h4 style="color: #aaa; margin-bottom: 5px; font-size: 0.8rem;">Win Rate</h4>
+                                     <p style="font-size: 1.2rem; font-weight: bold;">
+                                         <% const total=user.wins + user.losses; const winrate=total> 0 ?
+                                             Math.round((user.wins / total) * 100) : 0;
+                                             %>
+                                             <%= winrate %>%
+                                     </p>
+                                 </div>
+                             </div>
 
-                                                                            <div class="match-history"
-                                                                                style="margin-top: 40px; text-align: left;">
-                                                                                <div
-                                                                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(233, 213, 255, 0.2); padding-bottom: 10px;">
-                                                                                    <h3
-                                                                                        style="color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; margin: 0;">
-                                                                                        Recent Battles</h3>
-                                                                                    <% if (typeof matches !=='undefined'
-                                                                                        && matches.length> 0) { %>
-                                                                                        <a href="/profile/<%= user.nickname %>/history"
-                                                                                            style="color: #a78bfa; text-decoration: none; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">View
-                                                                                            All &rarr;</a>
-                                                                                        <% } %>
-                                                                                </div>
+                             <div class="match-history" style="margin-top: 40px; text-align: left;">
+                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(233, 213, 255, 0.2); padding-bottom: 10px;">
+                                     <h3 style="color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; margin: 0;">Recent Battles</h3>
+                                     <% if (typeof matches !== 'undefined' && matches.length > 0) { %>
+                                         <a href="/profile/<%= user.nickname %>/history" style="color: #a78bfa; text-decoration: none; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">View All &rarr;</a>
+                                     <% } %>
+                                 </div>
+                                 
+                                 <% if (typeof matches !== 'undefined' && matches.length > 0) { %>
+                                     <div style="background: rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden; border: 1px solid rgba(233, 213, 255, 0.1);">
+                                         <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                             <thead>
+                                                 <tr style="background: rgba(233, 213, 255, 0.05); color: #aaa; text-transform: uppercase; font-size: 0.75rem;">
+                                                     <th style="padding: 12px; text-align: center;">Result</th>
+                                                     <th style="padding: 12px; text-align: center;">Opponent</th>
+                                                     <th style="padding: 12px; text-align: center;">Elo</th>
+                                                     <th style="padding: 12px; text-align: center;">Date & Time</th>
+                                                 </tr>
+                                             </thead>
+                                             <tbody>
+                                                <% matches.forEach(match => { %>
+                                                    <% const isWinner = match.winner_id === user.id; %>
+                                                    <% const statusClass = isWinner ? 'status-victory' : 'status-defeat'; %>
+        
+                                                    <tr class="match-row">
+                                                        <td class="match-cell <%= statusClass %>">
+                                                            <%= isWinner ? 'VICTORY' : 'DEFEAT' %>
+                                                        </td>
+            
+                                                        <td class="match-cell">
+                                                            <a href="/profile/<%= isWinner ? match.loser_nickname : match.winner_nickname %>" 
+                                                            class="opponent-link">
+                                                                <%= isWinner ? match.loser_nickname : match.winner_nickname %>
+                                                            </a>
+                                                        </td>
+            
+                                                        <td class="match-cell <%= statusClass %>">
+                                                            <%= isWinner ? '+' : '-' %><%= match.elo_change %>
+                                                        </td>
+            
+                                                        <td class="match-cell match-date">
+                                                            <% const d = new Date(match.played_at); %>
+                                                            <%= d.toLocaleDateString() %> 
+                                                            <%= d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                         </table>
+                                     </div>
+                                 <% } else { %>
+                                     <div style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(233, 213, 255, 0.2);">
+                                         <p style="color: #666; font-style: italic; margin: 0;">No battles recorded in the archives yet.</p>
+                                     </div>
+                                 <% } %>
+                             </div>
 
-                                                                                <% if (typeof matches !=='undefined' &&
-                                                                                    matches.length> 0) { %>
-                                                                                    <div
-                                                                                        style="background: rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden; border: 1px solid rgba(233, 213, 255, 0.1);">
-                                                                                        <table
-                                                                                            style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                                                                                            <thead>
-                                                                                                <tr
-                                                                                                    style="background: rgba(233, 213, 255, 0.05); color: #aaa; text-transform: uppercase; font-size: 0.75rem;">
-                                                                                                    <th
-                                                                                                        style="padding: 12px; text-align: center;">
-                                                                                                        Result</th>
-                                                                                                    <th
-                                                                                                        style="padding: 12px; text-align: center;">
-                                                                                                        Opponent</th>
-                                                                                                    <th
-                                                                                                        style="padding: 12px; text-align: center;">
-                                                                                                        Elo</th>
-                                                                                                    <th
-                                                                                                        style="padding: 12px; text-align: center;">
-                                                                                                        Date & Time</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <%
-                                                                                                    matches.forEach(match=>
-                                                                                                    { %>
-                                                                                                    <% const
-                                                                                                        isWinner=match.winner_id===user.id;
-                                                                                                        %>
-                                                                                                        <% const
-                                                                                                            statusClass=isWinner
-                                                                                                            ? 'status-victory'
-                                                                                                            : 'status-defeat'
-                                                                                                            ; %>
-                                                                                                            <tr
-                                                                                                                class="match-row">
-                                                                                                                <td
-                                                                                                                    class="match-cell <%= statusClass %>">
-                                                                                                                    <%= isWinner
-                                                                                                                        ? 'VICTORY'
-                                                                                                                        : 'DEFEAT'
-                                                                                                                        %>
-                                                                                                                </td>
-                                                                                                                <td
-                                                                                                                    class="match-cell">
-                                                                                                                    <a href="/profile/<%= isWinner ? match.loser_nickname : match.winner_nickname %>"
-                                                                                                                        class="opponent-link">
-                                                                                                                        <%= isWinner
-                                                                                                                            ?
-                                                                                                                            match.loser_nickname
-                                                                                                                            :
-                                                                                                                            match.winner_nickname
-                                                                                                                            %>
-                                                                                                                    </a>
-                                                                                                                </td>
-                                                                                                                <td
-                                                                                                                    class="match-cell <%= statusClass %>">
-                                                                                                                    <%= isWinner
-                                                                                                                        ? '+'
-                                                                                                                        : '-'
-                                                                                                                        %>
-                                                                                                                        <%= match.elo_change
-                                                                                                                            %>
-                                                                                                                </td>
-                                                                                                                <td
-                                                                                                                    class="match-cell match-date">
-                                                                                                                    <% const
-                                                                                                                        d=new
-                                                                                                                        Date(match.played_at);
-                                                                                                                        %>
-                                                                                                                        <%= d.toLocaleDateString()
-                                                                                                                            %>
-                                                                                                                            <%= d.toLocaleTimeString([],
-                                                                                                                                {hour: '2-digit'
-                                                                                                                                ,
-                                                                                                                                minute:'2-digit'})
-                                                                                                                                %>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                            <% }); %>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                    <% } else { %>
-                                                                                        <div
-                                                                                            style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(233, 213, 255, 0.2);">
-                                                                                            <p
-                                                                                                style="color: #666; font-style: italic; margin: 0;">
-                                                                                                No battles recorded in
-                                                                                                the archives yet.</p>
-                                                                                        </div>
-                                                                                        <% } %>
-                                                                            </div>
+                             <div class="friends-list-widget" style="margin-top: 40px; text-align: left;">
+                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(233, 213, 255, 0.2); padding-bottom: 10px;">
+                                     <h3 style="color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; margin: 0;">Friends</h3>
+                                     <% if (typeof friends !== 'undefined') { %>
+                                         <a href="/profile/<%= user.nickname %>/friends" style="color: #a78bfa; text-decoration: none; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">View Friends (<%= friends.length %>) &rarr;</a>
+                                     <% } %>
+                                 </div>
 
-                                                                            <div class="friends-list-widget"
-                                                                                style="margin-top: 40px; text-align: left;">
-                                                                                <div
-                                                                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(233, 213, 255, 0.2); padding-bottom: 10px;">
-                                                                                    <h3
-                                                                                        style="color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; margin: 0;">
-                                                                                        Friends</h3>
-                                                                                    <% if (typeof friends !=='undefined'
-                                                                                        ) { %>
-                                                                                        <a href="/profile/<%= user.nickname %>/friends"
-                                                                                            style="color: #a78bfa; text-decoration: none; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">View
-                                                                                            Friends (<%= friends.length
-                                                                                                %>) &rarr;</a>
-                                                                                        <% } %>
-                                                                                </div>
-
-                                                                                <% if (typeof friends !=='undefined' &&
-                                                                                    friends.length> 0) { %>
-                                                                                    <div
-                                                                                        style="background: rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden; border: 1px solid rgba(233, 213, 255, 0.1); padding: 10px 15px;">
-                                                                                        <div
-                                                                                            style="display: flex; flex-direction: column; gap: 12px;">
-                                                                                            <% const
-                                                                                                topFriends=[...friends].sort((a,
-                                                                                                b)=> b.elo -
-                                                                                                a.elo).slice(0, 5); %>
-                                                                                                <%
-                                                                                                    topFriends.forEach(friend=>
-                                                                                                    { %>
-                                                                                                    <% const
-                                                                                                        friendRank=User.getRank(friend.elo);
-                                                                                                        %>
-                                                                                                        <div
-                                                                                                            style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                                                                                            <div
-                                                                                                                style="display: flex; align-items: center; gap: 15px;">
-                                                                                                                <img src="<%= friend.avatar %>"
-                                                                                                                    alt="<%= friend.nickname %>"
-                                                                                                                    style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e9d5ff; object-fit: cover;">
-                                                                                                                <a href="/profile/<%= friend.nickname %>"
-                                                                                                                    style="color: #e9d5ff; text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: color 0.2s;"
-                                                                                                                    onmouseover="this.style.color='#a78bfa'"
-                                                                                                                    onmouseout="this.style.color='#e9d5ff'">
-                                                                                                                    <%= friend.nickname
-                                                                                                                        %>
-                                                                                                                </a>
-                                                                                                            </div>
-                                                                                                            <div
-                                                                                                                style="display: flex; align-items: center; gap: 10px;">
-                                                                                                                <img src="/assets/ranks/<%= friendRank.icon %>"
-                                                                                                                    alt="<%= friendRank.name %>"
-                                                                                                                    title="<%= friendRank.name %>"
-                                                                                                                    style="width: 32px; height: 32px; border-radius: 0;">
-                                                                                                                <span
-                                                                                                                    style="color: #aaa; font-size: 0.85rem;">
-                                                                                                                    <%= friend.elo
-                                                                                                                        %>
-                                                                                                                        ELO
-                                                                                                                </span>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                        <% }); %>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <% } else { %>
-                                                                                        <div
-                                                                                            style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(233, 213, 255, 0.2);">
-                                                                                            <p
-                                                                                                style="color: #666; font-style: italic; margin: 0;">
-                                                                                                No friends added yet.
-                                                                                            </p>
-                                                                                        </div>
-                                                                                        <% } %>
-                                                                            </div>
+                                 <% if (typeof friends !== 'undefined' && friends.length > 0) { %>
+                                     <div style="background: rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden; border: 1px solid rgba(233, 213, 255, 0.1); padding: 10px 15px;">
+                                         <div style="display: flex; flex-direction: column; gap: 12px;">
+                                             <% const topFriends = [...friends].sort((a, b) => b.elo - a.elo).slice(0, 5); %>
+                                             <% topFriends.forEach(friend => { %>
+                                                 <% const friendRank = User.getRank(friend.elo); %>
+                                                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                                     <div style="display: flex; align-items: center; gap: 15px;">
+                                                         <img src="<%= friend.avatar %>" alt="<%= friend.nickname %>" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e9d5ff; object-fit: cover;">
+                                                         <a href="/profile/<%= friend.nickname %>" style="color: #e9d5ff; text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: color 0.2s;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#e9d5ff'">
+                                                             <%= friend.nickname %>
+                                                         </a>
+                                                     </div>
+                                                     <div style="display: flex; align-items: center; gap: 10px;">
+                                                         <img src="/assets/ranks/<%= friendRank.icon %>" alt="<%= friendRank.name %>" title="<%= friendRank.name %>" style="width: 32px; height: 32px; border-radius: 0;">
+                                                         <span style="color: #aaa; font-size: 0.85rem;"><%= friend.elo %> ELO</span>
+                                                     </div>
+                                                 </div>
+                                             <% }); %>
+                                         </div>
+                                     </div>
+                                 <% } else { %>
+                                     <div style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(233, 213, 255, 0.2);">
+                                         <p style="color: #666; font-style: italic; margin: 0;">No friends added yet.</p>
+                                     </div>
+                                 <% } %>
+                             </div>
 
         </div>
     </div>
@@ -678,7 +524,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
+        
         // Join personal user room to receive notifications
         socket.emit('joinUserRoom', { userId: '<%= session.userId %>' });
 
@@ -693,7 +539,7 @@
             const toast = document.createElement('div');
             toast.id = 'friend-request-notification-box';
             toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid #a78bfa; border-radius: 12px; padding: 15px 20px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
-
+            
             toast.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
                     <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">New Friend Request</h4>
@@ -725,7 +571,6 @@
                 transform: translateY(100px);
                 opacity: 0;
             }
-
             to {
                 transform: translateY(0);
                 opacity: 1;
