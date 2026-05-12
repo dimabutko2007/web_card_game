@@ -74,6 +74,18 @@ class User {
         );
         return rows;
     }
+    static getRank(elo) {
+        if (elo >= 2500) return { name: 'Netherite', icon: 'netherite.png' };
+        if (elo >= 2250) return { name: 'Emerald', icon: 'emerald.png' };
+        if (elo >= 2000) return { name: 'Diamond', icon: 'diamond.png' };
+        if (elo >= 1800) return { name: 'Lapis', icon: 'lapis.png' };
+        if (elo >= 1600) return { name: 'Redstone', icon: 'redstone.png' };
+        if (elo >= 1400) return { name: 'Gold', icon: 'gold.png' };
+        if (elo >= 1200) return { name: 'Iron', icon: 'iron.png' };
+        if (elo >= 1000) return { name: 'Copper', icon: 'copper.png' };
+        if (elo >= 800) return { name: 'Coal', icon: 'coal.png' };
+        return { name: 'Cobblestone', icon: 'cobblestone.png' };
+    }
 }
 
 module.exports = User;

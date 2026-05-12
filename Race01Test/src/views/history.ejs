@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Realms - Battle Archives</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .history-card {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .battle-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(233, 213, 255, 0.1);
+        }
+
+        .battle-table th {
+            background: rgba(233, 213, 255, 0.05);
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .battle-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .battle-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .result-victory {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .result-defeat {
+            color: #ff5a5a;
+            font-weight: bold;
+        }
+
+        .opponent-link {
+            color: #e9d5ff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .opponent-link:hover {
+            color: #a78bfa;
+            text-decoration: underline;
+        }
+
+        .date-text {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        .time-text {
+            color: #666;
+            font-size: 0.75rem;
+            margin-left: 5px;
+        }
+
+        .header-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .user-mini-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mini-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #e9d5ff;
+            object-fit: cover;
+        }
+
+        .alert-error {
+            color: #ff5a5a;
+            background: rgba(226, 54, 54, 0.15);
+            border: 1px solid rgba(226, 54, 54, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="auth-page">
+    <canvas id="bg-particles"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
+
+    <div class="auth-wrapper">
+        <div class="auth-card history-card">
+            
+            <div style="text-align: left; margin-bottom: 30px;">
+                <a href="/profile/<%= user.nickname %>" style="color: #aaa; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&larr; Back to Profile</a>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert-error">
+                    <%= error %>
+                </div>
+            <% } %>
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert-success">
+                    <%= success %>
+                </div>
+            <% } %>
+
+            <div class="header-section">
+                <div class="user-mini-info">
+                    <img src="<%= user.avatar %>" alt="Avatar" class="mini-avatar">
+                    <div>
+                        <h2 style="color: #e9d5ff; margin: 0; text-transform: uppercase; letter-spacing: 2px;"><%= user.nickname %>'s Archives</h2>
+                        <p style="color: #aaa; margin: 5px 0 0 0; font-size: 0.9rem;">Total Battles Recorded: <%= matches.length %></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="match-history-full">
+                <% if (typeof matches !== 'undefined' && matches.length > 0) { %>
+                    <table class="battle-table">
+                        <thead>
+                            <tr>
+                                <th>Result</th>
+                                <th>Opponent</th>
+                                <th>Elo Change</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% matches.forEach(match => { %>
+                                <% const isWinner = match.winner_id === user.id; %>
+                                <tr>
+                                    <td>
+                                        <span class="<%= isWinner ? 'result-victory' : 'result-defeat' %>">
+                                            <%= isWinner ? 'VICTORY' : 'DEFEAT' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/profile/<%= isWinner ? match.loser_nickname : match.winner_nickname %>" class="opponent-link">
+                                            <%= isWinner ? match.loser_nickname : match.winner_nickname %>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="<%= isWinner ? 'result-victory' : 'result-defeat' %>">
+                                            <%= isWinner ? '+' : '-' %><%= match.elo_change %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% const d = new Date(match.played_at); %>
+                                        <span class="date-text"><%= d.toLocaleDateString() %></span>
+                                        <span class="time-text"><%= d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(233, 213, 255, 0.2);">
+                        <p style="color: #666; font-style: italic; margin: 0; font-size: 1.1rem;">The archives are empty. No battles have been recorded yet.</p>
+                    </div>
+                <% } %>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/particles.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        // Join personal user room to receive notifications
+        socket.emit('joinUserRoom', { userId: '<%= session.userId %>' });
+
+        // Clear query parameters from URL after load so they don't persist on reload
+        window.addEventListener('load', () => {
+            if (window.location.search.includes('error=') || window.location.search.includes('success=')) {
+                const url = new URL(window.location);
+                url.searchParams.delete('error');
+                url.searchParams.delete('success');
+                window.history.replaceState({}, document.title, url.pathname + url.search);
+            }
+        });
+
+        // Listen for real-time friend requests
+        socket.on('friendRequestReceived', (data) => {
+            // Check if toast already exists
+            const existing = document.getElementById('friend-request-notification-box');
+            if (existing) {
+                existing.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.id = 'friend-request-notification-box';
+            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid #a78bfa; border-radius: 12px; padding: 15px 20px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
+            
+            toast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
+                    <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">New Friend Request</h4>
+                    <button onclick="document.getElementById('friend-request-notification-box').remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <img src="${data.avatar}" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #e9d5ff;">
+                    <div>
+                        <a href="/profile/${data.nickname}" style="color: #e9d5ff; text-decoration: none; font-weight: bold; font-size: 1rem; display: block; transition: color 0.2s;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#e9d5ff'">${data.nickname}</a>
+                        <span style="color: #aaa; font-size: 0.8rem; display: block; margin-top: 2px;">wants to be your friend!</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <form action="/profile/${data.nickname}/accept-friend" method="POST" style="flex: 1; margin: 0;">
+                        <button type="submit" style="width: 100%; background: linear-gradient(45deg, #4ade80, #15803d); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Accept</button>
+                    </form>
+                    <form action="/profile/${data.nickname}/decline-friend" method="POST" style="flex: 1; margin: 0;">
+                        <button type="submit" style="width: 100%; background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#ccc'">Decline</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(toast);
+        });
+    </script>
+    <style>
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</body>
+
+</html>
