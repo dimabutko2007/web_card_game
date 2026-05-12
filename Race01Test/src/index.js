@@ -9,6 +9,7 @@ const config = require('./config/config');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+app.set('io', io);
 
 // Middleware
 app.use(express.json());
@@ -36,6 +37,25 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
 }));
+
+const User = require('./models/User');
+const Friendship = require('./models/Friendship');
+app.use(async (req, res, next) => {
+    res.locals.User = User;
+    res.locals.session = req.session;
+    if (req.session && req.session.userId) {
+        try {
+            res.locals.pendingRequests = await Friendship.getPendingIncomingRequests(req.session.userId);
+        } catch (err) {
+            console.error('[MIDDLEWARE] Failed to fetch pending requests:', err);
+            res.locals.pendingRequests = [];
+        }
+    } else {
+        res.locals.pendingRequests = [];
+    }
+    next();
+});
+
 
 // Routes
 const authRoutes = require('./routes/auth');

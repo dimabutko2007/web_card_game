@@ -96,8 +96,11 @@ function updateStats() {
     if (myHpText) myHpText.textContent = `${myData.hp}/20`;
     if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
     
-    document.getElementById('opp-nickname').innerHTML = `${oppData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${oppData.elo})</span>`;
-    document.getElementById('my-nickname').innerHTML = `${myData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${myData.elo})</span>`;
+    const oppRankHtml = oppData.rankIcon ? `<img src="/assets/ranks/${oppData.rankIcon}" title="${oppData.rankName}" class="game-rank-icon">` : '';
+    const myRankHtml = myData.rankIcon ? `<img src="/assets/ranks/${myData.rankIcon}" title="${myData.rankName}" class="game-rank-icon">` : '';
+
+    document.getElementById('opp-nickname').innerHTML = `${oppRankHtml}${oppData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${oppData.elo})</span>`;
+    document.getElementById('my-nickname').innerHTML = `${myRankHtml}${myData.nickname} <span style="color: var(--marvel-gold); font-size: 0.8em; margin-left: 5px;">(Elo: ${myData.elo})</span>`;
 
     const myAvatar = document.getElementById('my-avatar');
     const oppAvatar = document.getElementById('opp-avatar');
@@ -389,5 +392,17 @@ style.textContent = `
         background: rgba(226, 54, 54, 0.2);
         cursor: pointer;
     }
+    .game-rank-icon {
+        width: 48px;
+        height: 48px;
+        vertical-align: middle;
+        margin-right: 6px;
+        filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.5));
+        transition: transform 0.2s ease;
+    }
+    .game-rank-icon:hover {
+        transform: scale(1.1);
+    }
+
 `;
 document.head.appendChild(style);

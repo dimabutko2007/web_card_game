@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const Card = require('../models/Card');
 const User = require('../models/User');
+const Match = require('../models/Match');
 
 let waitingPlayer = null;
 const activeGames = new Map();
@@ -107,6 +108,9 @@ module.exports = (io) => {
                         const cards = await Card.getBalancedInitialHand(5);
                         p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
                         p.field = [];
+                        const rank = User.getRank(p.elo);
+                        p.rankName = rank.name;
+                        p.rankIcon = rank.icon;
                     }
 
                     io.to(data.gameId).emit('startGame', { 
@@ -221,6 +225,9 @@ module.exports = (io) => {
                     // Update stats in DB and notify lobby
                     const winnerStats = await User.updateStats(winner.dbUserId, true);
                     const loserStats = await User.updateStats(loser.dbUserId, false);
+                    
+                    // Record match history
+                    await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
 
                     io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
                         elo: winnerStats.elo, 
@@ -270,6 +277,9 @@ module.exports = (io) => {
 
                         const winnerStats = await User.updateStats(winner.dbUserId, true);
                         const loserStats = await User.updateStats(loser.dbUserId, false);
+
+                        // Record match history
+                        await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
 
                         io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
                             elo: winnerStats.elo, 
@@ -355,7 +365,9 @@ async function switchTurn(gameId, io) {
             energy: p.energy,
             maxEnergy: p.maxEnergy,
             hand: p.hand,
-            field: p.field
+            field: p.field,
+            rankName: p.rankName,
+            rankIcon: p.rankIcon
         }))
     });
 

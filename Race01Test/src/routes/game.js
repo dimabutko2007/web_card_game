@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const User = require('../models/User');
+const Match = require('../models/Match');
+const Friendship = require('../models/Friendship');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -32,6 +34,17 @@ const upload = multer({
     }
 });
 
+const redirectBackWithParam = (req, res, paramName, paramValue) => {
+    const referer = req.get('referer') || '/lobby';
+    try {
+        const refUrl = new URL(referer, `${req.protocol}://${req.get('host')}`);
+        refUrl.searchParams.set(paramName, paramValue);
+        res.redirect(refUrl.pathname + refUrl.search);
+    } catch (e) {
+        res.redirect(`/lobby?${paramName}=` + encodeURIComponent(paramValue));
+    }
+};
+
 router.get('/', (req, res) => {
     if (req.session.userId) {
         res.redirect('/lobby');
@@ -48,13 +61,183 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         userId: req.session.userId,
         elo: user.elo,
         avatar: user.avatar,
-        leaders: leaders
+        leaders: leaders,
+        error: req.query.error,
+        success: req.query.success
     });
 });
 
 router.get('/profile', authController.isAuthenticated, async (req, res) => {
-    const user = await User.findById(req.session.userId);
-    res.render('profile', { user, error: req.query.error, success: req.query.success });
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.redirect('/auth/login');
+        }
+        const matches = await Match.getHistoryForUser(req.session.userId, 5);
+        const friends = await Friendship.getFriends(req.session.userId);
+        res.render('profile', { 
+            user, 
+            matches,
+            friends,
+            isOwnProfile: true,
+            error: req.query.error, 
+            success: req.query.success 
+        });
+    } catch (error) {
+        console.error('Profile error:', error);
+        res.redirect('/lobby');
+    }
+});
+
+router.get('/profile/:nickname', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        
+        // If it's the current user, redirect to /profile
+        if (nickname === req.session.nickname) {
+            return res.redirect('/profile');
+        }
+
+        const user = await User.findByNickname(nickname);
+        if (!user) {
+            return res.redirect('/lobby?error=' + encodeURIComponent('User not found.'));
+        }
+
+        const matches = await Match.getHistoryForUser(user.id, 5);
+        const friends = await Friendship.getFriends(user.id);
+        const relation = await Friendship.getRelation(req.session.userId, user.id);
+        res.render('profile', { 
+            user, 
+            matches,
+            friends,
+            relation,
+            isOwnProfile: false,
+            error: req.query.error, 
+            success: req.query.success 
+        });
+    } catch (error) {
+        console.error('Foreign profile error:', error);
+        res.redirect('/lobby?error=' + encodeURIComponent('Failed to load profile history. ' + error.message));
+    }
+});
+
+router.get('/profile/:nickname/history', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const user = await User.findByNickname(nickname);
+        if (!user) {
+            return res.redirect('/lobby?error=' + encodeURIComponent('User not found.'));
+        }
+
+        const matches = await Match.getHistoryForUser(user.id, 100); // Fetch up to 100 recent matches
+        res.render('history', { 
+            user, 
+            matches,
+            isOwnProfile: nickname === req.session.nickname,
+            error: req.query.error,
+            success: req.query.success
+        });
+    } catch (error) {
+        console.error('History error:', error);
+        res.redirect('/profile/' + req.params.nickname);
+    }
+});
+
+router.get('/profile/:nickname/friends', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const user = await User.findByNickname(nickname);
+        if (!user) {
+            return res.redirect('/lobby?error=' + encodeURIComponent('User not found.'));
+        }
+        const friends = await Friendship.getFriends(user.id);
+        const pendingRequests = nickname === req.session.nickname ? await Friendship.getPendingIncomingRequests(user.id) : [];
+        res.render('friends', {
+            user,
+            friends,
+            pendingRequests,
+            isOwnProfile: nickname === req.session.nickname,
+            error: req.query.error,
+            success: req.query.success
+        });
+    } catch (error) {
+        console.error('Friends page error:', error);
+        res.redirect('/profile/' + req.params.nickname);
+    }
+});
+
+router.post('/profile/:nickname/add-friend', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const targetUser = await User.findByNickname(nickname);
+        if (!targetUser) {
+            return redirectBackWithParam(req, res, 'error', 'User not found.');
+        }
+        await Friendship.sendRequest(req.session.userId, targetUser.id);
+        
+        // Emit real-time notification
+        const io = req.app.get('io');
+        if (io) {
+            const sender = await User.findById(req.session.userId);
+            io.to(`user_${targetUser.id}`).emit('friendRequestReceived', {
+                senderId: req.session.userId,
+                nickname: req.session.nickname,
+                avatar: sender ? sender.avatar : '/assets/default_avatar.png'
+            });
+        }
+
+        redirectBackWithParam(req, res, 'success', `Sent friend request to ${nickname}!`);
+    } catch (error) {
+        console.error('Add friend error:', error);
+        redirectBackWithParam(req, res, 'error', error.message);
+    }
+});
+
+router.post('/profile/:nickname/remove-friend', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const targetUser = await User.findByNickname(nickname);
+        if (!targetUser) {
+            return redirectBackWithParam(req, res, 'error', 'User not found.');
+        }
+        await Friendship.removeFriend(req.session.userId, targetUser.id);
+        redirectBackWithParam(req, res, 'success', `Removed ${nickname} from friends.`);
+    } catch (error) {
+        console.error('Remove friend error:', error);
+        redirectBackWithParam(req, res, 'error', error.message);
+    }
+});
+
+router.post('/profile/:nickname/accept-friend', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const targetUser = await User.findByNickname(nickname);
+        if (!targetUser) {
+            return redirectBackWithParam(req, res, 'error', 'User not found.');
+        }
+        await Friendship.acceptRequest(req.session.userId, targetUser.id);
+        redirectBackWithParam(req, res, 'success', `You are now friends with ${nickname}!`);
+    } catch (error) {
+        if (error.message !== "This friend request is no longer valid.") {
+            console.error('Accept friend error:', error);
+        }
+        redirectBackWithParam(req, res, 'error', error.message);
+    }
+});
+
+router.post('/profile/:nickname/decline-friend', authController.isAuthenticated, async (req, res) => {
+    try {
+        const { nickname } = req.params;
+        const targetUser = await User.findByNickname(nickname);
+        if (!targetUser) {
+            return redirectBackWithParam(req, res, 'error', 'User not found.');
+        }
+        await Friendship.declineRequest(req.session.userId, targetUser.id);
+        redirectBackWithParam(req, res, 'success', `Declined friend request from ${nickname}.`);
+    } catch (error) {
+        console.error('Decline friend error:', error);
+        redirectBackWithParam(req, res, 'error', error.message);
+    }
 });
 
 router.post('/profile/avatar', authController.isAuthenticated, (req, res) => {

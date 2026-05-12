@@ -13,14 +13,15 @@
 </head>
 
 <body style="background: url('/assets/background1.png') no-repeat center center fixed; background-size: cover;">
-    <canvas id="bg-particles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
+    <canvas id="bg-particles"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
     <canvas id="canvas-effects"></canvas>
 
     <div class="battlefield-container">
         <!-- Opponent Area -->
         <div class="player-area opponent-area">
             <div class="player-info">
-                <img src="/assets/default_avatar.png" alt="Opponent" id="opp-avatar">
+                <img src="/assets/default_avatar.png" alt="Opponent" id="opp-avatar" class="avatar">
                 <div>
                     <h3 id="opp-nickname">Opponent</h3>
                     <div class="hp-container" style="display: flex; align-items: center; gap: 10px;">
@@ -56,7 +57,7 @@
                 <!-- Cards in hand -->
             </div>
             <div class="player-info">
-                <img src="/assets/default_avatar.png" alt="Me" id="my-avatar">
+                <img src="/assets/default_avatar.png" alt="Me" id="my-avatar" class="avatar">
                 <div>
                     <h3 id="my-nickname">
                         <%= nickname %>
