@@ -94,7 +94,7 @@ module.exports = (io) => {
                 if (room && room.size === 2 && allReady && game.gameState === 'initializing') {
                     console.log(`[GAME] Battle started (GameID: ${data.gameId})`);
                     game.gameState = 'active';
-                    
+
                     // Initialize game state
                     game.round = 1;
                     game.turn = Math.floor(Math.random() * 2); // Random turn
@@ -103,7 +103,7 @@ module.exports = (io) => {
 
                     for (let p of game.players) {
                         p.hp = 20;
-                        p.energy = 1; 
+                        p.energy = 1;
                         p.maxEnergy = 1;
                         const cards = await Card.getBalancedInitialHand(5);
                         p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
@@ -113,7 +113,7 @@ module.exports = (io) => {
                         p.rankIcon = rank.icon;
                     }
 
-                    io.to(data.gameId).emit('startGame', { 
+                    io.to(data.gameId).emit('startGame', {
                         players: game.players,
                         turn: game.turn,
                         round: game.round,
@@ -123,7 +123,7 @@ module.exports = (io) => {
                     startTimer(data.gameId, io);
                 } else if (room && room.size === 2 && game.gameState === 'active') {
                     // Rejoining active game
-                    
+
                     // Clear disconnect timeout if exists
                     const timeoutKey = `${data.gameId}_${player.dbUserId}`;
                     if (disconnectTimeouts.has(timeoutKey)) {
@@ -131,7 +131,7 @@ module.exports = (io) => {
                         disconnectTimeouts.delete(timeoutKey);
                     }
 
-                    socket.emit('startGame', { 
+                    socket.emit('startGame', {
                         players: game.players,
                         turn: game.turn,
                         round: game.round,
@@ -162,7 +162,7 @@ module.exports = (io) => {
                     const fieldCard = { ...card, currentDefense: card.defense, isSummoning: true };
                     player.field.push(fieldCard);
                     player.hand.splice(cardIndex, 1);
-                    
+
                     io.to(data.gameId).emit('gameStateUpdate', {
                         players: game.players,
                         turn: game.turn
@@ -187,17 +187,20 @@ module.exports = (io) => {
                     if (!hasTaunt) {
                         defenderPlayer.hp -= attackerCard.attack;
                         attackerCard.canAttack = false;
+                        io.to(data.gameId).emit('attackEvent', { type: 'hero' });
                     }
                 } else {
                     // Attack card
                     const defenderCard = defenderPlayer.field.find(c => c.instanceId === data.targetInstanceId);
                     const hasTaunt = defenderPlayer.field.some(c => c.has_taunt);
-                    
+
                     if (defenderCard && (!hasTaunt || defenderCard.has_taunt)) {
                         // Trade damage
                         defenderCard.currentDefense -= attackerCard.attack;
                         attackerCard.currentDefense -= defenderCard.attack;
                         attackerCard.canAttack = false;
+
+                        io.to(data.gameId).emit('attackEvent', { type: 'card' });
 
                         // Remove dead cards
                         if (defenderCard.currentDefense <= 0) {
@@ -215,7 +218,7 @@ module.exports = (io) => {
                     const loser = defenderPlayer;
 
                     io.to(data.gameId).emit('gameOver', { winner: winner.nickname });
-                    
+
                     console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${data.gameId})`);
 
                     // Notify users that their active game ended
@@ -225,19 +228,19 @@ module.exports = (io) => {
                     // Update stats in DB and notify lobby
                     const winnerStats = await User.updateStats(winner.dbUserId, true);
                     const loserStats = await User.updateStats(loser.dbUserId, false);
-                    
+
                     // Record match history
                     await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
 
-                    io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
-                        elo: winnerStats.elo, 
-                        wins: winnerStats.wins, 
-                        losses: winnerStats.losses 
+                    io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
+                        elo: winnerStats.elo,
+                        wins: winnerStats.wins,
+                        losses: winnerStats.losses
                     });
-                    io.to(`user_${loser.dbUserId}`).emit('statsUpdate', { 
-                        elo: loserStats.elo, 
-                        wins: loserStats.wins, 
-                        losses: loserStats.losses 
+                    io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
+                        elo: loserStats.elo,
+                        wins: loserStats.wins,
+                        losses: loserStats.losses
                     });
 
                     if (game.interval) clearInterval(game.interval);
@@ -261,14 +264,14 @@ module.exports = (io) => {
                 const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);
                 if (disconnectedPlayer && game.gameState === 'active') {
                     console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (Grace period started)`);
-                    
+
                     const timeoutKey = `${gameId}_${disconnectedPlayer.dbUserId}`;
                     const timeout = setTimeout(async () => {
                         const winner = game.players.find(p => p.socketId !== socket.id);
                         const loser = disconnectedPlayer;
 
                         io.to(gameId).emit('gameOver', { winner: winner.nickname + ' (Opponent disconnected)' });
-                        
+
                         console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${gameId})`);
 
                         // Notify users
@@ -281,15 +284,15 @@ module.exports = (io) => {
                         // Record match history
                         await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
 
-                        io.to(`user_${winner.dbUserId}`).emit('statsUpdate', { 
-                            elo: winnerStats.elo, 
-                            wins: winnerStats.wins, 
-                            losses: winnerStats.losses 
+                        io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
+                            elo: winnerStats.elo,
+                            wins: winnerStats.wins,
+                            losses: winnerStats.losses
                         });
-                        io.to(`user_${loser.dbUserId}`).emit('statsUpdate', { 
-                            elo: loserStats.elo, 
-                            wins: loserStats.wins, 
-                            losses: loserStats.losses 
+                        io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
+                            elo: loserStats.elo,
+                            wins: loserStats.wins,
+                            losses: loserStats.losses
                         });
 
                         if (game.interval) clearInterval(game.interval);
@@ -325,7 +328,7 @@ async function switchTurn(gameId, io) {
     if (!game) return;
 
     game.turn = game.turn === 0 ? 1 : 0;
-    
+
     // If it's the starting player's turn again, increase round/energy
     if (game.turn === game.startingTurn) {
         game.round++;
@@ -342,7 +345,7 @@ async function switchTurn(gameId, io) {
         if (currentPlayer.maxEnergy >= 5) {
             excludedCosts = [1, 2];
         }
-        
+
         const newCards = await Card.getWeightedRandomCards(needed, currentPlayer.hand, excludedCosts);
         currentPlayer.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
     }
