@@ -232,10 +232,84 @@
             color: #aaa;
             font-size: 0.8rem;
         }
+        @keyframes spectatePulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+            }
+        }
+
+        .profile-avatar-playing { border-color: #c084fc !important; }
+        .profile-avatar-online { border-color: #10b981 !important; }
+        .profile-avatar-offline { border-color: #e9d5ff !important; }
+
+        .friend-row-playing { border-left: 3px solid #c084fc !important; padding-left: 12px !important; }
+        .friend-row-online { border-left: 3px solid #10b981 !important; padding-left: 12px !important; }
+        .friend-row-offline { border-left: none !important; padding-left: 10px !important; }
+
+        .friend-avatar-playing { border-color: #c084fc !important; }
+        .friend-avatar-online { border-color: #10b981 !important; }
+        .friend-avatar-offline { border-color: #e9d5ff !important; }
+
+        .friend-name-playing { color: #f3e8ff; }
+        .friend-name-online { color: #e8f5e9; }
+        .friend-name-offline { color: #e9d5ff; }
+        .friend-name-playing:hover, .friend-name-online:hover, .friend-name-offline:hover { color: #a78bfa !important; }
+
+        /* Nickname hover reveal — handled via JS */
+        .nickname-h2-clip {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 280px;
+            transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nickname-container-clip {
+            overflow: hidden;
+        }
+        #nickname-status-badges,
+        #nickname-container .rank-icon-large {
+            transition: opacity 0.25s ease, max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s ease, margin 0.35s ease, padding 0.35s ease;
+            overflow: hidden;
+        }
+        .nickname-edit-btn {
+            transition: opacity 0.2s ease;
+            overflow: hidden;
+        }
     </style>
 </head>
 
 <body class="auth-page">
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>⚠️</span> Error</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #fee2e2; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= error %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>✓</span> Success</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= success %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+
     <canvas id="bg-particles"
         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
@@ -246,17 +320,6 @@
                 <a href="/lobby" style="color: white; text-decoration: none; font-size: 0.9rem;">&larr; Back to Lobby</a>
             </div>
 
-            <% if (typeof error !=='undefined' && error) { %>
-                <div class="alert-error" style="color: #ff5a5a; margin-bottom: 15px; font-weight: bold;">
-                    <%= error %>
-                </div>
-                <% } %>
-                    <% if (typeof success !=='undefined' && success) { %>
-                        <div class="alert-success" style="color: #4ade80; margin-bottom: 15px; font-weight: bold;">
-                            <%= success %>
-                        </div>
-                        <% } %>
-
                              <% const userRank = User.getRank(user.elo); %>
 
                              <% if (isOwnProfile) { %>
@@ -264,12 +327,17 @@
                                  <div class="profile-avatar-wrapper"
                                      onclick="document.getElementById('avatar-input').click()"
                                      style="cursor: pointer; position: relative; display: inline-block;">
-                                     <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
+                                     <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar <%= (user.activeGameId || user.isPlaying) ? 'profile-avatar-playing' : (user.isOnline ? 'profile-avatar-online' : 'profile-avatar-offline') %>"
                                          id="avatar-preview"
                                          style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
                                      <div class="profile-avatar-overlay">
                                          Change
                                      </div>
+                                     <% if (user.activeGameId || user.isPlaying) { %>
+                                         <span style="position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; background-color: #c084fc; border: 3px solid #1a022d; border-radius: 50%; box-shadow: 0 0 12px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                     <% } else if (user.isOnline) { %>
+                                         <span style="position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; background-color: #10b981; border: 3px solid #1a022d; border-radius: 50%; box-shadow: 0 0 12px #10b981; display: block;"></span>
+                                     <% } %>
                                  </div>
                                  <input type="file" name="avatar" id="avatar-input"
                                      accept="image/jpeg, image/png, image/gif" style="display: none;"
@@ -280,22 +348,45 @@
                              </form>
                              <% } else { %>
                                  <div style="display: block; margin-bottom: 20px;">
-                                     <div class="profile-avatar-wrapper" style="cursor: default;">
-                                         <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar"
+                                     <div class="profile-avatar-wrapper" style="cursor: default; position: relative; display: inline-block;">
+                                         <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar <%= (user.activeGameId || user.isPlaying) ? 'profile-avatar-playing' : (user.isOnline ? 'profile-avatar-online' : 'profile-avatar-offline') %>"
                                              style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #e9d5ff;">
+                                         <% if (user.activeGameId || user.isPlaying) { %>
+                                             <span style="position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; background-color: #c084fc; border: 3px solid #1a022d; border-radius: 50%; box-shadow: 0 0 12px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                         <% } else if (user.isOnline) { %>
+                                             <span style="position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; background-color: #10b981; border: 3px solid #1a022d; border-radius: 50%; box-shadow: 0 0 12px #10b981; display: block;"></span>
+                                         <% } %>
                                      </div>
                                  </div>
                              <% } %>
 
-                              <div class="nickname-display" id="nickname-container" style="margin-top: 15px; display: flex; align-items: center; justify-content: center;">
-                                 <img src="/assets/ranks/<%= userRank.icon %>" alt="<%= userRank.name %>" title="<%= userRank.name %>" class="rank-icon-large" style="width: 70px; height: 70px; margin-right: 15px; border-radius: 0;">
-                                 <h2 id="nickname-text"
-                                     style="font-size: 2.5rem; margin-bottom: 5px; color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; display: inline-block;">
-                                     <%= user.nickname %>
-                                 </h2>
+                             <div style="position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; width: 100%;">
+                                 <div class="nickname-display nickname-container-clip" id="nickname-container" style="display: flex; align-items: center; justify-content: center; max-width: 100%; gap: 10px; flex-wrap: nowrap;">
+                                     <img src="/assets/ranks/<%= userRank.icon %>" alt="<%= userRank.name %>" title="<%= userRank.name %>" class="rank-icon-large" style="width: 70px; height: 70px; flex-shrink: 0; border-radius: 0;">
+                                     <h2 id="nickname-text"
+                                         class="nickname-h2-clip"
+                                         title="<%= user.nickname %>"
+                                         style="font-size: 2.5rem; margin: 0; color: #e9d5ff; text-transform: uppercase; letter-spacing: 2px; min-width: 0;">
+                                         <%= user.nickname %>
+                                     </h2>
+                                     <div id="nickname-status-badges" style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; max-width: 300px;">
+                                         <% if (user.activeGameId || user.isPlaying) { %>
+                                             <span style="font-size: 0.85rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 4px 10px; border-radius: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">Playing</span>
+                                             <% if (user.activeGameId) { %>
+                                                 <a href="/game/<%= user.activeGameId %>" class="spectate-badge-link" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.8rem; font-weight: bold; padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease; white-space: nowrap;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 15px rgba(168, 85, 247, 0.7)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px rgba(168, 85, 247, 0.4)';">
+                                                     👁️ Spectate
+                                                 </a>
+                                             <% } %>
+                                         <% } else if (user.isOnline) { %>
+                                             <span style="font-size: 0.85rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 4px 10px; border-radius: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">Online</span>
+                                         <% } else { %>
+                                             <span style="font-size: 0.85rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #aaa; padding: 4px 10px; border-radius: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">Offline</span>
+                                         <% } %>
+                                     </div>
+                                 </div>
                                  <% if (isOwnProfile) { %>
                                  <button class="nickname-edit-btn" onclick="toggleNicknameEdit()" title="Change nickname"
-                                     style="background: none; border: none; color: #e9d5ff; cursor: pointer; font-size: 1.2rem; margin-left: 15px; position: static; transform: none;">&#9998;</button>
+                                     style="background: none; border: none; color: #e9d5ff; cursor: pointer; font-size: 1.2rem; flex-shrink: 0; padding: 5px;">&#9998;</button>
                                  <% } %>
                              </div>
 
@@ -464,16 +555,33 @@
                                              <% const topFriends = [...friends].sort((a, b) => b.elo - a.elo).slice(0, 5); %>
                                              <% topFriends.forEach(friend => { %>
                                                  <% const friendRank = User.getRank(friend.elo); %>
-                                                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                                     <div style="display: flex; align-items: center; gap: 15px;">
-                                                         <img src="<%= friend.avatar %>" alt="<%= friend.nickname %>" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e9d5ff; object-fit: cover;">
-                                                         <a href="/profile/<%= friend.nickname %>" style="color: #e9d5ff; text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: color 0.2s;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#e9d5ff'">
-                                                             <%= friend.nickname %>
-                                                         </a>
+                                                <div class="<%= (friend.activeGameId || friend.isPlaying) ? 'friend-row-playing' : (friend.isOnline ? 'friend-row-online' : 'friend-row-offline') %>" style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                                                        <div style="position: relative; display: inline-block; width: 40px; height: 40px; flex-shrink: 0;">
+                                                            <img src="<%= friend.avatar %>" alt="<%= friend.nickname %>" class="<%= (friend.activeGameId || friend.isPlaying) ? 'friend-avatar-playing' : (friend.isOnline ? 'friend-avatar-online' : 'friend-avatar-offline') %>" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e9d5ff; object-fit: cover;">
+                                                            <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                                <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #c084fc; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                                            <% } else if (friend.isOnline) { %>
+                                                                <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #10b981; display: block;"></span>
+                                                            <% } %>
+                                                        </div>
+                                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                            <a href="/profile/<%= friend.nickname %>" class="<%= (friend.activeGameId || friend.isPlaying) ? 'friend-name-playing' : (friend.isOnline ? 'friend-name-online' : 'friend-name-offline') %>" style="text-decoration: none; font-size: 1.1rem; font-weight: bold; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
+                                                                <%= friend.nickname %>
+                                                            </a>
+                                                             <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                                 <span style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 2px 6px; border-radius: 6px; display: inline-block;">playing</span>
+                                                             <% } %>
+                                                             <% if (friend.activeGameId) { %>
+                                                                 <a href="/game/<%= friend.activeGameId %>" class="spectate-badge-link" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 8px rgba(168, 85, 247, 0.3); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 12px rgba(168, 85, 247, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 8px rgba(168, 85, 247, 0.3)';">
+                                                                     <span style="font-size: 0.8rem; line-height: 1;">👁️</span>Spec
+                                                                 </a>
+                                                             <% } %>
+                                                         </div>
                                                      </div>
-                                                     <div style="display: flex; align-items: center; gap: 10px;">
+                                                     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 110px; flex-shrink: 0;">
                                                          <img src="/assets/ranks/<%= friendRank.icon %>" alt="<%= friendRank.name %>" title="<%= friendRank.name %>" style="width: 32px; height: 32px; border-radius: 0;">
-                                                         <span style="color: #aaa; font-size: 0.85rem;"><%= friend.elo %> ELO</span>
+                                                         <span style="color: #aaa; font-size: 0.85rem; width: 65px; text-align: right;"><%= friend.elo %> ELO</span>
                                                      </div>
                                                  </div>
                                              <% }); %>
@@ -520,6 +628,70 @@
                 window.history.replaceState({}, document.title, url.pathname + url.search);
             }
         });
+
+        // Nickname hover reveal — JS approach for reliable inline style override
+        (function () {
+            const container = document.getElementById('nickname-container');
+            const h2 = document.getElementById('nickname-text');
+            const badges = document.getElementById('nickname-status-badges');
+            if (!container || !h2) return;
+
+            const rankIcon = container.querySelector('.rank-icon-large');
+            const editBtn = container.parentElement ? container.parentElement.querySelector('.nickname-edit-btn') : null;
+            let leaveTimer = null;
+
+            container.addEventListener('mouseenter', () => {
+                if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+
+                // Measure exact rendered text width so h2 box == text, no visual overflow
+                const probe = document.createElement('span');
+                const cs = getComputedStyle(h2);
+                probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;white-space:nowrap;' +
+                    'font-size:' + cs.fontSize + ';font-family:' + cs.fontFamily + ';' +
+                    'font-weight:' + cs.fontWeight + ';letter-spacing:' + cs.letterSpacing + ';' +
+                    'text-transform:' + cs.textTransform + ';';
+                probe.textContent = h2.textContent.trim();
+                document.body.appendChild(probe);
+                const exactWidth = Math.ceil(probe.getBoundingClientRect().width);
+                document.body.removeChild(probe);
+
+                // Expand to exact text width — CSS class transition (0.35s) applies
+                h2.style.transition = '';
+                h2.style.maxWidth = exactWidth + 'px';
+                h2.style.overflow = 'visible';      // button is outside — safe to overflow
+                h2.style.textOverflow = 'clip';
+                container.style.overflow = 'visible';
+                container.style.maxWidth = 'none';  // lift auth-card constraint
+                container.style.flexGrow = '1';      // fill outer wrapper → h2 centers in full width
+                // Hide rank icon, status badge, and fully collapse edit button
+                if (rankIcon) { rankIcon.style.opacity = '0'; rankIcon.style.width = '0'; rankIcon.style.margin = '0'; }
+                if (badges)   { badges.style.opacity   = '0'; badges.style.maxWidth = '0'; }
+                if (editBtn)  { editBtn.style.opacity = '0'; editBtn.style.position = 'absolute'; editBtn.style.pointerEvents = 'none'; }
+            });
+
+            container.addEventListener('mouseleave', () => {
+                if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+                // Collapse h2 fast (0.15s)
+                h2.style.transition = 'max-width 0.15s ease';
+                h2.style.maxWidth = '280px';
+                // Restore side elements after h2 collapses (150ms)
+                leaveTimer = setTimeout(() => {
+                    if (rankIcon) { rankIcon.style.opacity = ''; rankIcon.style.width = ''; rankIcon.style.margin = ''; }
+                    if (badges)   { badges.style.opacity   = ''; badges.style.maxWidth = ''; }
+                    if (editBtn)  { editBtn.style.opacity = ''; editBtn.style.position = ''; editBtn.style.pointerEvents = ''; }
+                    setTimeout(() => {
+                        container.style.overflow = '';
+                        container.style.maxWidth = '';
+                        container.style.flexGrow = '';
+                        h2.style.transition = '';
+                        h2.style.maxWidth = '';
+                        h2.style.overflow = '';
+                        h2.style.textOverflow = '';
+                        leaveTimer = null;
+                    }, 30);
+                }, 150);
+            });
+        })();
     </script>
     <script src="/socket.io/socket.io.js"></script>
     <script>

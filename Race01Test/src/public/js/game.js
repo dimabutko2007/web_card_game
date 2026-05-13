@@ -79,10 +79,27 @@ resize();
 socket.emit('joinGame', { gameId, nickname, userId: myUserId });
 
 socket.on('startGame', (data) => {
-    myPlayerIndex = data.players.findIndex(p => p.socketId === socket.id);
+    myPlayerIndex = data.players.findIndex(p => String(p.dbUserId) === String(myUserId));
+    if (myPlayerIndex === -1) {
+        window.isSpectator = true;
+        const specBanner = document.getElementById('spectator-banner');
+        if (specBanner) specBanner.classList.remove('hidden');
+    } else {
+        window.isSpectator = false;
+        const specBanner = document.getElementById('spectator-banner');
+        if (specBanner) specBanner.classList.add('hidden');
+    }
+
+    if (window.isSpectator) {
+        myPlayerIndex = 0; // Default to player 1 for spectator stats mapping
+        document.body.classList.add('spectator-mode');
+        // Hide emoji send button in spectator mode
+        const emojiBtn = document.getElementById('emoji-trigger-btn');
+        if (emojiBtn) emojiBtn.style.display = 'none';
+    }
     console.log('Game started. My index:', myPlayerIndex);
 
-    if (!data.isRejoin) {
+    if (!data.isRejoin && !window.isSpectator) {
         showCoinFlip(data.turn === myPlayerIndex);
     }
     processState(data.players, data.turn);
@@ -104,13 +121,23 @@ socket.on('gameStateUpdate', (data) => {
 
 
 function processState(players, turnIndex) {
+    myPlayerIndex = players.findIndex(p => String(p.dbUserId) === String(myUserId));
     if (myPlayerIndex === -1) {
-        myPlayerIndex = players.findIndex(p => p.socketId === socket.id);
+        window.isSpectator = true;
+    } else {
+        window.isSpectator = false;
     }
 
-    myData = players[myPlayerIndex];
-    oppData = players[myPlayerIndex === 0 ? 1 : 0];
-    isMyTurn = turnIndex === myPlayerIndex;
+    if (window.isSpectator) {
+        myPlayerIndex = 0;
+        myData = players[0];
+        oppData = players[1];
+        isMyTurn = false;
+    } else {
+        myData = players[myPlayerIndex];
+        oppData = players[myPlayerIndex === 0 ? 1 : 0];
+        isMyTurn = turnIndex === myPlayerIndex;
+    }
 
     renderHand();
     renderField();
@@ -119,14 +146,22 @@ function processState(players, turnIndex) {
     const turnIndicator = document.getElementById('turn-indicator');
     const endTurnBtn = document.getElementById('end-turn-btn');
 
-    if (isMyTurn) {
-        turnIndicator.textContent = 'YOUR TURN';
-        turnIndicator.className = 'turn-indicator my-turn';
-    } else {
-        turnIndicator.textContent = "OPPONENT'S TURN";
+    if (window.isSpectator) {
+        const turnPlayer = players[turnIndex];
+        turnIndicator.textContent = `${turnPlayer.nickname.toUpperCase()}'S TURN`;
         turnIndicator.className = 'turn-indicator opp-turn';
+        endTurnBtn.style.display = 'none';
+    } else {
+        if (isMyTurn) {
+            turnIndicator.textContent = 'YOUR TURN';
+            turnIndicator.className = 'turn-indicator my-turn';
+        } else {
+            turnIndicator.textContent = "OPPONENT'S TURN";
+            turnIndicator.className = 'turn-indicator opp-turn';
+        }
+        endTurnBtn.style.display = 'block'; // Make sure it is visible for players
+        endTurnBtn.disabled = !isMyTurn;
     }
-    endTurnBtn.disabled = !isMyTurn;
 }
 
 function updateStats() {
@@ -155,25 +190,66 @@ function updateStats() {
     const oppAvatar = document.getElementById('opp-avatar');
     if (myAvatar && myData.avatar) myAvatar.src = myData.avatar;
     if (oppAvatar && oppData.avatar) oppAvatar.src = oppData.avatar;
+
+    // Spectator: make avatar & nickname clickable to open player profiles
+    if (window.isSpectator) {
+        const oppNick = oppData.nickname;
+        const myNick = myData.nickname;
+
+        const oppPlayerInfo = document.querySelector('.opponent-area .player-info');
+        const myPlayerInfo = document.querySelector('.player-area:not(.opponent-area) .player-info');
+
+        if (oppPlayerInfo && oppNick && !oppPlayerInfo.dataset.profileLinked) {
+            oppPlayerInfo.dataset.profileLinked = 'true';
+            oppPlayerInfo.style.cursor = 'pointer';
+            oppPlayerInfo.title = `View ${oppData.nickname}'s profile`;
+            oppPlayerInfo.addEventListener('click', (e) => {
+                window.open(`/profile/${encodeURIComponent(oppNick)}`, '_blank');
+            });
+        }
+
+        if (myPlayerInfo && myNick && !myPlayerInfo.dataset.profileLinked) {
+            myPlayerInfo.dataset.profileLinked = 'true';
+            myPlayerInfo.style.cursor = 'pointer';
+            myPlayerInfo.title = `View ${myData.nickname}'s profile`;
+            myPlayerInfo.addEventListener('click', (e) => {
+                window.open(`/profile/${encodeURIComponent(myNick)}`, '_blank');
+            });
+        }
+    }
 }
 
 function renderHand() {
     myHandEl.innerHTML = '';
     if (!myData || !myData.hand) return;
 
-    myData.hand.forEach(card => {
-        const cardEl = createCardElement(card);
-        if (isMyTurn && myData.energy >= card.cost) {
-            cardEl.classList.add('playable-card');
-        }
-
-        cardEl.addEventListener('click', () => {
-            if (!isMyTurn) return;
-            if (myData.energy < card.cost) return;
-            socket.emit('playCard', { gameId, cardInstanceId: card.instanceId });
+    if (window.isSpectator) {
+        // Render Player 1's cards as beautiful card backs
+        myData.hand.forEach(() => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #3b0764, #1e1b4b); border: 2px solid rgba(147, 51, 234, 0.4); border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+                    <span style="color: #c084fc; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 8px #9333ea; letter-spacing: 1.5px;">DARK</span>
+                </div>
+            `;
+            myHandEl.appendChild(cardEl);
         });
-        myHandEl.appendChild(cardEl);
-    });
+    } else {
+        myData.hand.forEach(card => {
+            const cardEl = createCardElement(card);
+            if (isMyTurn && myData.energy >= card.cost) {
+                cardEl.classList.add('playable-card');
+            }
+
+            cardEl.addEventListener('click', () => {
+                if (!isMyTurn) return;
+                if (myData.energy < card.cost) return;
+                socket.emit('playCard', { gameId, cardInstanceId: card.instanceId });
+            });
+            myHandEl.appendChild(cardEl);
+        });
+    }
 }
 
 function renderField() {
@@ -184,24 +260,27 @@ function renderField() {
     myData.field.forEach(card => {
         const cardEl = createCardElement(card);
         if (card.isSummoning) cardEl.classList.add('summoning-sickness');
-        if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) cardEl.classList.add('selected-card');
+        
+        if (!window.isSpectator) {
+            if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) cardEl.classList.add('selected-card');
 
-        // Add "Ready to Attack" indicator
-        if (isMyTurn && !card.isSummoning && card.canAttack !== false) {
-            cardEl.classList.add('ready-to-attack');
-        }
-
-        cardEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!isMyTurn || card.isSummoning || card.canAttack === false) return;
-
-            if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) {
-                selectedFieldCard = null;
-            } else {
-                selectedFieldCard = card;
+            // Add "Ready to Attack" indicator
+            if (isMyTurn && !card.isSummoning && card.canAttack !== false) {
+                cardEl.classList.add('ready-to-attack');
             }
-            renderField(); // Re-render to show selection
-        });
+
+            cardEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isMyTurn || card.isSummoning || card.canAttack === false) return;
+
+                if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) {
+                    selectedFieldCard = null;
+                } else {
+                    selectedFieldCard = card;
+                }
+                renderField(); // Re-render to show selection
+            });
+        }
         myFieldEl.appendChild(cardEl);
     });
 
@@ -209,36 +288,42 @@ function renderField() {
 
     oppData.field.forEach(card => {
         const cardEl = createCardElement(card);
-        const canHitThis = !hasTaunt || card.has_taunt;
+        
+        if (!window.isSpectator) {
+            const canHitThis = !hasTaunt || card.has_taunt;
 
-        if (selectedFieldCard && canHitThis) {
-            cardEl.classList.add('valid-target');
-        }
-
-        if (hasTaunt && !card.has_taunt) cardEl.style.opacity = '0.5';
-
-        cardEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (selectedFieldCard) {
-                if (hasTaunt && !card.has_taunt) return;
-
-                console.log(`[BATTLE] Attacking card: ${selectedFieldCard.name} -> ${card.name}`);
-                socket.emit('attack', {
-                    gameId,
-                    attackerInstanceId: selectedFieldCard.instanceId,
-                    targetInstanceId: card.instanceId,
-                    target: 'card'
-                });
-                selectedFieldCard = null;
-                renderField();
+            if (selectedFieldCard && canHitThis) {
+                cardEl.classList.add('valid-target');
             }
-        });
+
+            if (hasTaunt && !card.has_taunt) cardEl.style.opacity = '0.5';
+
+            cardEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (selectedFieldCard) {
+                    if (hasTaunt && !card.has_taunt) return;
+
+                    console.log(`[BATTLE] Attacking card: ${selectedFieldCard.name} -> ${card.name}`);
+                    socket.emit('attack', {
+                        gameId,
+                        attackerInstanceId: selectedFieldCard.instanceId,
+                        targetInstanceId: card.instanceId,
+                        target: 'card'
+                    });
+                    selectedFieldCard = null;
+                    renderField();
+                }
+            });
+        } else {
+            if (hasTaunt && !card.has_taunt) cardEl.style.opacity = '0.5';
+        }
         oppFieldEl.appendChild(cardEl);
     });
 }
 
 // Hero attack
 document.querySelector('.opponent-area .player-info').addEventListener('click', () => {
+    if (window.isSpectator) return;
     if (selectedFieldCard) {
         const hasTaunt = oppData.field.some(c => c.has_taunt);
         if (hasTaunt) {
@@ -292,7 +377,13 @@ if (leaveBtn && leaveModal) {
     leaveBtn.addEventListener('click', () => {
         clickSound.currentTime = 0;
         clickSound.play().catch(e => { });
-        leaveModal.classList.remove('hidden');
+        if (window.isSpectator) {
+            duelSound.pause();
+            duelSound.currentTime = 0;
+            window.location.href = '/lobby';
+        } else {
+            leaveModal.classList.remove('hidden');
+        }
     });
 
     cancelLeaveBtn.addEventListener('click', () => {
@@ -422,61 +513,66 @@ function showCoinFlip(isMeFirst) {
 }
 
 socket.on('gameOver', (data) => {
-    // Check if the winner's nickname is at the start of the message
-    const isWinner = data.winner.startsWith(myData.nickname);
-
     // Stop the duel music
     duelSound.pause();
     duelSound.currentTime = 0;
 
-    // Play outcome sound
-    if (isWinner) {
+    if (window.isSpectator) {
         victorySound.currentTime = 0;
         victorySound.play().catch(e => console.log('Victory sound prevented', e));
+        showGameOverScreen(true, data.winner);
     } else {
-        loseSound.currentTime = 0;
-        loseSound.play().catch(e => console.log('Lose sound prevented', e));
-    }
+        // Check if the winner's nickname is at the start of the message
+        const isWinner = data.winner.startsWith(nickname);
 
-    showGameOverScreen(isWinner, data.winner);
+        // Play outcome sound
+        if (isWinner) {
+            victorySound.currentTime = 0;
+            victorySound.play().catch(e => console.log('Victory sound prevented', e));
+        } else {
+            loseSound.currentTime = 0;
+            loseSound.play().catch(e => console.log('Lose sound prevented', e));
+        }
+
+        showGameOverScreen(isWinner, data.winner);
+    }
 });
 
 function showGameOverScreen(isWinner, winnerName) {
-    let frame = 0;
-    const interval = setInterval(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const text = isWinner ? 'YOU WON!' : 'YOU LOST!';
-        const eloText = isWinner ? '+25 Elo' : '-25 Elo';
+    let text = isWinner ? 'YOU WON!' : 'YOU LOST!';
+    let eloText = isWinner ? '+25 Elo' : '-25 Elo';
+    let mainColor = isWinner ? '#f0a500' : '#e23636';
 
-        // Use hex colors as Canvas doesn't support var()
-        const mainColor = isWinner ? '#f0a500' : '#e23636';
+    if (window.isSpectator) {
+        text = 'BATTLE ENDED!';
+        eloText = 'Spectator Mode';
+        mainColor = '#c084fc'; // Purple spectator color
+    }
 
-        ctx.font = 'bold 60px Outfit'; // Decreased size
-        ctx.fillStyle = mainColor;
-        ctx.textAlign = 'center';
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = mainColor;
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
+    ctx.font = 'bold 60px Outfit';
+    ctx.fillStyle = mainColor;
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = mainColor;
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
 
-        ctx.font = 'bold 45px Outfit'; // Decreased size
-        ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 + 30);
+    ctx.font = 'bold 45px Outfit';
+    ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 + 30);
 
-        ctx.shadowBlur = 0;
-        ctx.font = '24px Outfit';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(`Winner: ${winnerName}`, canvas.width / 2, canvas.height / 2 + 100);
-        ctx.fillText('Returning to lobby in 5 seconds...', canvas.width / 2, canvas.height / 2 + 140);
+    ctx.shadowBlur = 0;
+    ctx.font = '24px Outfit';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`Winner: ${winnerName}`, canvas.width / 2, canvas.height / 2 + 100);
+    ctx.fillText('Returning to lobby in 5 seconds...', canvas.width / 2, canvas.height / 2 + 140);
 
-        frame++;
-        if (frame > 300) { // 5 seconds
-            clearInterval(interval);
-            window.location.href = '/lobby';
-        }
-    }, 16);
+    setTimeout(() => {
+        window.location.href = '/lobby';
+    }, 5000);
 }
 
 // Add CSS for selected card
@@ -497,9 +593,13 @@ style.textContent = `
         box-shadow: 0 0 15px rgba(255, 0, 0, 0.7) !important;
         border-color: #ff0000 !important;
     }
-    .opponent-area .player-info:hover {
+    body:not(.spectator-mode) .opponent-area .player-info:hover {
         background: rgba(226, 54, 54, 0.2);
         cursor: pointer;
+    }
+    .spectator-mode .player-info:hover {
+        background: rgba(147, 51, 234, 0.15);
+        transition: background 0.2s ease;
     }
     .game-rank-icon {
         width: 48px;

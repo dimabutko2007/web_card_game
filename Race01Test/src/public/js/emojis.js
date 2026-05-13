@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (timeoutRef) clearTimeout(timeoutRef);
 
-        if (!isOpponent) {
+        if (!isOpponent && !window.isSpectator) {
             const btnRect = triggerBtn.getBoundingClientRect();
             myBubble.style.left = (btnRect.left + btnRect.width / 2) + 'px';
             myBubble.style.bottom = (window.innerHeight - btnRect.top + 10) + 'px';
@@ -130,9 +130,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (typeof socket !== 'undefined') {
         socket.on('receiveEmoji', (data) => {
-            const isMe = typeof myUserId !== 'undefined' && data.senderId === myUserId;
-            if (!isMe) {
-                showEmojiBubble(true, data.emojiId);
+            if (window.isSpectator) {
+                // Configure bubbles for spectator mode on the fly once
+                if (myBubble.classList.contains('emoji-bubble-fixed')) {
+                    myBubble.classList.remove('emoji-bubble-fixed');
+                    myBubble.style.left = '';
+                    myBubble.style.bottom = '';
+                    if (myPlayerInfo) myPlayerInfo.appendChild(myBubble);
+                }
+
+                const isPlayer1 = typeof myData !== 'undefined' && myData && String(data.senderId) === String(myData.dbUserId);
+                const isPlayer2 = typeof oppData !== 'undefined' && oppData && String(data.senderId) === String(oppData.dbUserId);
+                if (isPlayer1) {
+                    showEmojiBubble(false, data.emojiId);
+                } else if (isPlayer2) {
+                    showEmojiBubble(true, data.emojiId);
+                }
+            } else {
+                const isMe = typeof myUserId !== 'undefined' && String(data.senderId) === String(myUserId);
+                if (!isMe) {
+                    showEmojiBubble(true, data.emojiId);
+                }
             }
         });
     }

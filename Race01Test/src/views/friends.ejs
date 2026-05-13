@@ -10,6 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css?v=1.2">
     <style>
+        @keyframes spectatePulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+            }
+        }
+
         .friends-card {
             max-width: 900px;
             width: 100%;
@@ -84,6 +96,13 @@
             object-fit: cover;
         }
 
+        .avatar-playing { border-color: #c084fc !important; }
+        .avatar-online { border-color: #10b981 !important; }
+        .avatar-offline { border-color: #e9d5ff !important; }
+        .name-playing { color: #f3e8ff !important; }
+        .name-online { color: #e8f5e9 !important; }
+        .name-offline { color: #e9d5ff !important; }
+
         .friend-info {
             display: flex;
             align-items: center;
@@ -145,6 +164,31 @@
 </head>
 
 <body class="auth-page">
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>⚠️</span> Error</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #fee2e2; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= error %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>✓</span> Success</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= success %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+
     <canvas id="bg-particles"
         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
@@ -152,19 +196,8 @@
         <div class="auth-card friends-card">
             
             <div style="text-align: left; margin-bottom: 30px;">
-                <a href="/profile/<%= user.nickname %>" style="color: #aaa; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&larr; Back to Profile</a>
+                <a id="back-link" href="/profile/<%= user.nickname %>" style="color: #aaa; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&larr; Back to Profile</a>
             </div>
-
-            <% if (typeof error !== 'undefined' && error) { %>
-                <div class="alert-error">
-                    <%= error %>
-                </div>
-            <% } %>
-            <% if (typeof success !== 'undefined' && success) { %>
-                <div class="alert-success">
-                    <%= success %>
-                </div>
-            <% } %>
 
             <div class="header-section">
                 <div class="user-mini-info">
@@ -175,6 +208,87 @@
                     </div>
                 </div>
             </div>
+
+            <% if (isOwnProfile) { %>
+                <div class="add-friend-section" style="margin-bottom: 35px; background: rgba(140, 60, 200, 0.08); border: 1px solid rgba(140, 60, 200, 0.2); border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);">
+                    <h3 style="color: #e9d5ff; text-transform: uppercase; letter-spacing: 1.5px; font-size: 1.1rem; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>👤⁺</span> Add Friend by Nickname
+                    </h3>
+                    <form action="/profile/add-friend-by-nickname" method="POST" style="display: flex; gap: 12px; margin: 0; align-items: center;">
+                        <div style="flex: 1; position: relative;">
+                            <input type="text" name="nickname" id="add-friend-input" placeholder="Enter nickname..." required autocomplete="off"
+                                   style="width: 100%; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(140, 60, 200, 0.35); padding: 12px 15px; border-radius: 12px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.95rem; box-sizing: border-box; transition: all 0.3s ease;"
+                                   onfocus="this.style.borderColor='#a78bfa'; this.style.boxShadow='0 0 10px rgba(167, 139, 250, 0.25)'; showFriendSuggestions();"
+                                   onblur="this.style.borderColor='rgba(140, 60, 200, 0.35)'; this.style.boxShadow='none'; setTimeout(hideFriendSuggestions, 200);"
+                                   oninput="filterFriendSuggestions()">
+                            
+                            <% if (typeof availableUsers !== 'undefined') { %>
+                            <div id="friend-suggestions-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px; background: rgba(25, 5, 45, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 1000; max-height: 220px; overflow-y: auto;">
+                                <% availableUsers.forEach(u => { %>
+                                    <div class="suggestion-item" data-nickname="<%= u.nickname.toLowerCase() %>" onclick="selectSuggestion('<%= u.nickname %>')" style="display: flex; align-items: center; gap: 12px; padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(167, 139, 250, 0.2)'" onmouseout="this.style.background='transparent'">
+                                        <img src="<%= u.avatar || '/assets/default_avatar.png' %>" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #a78bfa;">
+                                        <span style="color: #e9d5ff; font-weight: bold; font-size: 0.95rem;"><%= u.nickname %></span>
+                                        <span style="margin-left: auto; color: var(--color-gold); font-size: 0.8rem; font-weight: bold;"><%= u.elo %> ELO</span>
+                                    </div>
+                                <% }); %>
+                                <div id="no-suggestions-msg" style="display: none; padding: 12px 15px; color: #aaa; font-style: italic; font-size: 0.9rem; text-align: center;">No matching users found</div>
+                            </div>
+                            <script>
+                                function showFriendSuggestions() {
+                                    const input = document.getElementById('add-friend-input');
+                                    const dropdown = document.getElementById('friend-suggestions-dropdown');
+                                    if (dropdown && input.value.trim().length > 0) {
+                                        dropdown.style.display = 'block';
+                                        filterFriendSuggestions();
+                                    }
+                                }
+                                function hideFriendSuggestions() {
+                                    const dropdown = document.getElementById('friend-suggestions-dropdown');
+                                    if (dropdown) dropdown.style.display = 'none';
+                                }
+                                function filterFriendSuggestions() {
+                                    const input = document.getElementById('add-friend-input');
+                                    const dropdown = document.getElementById('friend-suggestions-dropdown');
+                                    const query = input.value.trim().toLowerCase();
+                                    
+                                    if (!dropdown) return;
+                                    if (query.length === 0) {
+                                        dropdown.style.display = 'none';
+                                        return;
+                                    }
+                                    
+                                    dropdown.style.display = 'block';
+                                    const items = dropdown.querySelectorAll('.suggestion-item');
+                                    let matchCount = 0;
+                                    items.forEach(item => {
+                                        const nick = item.getAttribute('data-nickname');
+                                        if (nick.includes(query) && matchCount < 5) {
+                                            item.style.display = 'flex';
+                                            matchCount++;
+                                        } else {
+                                            item.style.display = 'none';
+                                        }
+                                    });
+                                    const noMsg = document.getElementById('no-suggestions-msg');
+                                    if (noMsg) noMsg.style.display = matchCount === 0 ? 'block' : 'none';
+                                }
+                                function selectSuggestion(nickname) {
+                                    const input = document.getElementById('add-friend-input');
+                                    if (input) input.value = nickname;
+                                    hideFriendSuggestions();
+                                }
+                            </script>
+                            <% } %>
+                        </div>
+                        <button type="submit" style="background: linear-gradient(135deg, #a78bfa, #7c3aed); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35); display: flex; align-items: center; gap: 5px; height: 100%; box-sizing: border-box;"
+                                onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';"
+                                onactive="this.style.transform='translateY(0)';">
+                            Send Request
+                        </button>
+                    </form>
+                </div>
+            <% } %>
 
             <% if (isOwnProfile && typeof pendingRequests !== 'undefined' && pendingRequests.length > 0) { %>
                 <div class="pending-requests-section" style="margin-bottom: 40px;">
@@ -228,14 +342,35 @@
 
             <div class="friends-list-full">
                 <% if (typeof friends !== 'undefined' && friends.length > 0) { %>
-                    <!-- Friend Search Bar -->
-                    <div style="margin-bottom: 20px; position: relative;">
-                        <input type="text" id="friend-search-input" placeholder="Search friends by nickname..." 
-                               style="width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(233, 213, 255, 0.2); padding: 12px 16px 12px 40px; border-radius: 10px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s; box-sizing: border-box;"
-                               onfocus="this.style.borderColor='#a78bfa'; this.style.boxShadow='0 0 10px rgba(167, 139, 250, 0.2)';"
-                               onblur="this.style.borderColor='rgba(233, 213, 255, 0.2)'; this.style.boxShadow='none';">
-                        <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: rgba(233, 213, 255, 0.4); pointer-events: none;">🔍</span>
+                    <!-- Friend Search Bar and Online Filter -->
+                    <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                        <div style="position: relative; flex: 1;">
+                            <input type="text" id="friend-search-input" placeholder="Search friends by nickname..." 
+                                   style="width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(233, 213, 255, 0.2); padding: 12px 16px 12px 40px; border-radius: 10px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s; box-sizing: border-box;"
+                                   onfocus="this.style.borderColor='#a78bfa'; this.style.boxShadow='0 0 10px rgba(167, 139, 250, 0.2)';"
+                                   onblur="this.style.borderColor='rgba(233, 213, 255, 0.2)'; this.style.boxShadow='none';">
+                            <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: rgba(233, 213, 255, 0.4); pointer-events: none;">🔍</span>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(233, 213, 255, 0.2); padding: 12px 18px; border-radius: 10px; transition: all 0.3s; user-select: none;" onmouseover="this.style.borderColor='#a78bfa'; this.style.background='rgba(0,0,0,0.6)';" onmouseout="this.style.borderColor='rgba(233, 213, 255, 0.2)'; this.style.background='rgba(0,0,0,0.4)';">
+                            <span style="color: #a78bfa; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;">🟢 Online</span>
+                            <div style="position: relative; display: inline-block; width: 38px; height: 20px;">
+                                <input type="checkbox" id="friends-online-filter-checkbox" style="opacity: 0; width: 0; height: 0; position: absolute;" onchange="filterFriendsList()">
+                                <span class="custom-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(167,139,250,0.4); border-radius: 20px; transition: .3s;"></span>
+                                <span class="custom-toggle-dot" style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background-color: #a78bfa; border-radius: 50%; transition: .3s;"></span>
+                            </div>
+                        </label>
                     </div>
+                    <style>
+                        #friends-online-filter-checkbox:checked ~ .custom-toggle-slider {
+                            background-color: rgba(16, 185, 129, 0.25) !important;
+                            border-color: #10b981 !important;
+                        }
+                        #friends-online-filter-checkbox:checked ~ .custom-toggle-dot {
+                            transform: translateX(18px);
+                            background-color: #10b981 !important;
+                            box-shadow: 0 0 8px #10b981;
+                        }
+                    </style>
 
                     <table class="friend-table">
                         <thead>
@@ -251,13 +386,30 @@
                         <tbody>
                             <% friends.forEach(friend => { %>
                                 <% const friendRank = User.getRank(friend.elo); %>
-                                <tr class="friend-row" data-nickname="<%= friend.nickname.toLowerCase() %>">
+                                <tr class="friend-row" data-nickname="<%= friend.nickname.toLowerCase() %>" data-online="<%= (friend.activeGameId || friend.isPlaying || friend.isOnline) ? 'true' : 'false' %>">
                                     <td>
                                         <div class="friend-info">
-                                            <img src="<%= friend.avatar %>" alt="<%= friend.nickname %>" class="friend-avatar">
-                                            <a href="/profile/<%= friend.nickname %>" class="friend-link">
+                                            <div style="position: relative; display: inline-block; width: 45px; height: 45px;">
+                                                <img src="<%= friend.avatar %>" alt="<%= friend.nickname %>" class="friend-avatar <%= (friend.activeGameId || friend.isPlaying) ? 'avatar-playing' : (friend.isOnline ? 'avatar-online' : 'avatar-offline') %>">
+                                                <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #c084fc; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                                <% } else if (friend.isOnline) { %>
+                                                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #10b981; display: block;"></span>
+                                                <% } %>
+                                            </div>
+                                            <a href="/profile/<%= friend.nickname %>" class="friend-link <%= (friend.activeGameId || friend.isPlaying) ? 'name-playing' : (friend.isOnline ? 'name-online' : 'name-offline') %>">
                                                 <%= friend.nickname %>
+                                                <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                    <span style="font-size: 0.75rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 2px 6px; border-radius: 6px; margin-left: 6px; display: inline-block;">playing</span>
+                                                <% } else if (friend.isOnline) { %>
+                                                    <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 2px 6px; border-radius: 6px; margin-left: 6px; display: inline-block;">online</span>
+                                                <% } %>
                                             </a>
+                                            <% if (friend.activeGameId) { %>
+                                                <a href="/game/<%= friend.activeGameId %>" class="spectate-badge-link" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 8px rgba(168, 85, 247, 0.3); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease; margin-left: 10px; vertical-align: middle;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 12px rgba(168, 85, 247, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 8px rgba(168, 85, 247, 0.3)';">
+                                                    👁️ Spectate
+                                                </a>
+                                            <% } %>
                                         </div>
                                     </td>
                                     <td style="text-align: center;">
@@ -355,29 +507,47 @@
         const friendRows = document.querySelectorAll('.friend-row');
         const noFriendsMessage = document.getElementById('no-friends-filtered');
 
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                let visibleCount = 0;
+        function filterFriendsList() {
+            const isOnlineOnly = document.getElementById('friends-online-filter-checkbox')?.checked;
+            const query = (searchInput?.value || '').toLowerCase().trim();
+            let visibleCount = 0;
 
-                friendRows.forEach(row => {
-                    const nickname = row.getAttribute('data-nickname');
-                    if (nickname.includes(query)) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                if (noFriendsMessage) {
-                    if (visibleCount === 0 && friendRows.length > 0) {
-                        noFriendsMessage.style.display = 'block';
-                    } else {
-                        noFriendsMessage.style.display = 'none';
-                    }
+            friendRows.forEach(row => {
+                const nickname = row.getAttribute('data-nickname');
+                const isOnline = row.getAttribute('data-online') === 'true';
+                if (nickname.includes(query) && (!isOnlineOnly || isOnline)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
                 }
             });
+
+            if (noFriendsMessage) {
+                if (visibleCount === 0 && friendRows.length > 0) {
+                    noFriendsMessage.style.display = 'block';
+                } else {
+                    noFriendsMessage.style.display = 'none';
+                }
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', filterFriendsList);
+        }
+
+        // Dynamic contextual back button based on referrer
+        const backLink = document.getElementById('back-link');
+        if (backLink && document.referrer) {
+            try {
+                const refUrl = new URL(document.referrer);
+                if (refUrl.pathname === '/lobby') {
+                    backLink.href = '/lobby';
+                    backLink.innerHTML = '&larr; Back to Lobby';
+                }
+            } catch (e) {
+                console.error('Error parsing referrer:', e);
+            }
         }
     </script>
     <style>

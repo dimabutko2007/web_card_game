@@ -119,6 +119,31 @@
 </head>
 
 <body class="auth-page">
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>⚠️</span> Error</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #fee2e2; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= error %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>✓</span> Success</h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= success %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
+    <% } %>
+
     <canvas id="bg-particles"
         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
@@ -128,17 +153,6 @@
             <div style="text-align: left; margin-bottom: 30px;">
                 <a href="/profile/<%= user.nickname %>" style="color: #aaa; text-decoration: none; font-size: 0.9rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&larr; Back to Profile</a>
             </div>
-
-            <% if (typeof error !== 'undefined' && error) { %>
-                <div class="alert-error">
-                    <%= error %>
-                </div>
-            <% } %>
-            <% if (typeof success !== 'undefined' && success) { %>
-                <div class="alert-success">
-                    <%= success %>
-                </div>
-            <% } %>
 
             <div class="header-section">
                 <div class="user-mini-info">
