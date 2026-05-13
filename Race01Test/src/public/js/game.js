@@ -38,12 +38,12 @@ window.AudioManager.register(clickSound, 'sfx', 0.5);
 
 socket.on('attackEvent', (data) => {
     attackSound.currentTime = 0;
-    attackSound.play().catch(e => {});
+    attackSound.play().catch(e => { });
 
     if (data.type === 'hero') {
         setTimeout(() => {
             heroDamageSound.currentTime = 0;
-            heroDamageSound.play().catch(e => {});
+            heroDamageSound.play().catch(e => { });
         }, 150);
     }
 });
@@ -278,7 +278,7 @@ function createCardElement(card) {
 
 endTurnBtn.addEventListener('click', () => {
     clickSound.currentTime = 0;
-    clickSound.play().catch(e => {});
+    clickSound.play().catch(e => { });
     socket.emit('endTurn', { gameId });
 });
 
@@ -291,27 +291,29 @@ const cancelLeaveBtn = document.getElementById('cancel-leave-btn');
 if (leaveBtn && leaveModal) {
     leaveBtn.addEventListener('click', () => {
         clickSound.currentTime = 0;
-        clickSound.play().catch(e => {});
+        clickSound.play().catch(e => { });
         leaveModal.classList.remove('hidden');
     });
 
     cancelLeaveBtn.addEventListener('click', () => {
         clickSound.currentTime = 0;
-        clickSound.play().catch(e => {});
+        clickSound.play().catch(e => { });
         leaveModal.classList.add('hidden');
     });
 
     confirmLeaveBtn.addEventListener('click', () => {
         clickSound.currentTime = 0;
-        clickSound.play().catch(e => {});
-        
+        clickSound.play().catch(e => { });
+
+        socket.emit('leaveGame', { gameId: gameId });
+
         leaveModal.classList.add('hidden');
-        
+
         duelSound.pause();
         duelSound.currentTime = 0;
 
         loseSound.currentTime = 0;
-        loseSound.play().catch(e => {});
+        loseSound.play().catch(e => { });
 
         const winnerName = (oppData && oppData.nickname) ? oppData.nickname : "Opponent";
         showGameOverScreen(false, winnerName);
@@ -422,7 +424,7 @@ function showCoinFlip(isMeFirst) {
 socket.on('gameOver', (data) => {
     // Check if the winner's nickname is at the start of the message
     const isWinner = data.winner.startsWith(myData.nickname);
-    
+
     // Stop the duel music
     duelSound.pause();
     duelSound.currentTime = 0;

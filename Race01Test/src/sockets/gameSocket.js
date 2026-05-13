@@ -214,37 +214,7 @@ module.exports = (io) => {
 
                 // Check for victory
                 if (defenderPlayer.hp <= 0) {
-                    const winner = attackerPlayer;
-                    const loser = defenderPlayer;
-
-                    io.to(data.gameId).emit('gameOver', { winner: winner.nickname });
-
-                    console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${data.gameId})`);
-
-                    // Notify users that their active game ended
-                    io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
-                    io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
-
-                    // Update stats in DB and notify lobby
-                    const winnerStats = await User.updateStats(winner.dbUserId, true);
-                    const loserStats = await User.updateStats(loser.dbUserId, false);
-
-                    // Record match history
-                    await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
-
-                    io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
-                        elo: winnerStats.elo,
-                        wins: winnerStats.wins,
-                        losses: winnerStats.losses
-                    });
-                    io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
-                        elo: loserStats.elo,
-                        wins: loserStats.wins,
-                        losses: loserStats.losses
-                    });
-
-                    if (game.interval) clearInterval(game.interval);
-                    activeGames.delete(data.gameId);
+                    await endGame(data.gameId, io, attackerPlayer, defenderPlayer);
                 } else {
                     io.to(data.gameId).emit('gameStateUpdate', {
                         players: game.players,
@@ -274,44 +244,37 @@ module.exports = (io) => {
             for (const [gameId, game] of activeGames.entries()) {
                 const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);
                 if (disconnectedPlayer && game.gameState === 'active') {
-                    console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (Grace period started)`);
+                    console.log(`[GAME] User ${disconnectedPlayer.nickname} disconnected (GameID: ${gameId})`);
 
                     const timeoutKey = `${gameId}_${disconnectedPlayer.dbUserId}`;
                     const timeout = setTimeout(async () => {
-                        const winner = game.players.find(p => p.socketId !== socket.id);
-                        const loser = disconnectedPlayer;
-
-                        io.to(gameId).emit('gameOver', { winner: winner.nickname + ' (Opponent disconnected)' });
-
-                        console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${gameId})`);
-
-                        // Notify users
-                        io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
-                        io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
-
-                        const winnerStats = await User.updateStats(winner.dbUserId, true);
-                        const loserStats = await User.updateStats(loser.dbUserId, false);
-
-                        // Record match history
-                        await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
-
-                        io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
-                            elo: winnerStats.elo,
-                            wins: winnerStats.wins,
-                            losses: winnerStats.losses
-                        });
-                        io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
-                            elo: loserStats.elo,
-                            wins: loserStats.wins,
-                            losses: loserStats.losses
-                        });
-
-                        if (game.interval) clearInterval(game.interval);
-                        activeGames.delete(gameId);
+                        const gameAtTimeout = activeGames.get(gameId);
+                        if (gameAtTimeout) {
+                            const winner = gameAtTimeout.players.find(p => p.socketId !== socket.id);
+                            const loser = disconnectedPlayer;
+                            await endGame(gameId, io, winner, loser, 'disconnect');
+                        }
                         disconnectTimeouts.delete(timeoutKey);
-                    }, 5000); // 5 second grace period
+                    }, 5000);
 
                     disconnectTimeouts.set(timeoutKey, timeout);
+                }
+            }
+        });
+
+        socket.on('leaveGame', async (data) => {
+            if (!data || !data.gameId) {
+                console.error('[SOCKET ERROR] leaveGame called without gameId');
+                return;
+            }
+            const game = activeGames.get(data.gameId);
+            if (game && game.gameState === 'active') {
+                const loser = game.players.find(p => p.socketId === socket.id);
+                const winner = game.players.find(p => p.socketId !== socket.id);
+
+                if (winner && loser) {
+                    console.log(`[GAME] User ${loser.nickname} conceded (GameID: ${data.gameId})`);
+                    await endGame(data.gameId, io, winner, loser, 'leave');
                 }
             }
         });
@@ -386,4 +349,38 @@ async function switchTurn(gameId, io) {
     });
 
     startTimer(gameId, io);
+}
+
+async function endGame(gameId, io, winner, loser, reason = '') {
+    const game = activeGames.get(gameId);
+    if (!game) return;
+
+    if (game.gameState === 'finished') return;
+    game.gameState = 'finished';
+
+    const message = reason === 'leave'
+        ? `${winner.nickname} (Opponent conceded)`
+        : (reason === 'disconnect' ? `${winner.nickname} (Opponent disconnected)` : winner.nickname);
+
+    io.to(gameId).emit('gameOver', { winner: message });
+
+    console.log(`[MATCH] Battle ended: ${winner.nickname} vs ${loser.nickname} (GameID: ${gameId})`);
+
+    io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
+    io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
+
+    const winnerStats = await User.updateStats(winner.dbUserId, true);
+    const loserStats = await User.updateStats(loser.dbUserId, false);
+
+    await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
+
+    io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
+        elo: winnerStats.elo, wins: winnerStats.wins, losses: winnerStats.losses
+    });
+    io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
+        elo: loserStats.elo, wins: loserStats.wins, losses: loserStats.losses
+    });
+
+    if (game.interval) clearInterval(game.interval);
+    activeGames.delete(gameId);
 }
