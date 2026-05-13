@@ -33,6 +33,9 @@ window.AudioManager.register(victorySound, 'sfx', 0.7);
 const loseSound = new Audio('/assets/sounds/lose_sound.mp3');
 window.AudioManager.register(loseSound, 'sfx', 0.7);
 
+const clickSound = new Audio('/assets/sounds/click_sound.mp3');
+window.AudioManager.register(clickSound, 'sfx', 0.5);
+
 socket.on('attackEvent', (data) => {
     attackSound.currentTime = 0;
     attackSound.play().catch(e => {});
@@ -274,8 +277,52 @@ function createCardElement(card) {
 }
 
 endTurnBtn.addEventListener('click', () => {
+    clickSound.currentTime = 0;
+    clickSound.play().catch(e => {});
     socket.emit('endTurn', { gameId });
 });
+
+// Leave Battle logic
+const leaveBtn = document.getElementById('leave-battle-btn');
+const leaveModal = document.getElementById('leave-confirm-modal');
+const confirmLeaveBtn = document.getElementById('confirm-leave-btn');
+const cancelLeaveBtn = document.getElementById('cancel-leave-btn');
+
+if (leaveBtn && leaveModal) {
+    leaveBtn.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => {});
+        leaveModal.classList.remove('hidden');
+    });
+
+    cancelLeaveBtn.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => {});
+        leaveModal.classList.add('hidden');
+    });
+
+    confirmLeaveBtn.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => {});
+        
+        leaveModal.classList.add('hidden');
+        
+        duelSound.pause();
+        duelSound.currentTime = 0;
+
+        loseSound.currentTime = 0;
+        loseSound.play().catch(e => {});
+
+        const winnerName = (oppData && oppData.nickname) ? oppData.nickname : "Opponent";
+        showGameOverScreen(false, winnerName);
+    });
+
+    leaveModal.addEventListener('click', (e) => {
+        if (e.target === leaveModal) {
+            leaveModal.classList.add('hidden');
+        }
+    });
+}
 
 function showCoinFlip(isMeFirst) {
     let frame = 0;

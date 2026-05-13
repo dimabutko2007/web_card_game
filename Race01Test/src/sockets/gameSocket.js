@@ -254,6 +254,17 @@ module.exports = (io) => {
             }
         });
 
+        socket.on('sendEmoji', (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+
+            // Broadcast the emoji to the room
+            io.to(data.gameId).emit('receiveEmoji', {
+                emojiId: data.emojiId,
+                senderId: data.senderId
+            });
+        });
+
         socket.on('disconnect', async () => {
             if (waitingPlayer && waitingPlayer.socket.id === socket.id) {
                 waitingPlayer = null;

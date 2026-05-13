@@ -16,6 +16,20 @@
     <canvas id="bg-particles"
         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
     <canvas id="canvas-effects"></canvas>
+    
+    <button id="leave-battle-btn" class="leave-battle-btn"> Leave Battle </button>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="leave-confirm-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Surrender?</h2>
+            <p>Are you sure you want to leave the battle? This will be counted as a loss.</p>
+            <div class="modal-actions">
+                <button id="confirm-leave-btn" class="confirm-btn">Yes, Surrender</button>
+                <button id="cancel-leave-btn" class="cancel-btn">No, Continue</button>
+            </div>
+        </div>
+    </div>
 
     <div class="battlefield-container">
         <!-- Opponent Area -->
@@ -83,6 +97,7 @@
     </script>
     <script src="/js/particles.js"></script>
     <script src="/js/volume-controls.js"></script>
+    <script src="/js/emojis.js"></script>
     <script src="/js/game.js"></script>
 </body>
 
