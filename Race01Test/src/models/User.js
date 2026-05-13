@@ -74,6 +74,12 @@ class User {
         );
         return rows;
     }
+
+    static async getAllUsers() {
+        const [rows] = await db.execute('SELECT id, nickname, avatar, elo FROM users ORDER BY nickname ASC');
+        return rows;
+    }
+
     static getRank(elo) {
         if (elo >= 2500) return { name: 'Netherite', icon: 'netherite.png' };
         if (elo >= 2250) return { name: 'Emerald', icon: 'emerald.png' };

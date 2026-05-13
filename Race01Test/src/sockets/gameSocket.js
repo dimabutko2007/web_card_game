@@ -6,6 +6,7 @@ const Match = require('../models/Match');
 let waitingPlayer = null;
 const activeGames = new Map();
 const disconnectTimeouts = new Map();
+const onlineUsers = new Map(); // userId -> Set of socket.id
 
 module.exports = (io) => {
     function broadcastLobbyStats() {
@@ -21,13 +22,18 @@ module.exports = (io) => {
         broadcastLobbyStats();
         socket.on('joinUserRoom', (data) => {
             if (data.userId) {
+                socket.dbUserId = data.userId;
+                if (!onlineUsers.has(data.userId)) {
+                    onlineUsers.set(data.userId, new Set());
+                }
+                onlineUsers.get(data.userId).add(socket.id);
                 socket.join(`user_${data.userId}`);
             }
         });
 
         socket.on('checkActiveGame', (data) => {
             for (const [gameId, game] of activeGames.entries()) {
-                const player = game.players.find(p => p.dbUserId === data.userId);
+                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
                 if (player) {
                     socket.emit('activeGameFound', { gameId });
                     return;
@@ -38,7 +44,7 @@ module.exports = (io) => {
         socket.on('findMatch', (data) => {
             // Check for active game first
             for (const [gameId, game] of activeGames.entries()) {
-                const player = game.players.find(p => p.dbUserId === data.userId);
+                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
                 if (player) {
                     socket.emit('matchFound', { gameId });
                     return;
@@ -78,20 +84,22 @@ module.exports = (io) => {
             const game = activeGames.get(data.gameId);
             if (game) {
                 // Update socket ID for the player who just joined (because of page reload)
-                const player = game.players.find(p => p.dbUserId === data.userId);
+                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
                 if (player) {
                     player.socketId = socket.id;
                     player.ready = true;
                     // Update nickname from session in case it was changed
                     if (data.nickname) player.nickname = data.nickname;
                     console.log(`[GAME] Player ${data.nickname} joined the battle (GameID: ${data.gameId})`);
+                } else {
+                    console.log(`[GAME] Spectator joined the battle (GameID: ${data.gameId})`);
                 }
 
                 // If both players joined, start the game
                 const room = io.sockets.adapter.rooms.get(data.gameId);
                 const allReady = game.players.every(p => p.ready);
 
-                if (room && room.size === 2 && allReady && game.gameState === 'initializing') {
+                if (room && room.size >= 2 && allReady && game.gameState === 'initializing') {
                     console.log(`[GAME] Battle started (GameID: ${data.gameId})`);
                     game.gameState = 'active';
 
@@ -121,21 +129,40 @@ module.exports = (io) => {
                     });
 
                     startTimer(data.gameId, io);
-                } else if (room && room.size === 2 && game.gameState === 'active') {
-                    // Rejoining active game
+                } else if (room && room.size >= 2 && game.gameState === 'active') {
+                    // Rejoining active game or Spectator joining mid-game
+                    if (player) {
+                        // Clear disconnect timeout if exists
+                        const timeoutKey = `${data.gameId}_${player.dbUserId}`;
+                        if (disconnectTimeouts.has(timeoutKey)) {
+                            clearTimeout(disconnectTimeouts.get(timeoutKey));
+                            disconnectTimeouts.delete(timeoutKey);
+                        }
 
-                    // Clear disconnect timeout if exists
-                    const timeoutKey = `${data.gameId}_${player.dbUserId}`;
-                    if (disconnectTimeouts.has(timeoutKey)) {
-                        clearTimeout(disconnectTimeouts.get(timeoutKey));
-                        disconnectTimeouts.delete(timeoutKey);
+                        socket.emit('startGame', {
+                            players: game.players,
+                            turn: game.turn,
+                            round: game.round,
+                            isRejoin: true
+                        });
+                    } else {
+                        // Send current game state to spectator
+                        socket.emit('startGame', {
+                            players: game.players,
+                            turn: game.turn,
+                            round: game.round,
+                            isRejoin: true,
+                            isSpectator: true
+                        });
                     }
-
+                } else if (room && room.size >= 1 && game.gameState === 'initializing' && !player) {
+                    // Spectator joining during initialization
                     socket.emit('startGame', {
                         players: game.players,
                         turn: game.turn,
                         round: game.round,
-                        isRejoin: true
+                        isRejoin: false,
+                        isSpectator: true
                     });
                 }
             }
@@ -228,6 +255,10 @@ module.exports = (io) => {
             const game = activeGames.get(data.gameId);
             if (!game) return;
 
+            // Make sure the sender is a player, not a spectator
+            const isPlayer = game.players.some(p => String(p.dbUserId) === String(data.senderId));
+            if (!isPlayer) return;
+
             // Broadcast the emoji to the room
             io.to(data.gameId).emit('receiveEmoji', {
                 emojiId: data.emojiId,
@@ -236,6 +267,15 @@ module.exports = (io) => {
         });
 
         socket.on('disconnect', async () => {
+            if (socket.dbUserId) {
+                const sockets = onlineUsers.get(socket.dbUserId);
+                if (sockets) {
+                    sockets.delete(socket.id);
+                    if (sockets.size === 0) {
+                        onlineUsers.delete(socket.dbUserId);
+                    }
+                }
+            }
             if (waitingPlayer && waitingPlayer.socket.id === socket.id) {
                 waitingPlayer = null;
             }
@@ -334,6 +374,7 @@ async function switchTurn(gameId, io) {
         turn: game.turn,
         round: game.round,
         players: game.players.map(p => ({
+            dbUserId: p.dbUserId,
             socketId: p.socketId,
             nickname: p.nickname,
             avatar: p.avatar,
@@ -384,3 +425,19 @@ async function endGame(gameId, io, winner, loser, reason = '') {
     if (game.interval) clearInterval(game.interval);
     activeGames.delete(gameId);
 }
+
+module.exports.isUserOnline = (userId) => {
+    if (!userId) return false;
+    return onlineUsers.has(userId) || onlineUsers.has(Number(userId)) || onlineUsers.has(String(userId)) || module.exports.getUserActiveGameId(userId) !== null;
+};
+
+module.exports.getUserActiveGameId = (userId) => {
+    if (!userId) return null;
+    for (const [gameId, game] of activeGames.entries()) {
+        const player = game.players.find(p => String(p.dbUserId) === String(userId));
+        if (player) {
+            return gameId;
+        }
+    }
+    return null;
+};

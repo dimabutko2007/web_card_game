@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Friendship = require('../models/Friendship');
+const gameSocket = require('../sockets/gameSocket');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -56,12 +57,21 @@ router.get('/', (req, res) => {
 router.get('/lobby', authController.isAuthenticated, async (req, res) => {
     const user = await User.findById(req.session.userId);
     const leaders = await User.getTopPlayers(25);
+    const friends = await Friendship.getFriends(req.session.userId);
+    friends.forEach(f => {
+        f.isOnline = gameSocket.isUserOnline(f.id);
+        f.activeGameId = gameSocket.getUserActiveGameId(f.id);
+        f.isPlaying = f.activeGameId !== null;
+    });
+    const pendingRequests = await Friendship.getPendingIncomingRequests(req.session.userId);
     res.render('lobby', { 
         nickname: req.session.nickname, 
         userId: req.session.userId,
         elo: user.elo,
         avatar: user.avatar,
         leaders: leaders,
+        friends: friends,
+        pendingRequests: pendingRequests,
         error: req.query.error,
         success: req.query.success
     });
@@ -74,7 +84,15 @@ router.get('/profile', authController.isAuthenticated, async (req, res) => {
             return res.redirect('/auth/login');
         }
         const matches = await Match.getHistoryForUser(req.session.userId, 5);
+        user.isOnline = gameSocket.isUserOnline(user.id);
+        user.activeGameId = gameSocket.getUserActiveGameId(user.id);
+        user.isPlaying = user.activeGameId !== null;
         const friends = await Friendship.getFriends(req.session.userId);
+        friends.forEach(f => {
+            f.isOnline = gameSocket.isUserOnline(f.id);
+            f.activeGameId = gameSocket.getUserActiveGameId(f.id);
+            f.isPlaying = f.activeGameId !== null;
+        });
         res.render('profile', { 
             user, 
             matches,
@@ -105,6 +123,26 @@ router.get('/profile/:nickname', authController.isAuthenticated, async (req, res
 
         const matches = await Match.getHistoryForUser(user.id, 5);
         const friends = await Friendship.getFriends(user.id);
+        const loggedInUserFriends = await Friendship.getFriends(req.session.userId);
+        const loggedInUserFriendIds = new Set(loggedInUserFriends.map(f => f.id));
+
+        user.isOnline = gameSocket.isUserOnline(user.id);
+        user.isPlaying = gameSocket.getUserActiveGameId(user.id) !== null;
+        if (loggedInUserFriendIds.has(user.id)) {
+            user.activeGameId = gameSocket.getUserActiveGameId(user.id);
+        } else {
+            user.activeGameId = null;
+        }
+
+        friends.forEach(f => {
+            f.isOnline = gameSocket.isUserOnline(f.id);
+            f.isPlaying = gameSocket.getUserActiveGameId(f.id) !== null;
+            if (f.id === req.session.userId || loggedInUserFriendIds.has(f.id)) {
+                f.activeGameId = gameSocket.getUserActiveGameId(f.id);
+            } else {
+                f.activeGameId = null;
+            }
+        });
         const relation = await Friendship.getRelation(req.session.userId, user.id);
         res.render('profile', { 
             user, 
@@ -151,11 +189,26 @@ router.get('/profile/:nickname/friends', authController.isAuthenticated, async (
             return res.redirect('/lobby?error=' + encodeURIComponent('User not found.'));
         }
         const friends = await Friendship.getFriends(user.id);
+        const loggedInUserFriends = await Friendship.getFriends(req.session.userId);
+        const loggedInUserFriendIds = new Set(loggedInUserFriends.map(f => f.id));
+
+        friends.forEach(f => {
+            f.isOnline = gameSocket.isUserOnline(f.id);
+            f.isPlaying = gameSocket.getUserActiveGameId(f.id) !== null;
+            if (f.id === req.session.userId || loggedInUserFriendIds.has(f.id)) {
+                f.activeGameId = gameSocket.getUserActiveGameId(f.id);
+            } else {
+                f.activeGameId = null;
+            }
+        });
         const pendingRequests = nickname === req.session.nickname ? await Friendship.getPendingIncomingRequests(user.id) : [];
+        const allRegisteredUsers = await User.getAllUsers();
+        const availableUsersForSearch = allRegisteredUsers.filter(u => u.id !== req.session.userId);
         res.render('friends', {
             user,
             friends,
             pendingRequests,
+            availableUsers: availableUsersForSearch,
             isOwnProfile: nickname === req.session.nickname,
             error: req.query.error,
             success: req.query.success
@@ -163,6 +216,41 @@ router.get('/profile/:nickname/friends', authController.isAuthenticated, async (
     } catch (error) {
         console.error('Friends page error:', error);
         res.redirect('/profile/' + req.params.nickname);
+    }
+});
+
+router.post('/profile/add-friend-by-nickname', authController.isAuthenticated, async (req, res) => {
+    try {
+        const nickname = req.body.nickname ? req.body.nickname.trim() : '';
+        if (!nickname) {
+            return redirectBackWithParam(req, res, 'error', 'Please enter a nickname.');
+        }
+
+        if (nickname.toLowerCase() === req.session.nickname.toLowerCase()) {
+            return redirectBackWithParam(req, res, 'error', "You cannot send a friend request to yourself.");
+        }
+
+        const targetUser = await User.findByNickname(nickname);
+        if (!targetUser) {
+            return redirectBackWithParam(req, res, 'error', `User with nickname "${nickname}" not found.`);
+        }
+
+        await Friendship.sendRequest(req.session.userId, targetUser.id);
+
+        // Emit real-time notification
+        const io = req.app.get('io');
+        if (io) {
+            const sender = await User.findById(req.session.userId);
+            io.to(`user_${targetUser.id}`).emit('friendRequestReceived', {
+                nickname: sender.nickname,
+                avatar: sender.avatar || '/assets/default_avatar.png'
+            });
+        }
+
+        redirectBackWithParam(req, res, 'success', `Sent friend request to ${targetUser.nickname}!`);
+    } catch (error) {
+        console.error('Add friend by nickname error:', error);
+        redirectBackWithParam(req, res, 'error', error.message || 'Failed to send friend request.');
     }
 });
 
