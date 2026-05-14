@@ -53,7 +53,9 @@ CREATE TABLE IF NOT EXISTS user_cards (
     FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE cards;
+SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt, is_starter, shop_price) VALUES
 -- =============================================

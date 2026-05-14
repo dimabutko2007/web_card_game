@@ -348,6 +348,19 @@
                     <canvas id="bg-particles"
                         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
+                    <button onclick="if(typeof playClickSound === 'function') playClickSound(); setTimeout(() => window.location.reload(), 150)" 
+                        style="position: fixed; top: 25px; left: 25px; z-index: 1000; background: rgba(40, 0, 70, 0.6); border: 1px solid rgba(140, 60, 200, 0.4); color: #e9d5ff; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; backdrop-filter: blur(5px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);"
+                        onmouseover="this.style.background='rgba(140, 60, 200, 0.4)'; this.style.borderColor='#c084fc'; this.style.transform='rotate(180deg) scale(1.1)';"
+                        onmouseout="this.style.background='rgba(40, 0, 70, 0.6)'; this.style.borderColor='rgba(140, 60, 200, 0.4)'; this.style.transform='rotate(0deg) scale(1)';"
+                        title="Reload Page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 2v6h-6"></path>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            <path d="M3 22v-6h6"></path>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                        </svg>
+                    </button>
+
                     <div class="container">
                         <div class="lobby-content">
                             <h1 class="dark-fantasy-title">Lobby</h1>
@@ -360,7 +373,11 @@
                                     <div class="user-section"
                                         style="display: flex; flex-direction: column; gap: 20px; flex: 1; min-width: 400px; height: 530px; box-sizing: border-box;">
                                         <div class="user-panel"
-                                            style="justify-content: center; width: 100%; margin: 0; position: relative;">
+                                            style="justify-content: center; width: 100%; margin: 0; position: relative; padding-left: 40px; padding-right: 80px; box-sizing: border-box;">
+                                            <div class="user-coins" style="position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 12px; border: 1px solid rgba(255, 215, 0, 0.3); box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);">
+                                                <img src="/assets/coins.png" alt="Coins" style="width: 20px; height: 20px; border: none; box-shadow: none; border-radius: 0; margin: 0;">
+                                                <span style="color: #ffd700; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);"><%= coins %></span>
+                                            </div>
                                             <a href="/profile"
                                                 style="display: block; border-radius: 50%; text-decoration: none;"
                                                 title="View Profile">
@@ -770,8 +787,16 @@
                         });
 
                         findMatchBtn.addEventListener('click', () => {
-                            if (findMatchBtn.classList.contains('searching')) return;
+                            // If currently searching, cancel it
+                            if (findMatchBtn.classList.contains('searching')) {
+                                socket.emit('cancelSearch');
+                                findMatchBtn.classList.remove('searching');
+                                findMatchBtn.textContent = 'Search Battle';
+                                statusMsg.textContent = 'Search cancelled.';
+                                return;
+                            }
 
+                            // Normal search start
                             findMatchBtn.classList.add('searching');
                             findMatchBtn.textContent = 'Searching...';
                             statusMsg.textContent = 'Waiting for opponent...';

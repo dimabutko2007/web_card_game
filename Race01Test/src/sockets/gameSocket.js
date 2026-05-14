@@ -41,6 +41,14 @@ module.exports = (io) => {
             }
         });
 
+        socket.on('cancelSearch', () => {
+            if (waitingPlayer && waitingPlayer.socket.id === socket.id) {
+                waitingPlayer = null;
+                broadcastLobbyStats();
+                console.log(`[MATCH] User cancelled search: ${socket.id}`);
+            }
+        });
+
         socket.on('findMatch', (data) => {
             // Check for active game first
             for (const [gameId, game] of activeGames.entries()) {
