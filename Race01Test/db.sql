@@ -68,11 +68,11 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt) VALUES
 ('Witch', 5, 4, 4, '/assets/cards/witch.png', FALSE),
 ('Blaze', 6, 3, 4, '/assets/cards/blaze.png', FALSE),
 ('Ghast', 5, 3, 4, '/assets/cards/ghast.png', FALSE),
-('Hoglin', 3, 5, 4, '/assets/cards/hoglin.png', TRUE), -- Taunt
+('Hoglin', 4, 3, 4, '/assets/cards/hoglin.png', TRUE), -- Taunt
 ('Guardian', 4, 4, 4, '/assets/cards/guardian.png', FALSE),
 ('Vindicator', 6, 2, 4, '/assets/cards/vindicator.png', FALSE),
 ('Shulker', 1, 6, 4, '/assets/cards/shulker.png', TRUE), -- Taunt
-('Zoglin', 6, 3, 4, '/assets/cards/zoglin.png', FALSE),
+('Zoglin', 3, 4, 4, '/assets/cards/zoglin.png', TRUE), -- Taunt
 ('Jockey', 5, 3, 4, '/assets/cards/jockey.png', FALSE),
 ('Snow Golem', 4, 4, 4, '/assets/cards/snow_golem.png', FALSE),
 -- 5 Energy (Stats: 9-11)

@@ -55,6 +55,7 @@ let oppData = null;
 let isMyTurn = false;
 let selectedFieldCard = null;
 let myPlayerIndex = -1;
+let isTrashMode = false;
 
 const timerEl = document.getElementById('timer');
 const myHandEl = document.getElementById('my-hand');
@@ -112,6 +113,7 @@ socket.on('timerUpdate', (data) => {
 
 socket.on('turnUpdate', (data) => {
     console.log('Turn update:', data);
+    isTrashMode = false;
     processState(data.players, data.turn);
 });
 
@@ -180,6 +182,24 @@ function updateStats() {
     if (myHpText) myHpText.textContent = `${myData.hp}/20`;
     if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
 
+    // Update side action buttons
+    const trashBtn = document.getElementById('trash-btn');
+    const changeBtn = document.getElementById('change-hand-btn');
+    const trashCountEl = document.getElementById('trash-count');
+    const changeCountEl = document.getElementById('change-count');
+
+    if (trashBtn && myData.trashCount !== undefined) {
+        trashCountEl.textContent = myData.trashCount;
+        trashBtn.disabled = !isMyTurn || myData.trashCount <= 0 || window.isSpectator;
+        if (isTrashMode) trashBtn.classList.add('active');
+        else trashBtn.classList.remove('active');
+    }
+
+    if (changeBtn && myData.canChangeHand !== undefined) {
+        changeCountEl.textContent = myData.canChangeHand ? '1' : '0';
+        changeBtn.disabled = !isMyTurn || !myData.canChangeHand || window.isSpectator;
+    }
+
     const oppRankHtml = oppData.rankIcon ? `<img src="/assets/ranks/${oppData.rankIcon}" title="${oppData.rankName}" class="game-rank-icon">` : '';
     const myRankHtml = myData.rankIcon ? `<img src="/assets/ranks/${myData.rankIcon}" title="${myData.rankName}" class="game-rank-icon">` : '';
 
@@ -244,6 +264,13 @@ function renderHand() {
 
             cardEl.addEventListener('click', () => {
                 if (!isMyTurn) return;
+                
+                if (isTrashMode) {
+                    socket.emit('trashCard', { gameId, cardInstanceId: card.instanceId });
+                    isTrashMode = false;
+                    return;
+                }
+
                 if (myData.energy < card.cost) return;
                 socket.emit('playCard', { gameId, cardInstanceId: card.instanceId });
             });
@@ -364,7 +391,24 @@ function createCardElement(card) {
 endTurnBtn.addEventListener('click', () => {
     clickSound.currentTime = 0;
     clickSound.play().catch(e => { });
+    isTrashMode = false;
     socket.emit('endTurn', { gameId });
+});
+
+// Side actions listeners
+document.getElementById('trash-btn').addEventListener('click', () => {
+    if (!isMyTurn || myData.trashCount <= 0) return;
+    clickSound.currentTime = 0;
+    clickSound.play().catch(e => { });
+    isTrashMode = !isTrashMode;
+    updateStats(); // Refresh button state
+});
+
+document.getElementById('change-hand-btn').addEventListener('click', () => {
+    if (!isMyTurn || !myData.canChangeHand) return;
+    clickSound.currentTime = 0;
+    clickSound.play().catch(e => { });
+    socket.emit('changeHand', { gameId });
 });
 
 // Leave Battle logic
@@ -539,6 +583,12 @@ socket.on('gameOver', (data) => {
 });
 
 function showGameOverScreen(isWinner, winnerName) {
+    // Disable leave button immediately at game end
+    const leaveBtn = document.getElementById('leave-battle-btn');
+    if (leaveBtn) {
+        leaveBtn.disabled = true;
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';

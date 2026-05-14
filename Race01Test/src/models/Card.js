@@ -12,9 +12,10 @@ class Card {
     }
 
     static async getBalancedInitialHand(count = 5) {
-        // Fetch 2 random cards with cost 1 or 2
+        // Fetch up to 2 random cards with cost 1 or 2, respecting count
+        const lowLimit = Math.min(2, count);
         const [lowCostCards] = await db.query(
-            'SELECT * FROM cards WHERE cost IN (1, 2) ORDER BY RAND() LIMIT 2'
+            'SELECT * FROM cards WHERE cost IN (1, 2) ORDER BY RAND() LIMIT ?', [parseInt(lowLimit)]
         );
 
         const remainingCount = count - lowCostCards.length;

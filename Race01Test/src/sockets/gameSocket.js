@@ -116,13 +116,18 @@ module.exports = (io) => {
                         const cards = await Card.getBalancedInitialHand(5);
                         p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
                         p.field = [];
+                        p.trashCount = 3;
+                        p.canChangeHand = true;
                         const rank = User.getRank(p.elo);
                         p.rankName = rank.name;
                         p.rankIcon = rank.icon;
                     }
 
                     io.to(data.gameId).emit('startGame', {
-                        players: game.players,
+                        players: game.players.map(p => ({
+                            ...p,
+                            hand: p.hand // hand is already mapped
+                        })),
                         turn: game.turn,
                         round: game.round,
                         isRejoin: false
@@ -196,6 +201,49 @@ module.exports = (io) => {
                     });
                 }
             }
+        });
+
+        socket.on('trashCard', async (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+            const player = game.players[game.turn];
+            if (player.socketId !== socket.id) return;
+            if (player.trashCount <= 0) return;
+
+            const cardIndex = player.hand.findIndex(c => c.instanceId === data.cardInstanceId);
+            if (cardIndex !== -1) {
+                player.hand.splice(cardIndex, 1);
+                player.trashCount--;
+
+                // Give one new card
+                const newCards = await Card.getWeightedRandomCards(1, player.hand);
+                player.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
+
+                io.to(data.gameId).emit('gameStateUpdate', {
+                    players: game.players,
+                    turn: game.turn
+                });
+            }
+        });
+
+        socket.on('changeHand', async (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+            const player = game.players[game.turn];
+            if (player.socketId !== socket.id) return;
+            if (!player.canChangeHand) return;
+
+            const handSize = player.hand.length;
+            player.hand = [];
+            player.canChangeHand = false;
+
+            const newCards = await Card.getBalancedInitialHand(handSize);
+            player.hand = newCards.map(c => ({ ...c, instanceId: uuidv4() }));
+
+            io.to(data.gameId).emit('gameStateUpdate', {
+                players: game.players,
+                turn: game.turn
+            });
         });
 
         socket.on('attack', async (data) => {
@@ -384,6 +432,8 @@ async function switchTurn(gameId, io) {
             maxEnergy: p.maxEnergy,
             hand: p.hand,
             field: p.field,
+            trashCount: p.trashCount,
+            canChangeHand: p.canChangeHand,
             rankName: p.rankName,
             rankIcon: p.rankIcon
         }))

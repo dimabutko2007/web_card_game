@@ -13,7 +13,14 @@ npm install
 ```
 
 ### 2. Налаштування бази даних (MySQL)
-Переконайтеся, що у вас встановлено MySQL Server. 
+Переконайтеся, що у вас встановлено MySQL Server.
+
+Виконайте в терміналі powershell: 
+```powershell
+Get-Content db.sql | mysql -u root -p
+```
+
+або:
 
 1. Увійдіть у вашу консоль MySQL:
    ```bash

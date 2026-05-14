@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css?v=1.2">
     <link rel="stylesheet" href="/css/game.css?v=1.4">
+    <link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css">
 </head>
 
 <body style="background: url('/assets/background1.png') no-repeat center center fixed; background-size: cover;">
@@ -91,8 +92,20 @@
 
         <!-- My Area -->
         <div class="player-area">
-            <div class="hand" id="my-hand">
-                <!-- Cards in hand -->
+            <div class="hand-container">
+                <div class="hand" id="my-hand">
+                    <!-- Cards in hand -->
+                </div>
+                <div class="side-actions">
+                    <button id="trash-btn" class="side-btn" title="Trash one card (3 left)">
+                        <span class="icon"><i class="hgi hgi-stroke hgi-restore-bin"></i></span>
+                        <span id="trash-count" class="count">3</span>
+                    </button>
+                    <button id="change-hand-btn" class="side-btn" title="Change all cards (1 left)">
+                        <span class="icon"><i class="hgi hgi-stroke hgi-reload"></i></span>
+                        <span id="change-count" class="count">1</span>
+                    </button>
+                </div>
             </div>
             <div class="player-info">
                 <img src="/assets/default_avatar.png" alt="Me" id="my-avatar" class="avatar">
