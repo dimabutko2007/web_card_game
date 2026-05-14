@@ -36,6 +36,19 @@ window.AudioManager.register(loseSound, 'sfx', 0.7);
 const clickSound = new Audio('/assets/sounds/click_sound.mp3');
 window.AudioManager.register(clickSound, 'sfx', 0.5);
 
+const changeOneCardSound = new Audio('/assets/sounds/change_one_card_sound.mp3');
+window.AudioManager.register(changeOneCardSound, 'sfx', 0.7);
+
+const shuffleCardsSound = new Audio('/assets/sounds/shuffle_cards_sound.mp3');
+window.AudioManager.register(shuffleCardsSound, 'sfx', 0.7);
+
+let lastHandIds = new Set();
+let lastMyFieldIds = new Set();
+let lastOppFieldIds = new Set();
+
+const cardBirthTimes = new Map(); // instanceId -> timestamp
+const cardFirstLocation = new Map(); // instanceId -> 'hand' or 'field'
+
 socket.on('attackEvent', (data) => {
     attackSound.currentTime = 0;
     attackSound.play().catch(e => { });
@@ -99,6 +112,10 @@ socket.on('startGame', (data) => {
         if (emojiBtn) emojiBtn.style.display = 'none';
     }
     console.log('Game started. My index:', myPlayerIndex);
+
+    // Reset tracking for the new match
+    cardBirthTimes.clear();
+    cardFirstLocation.clear();
 
     if (!data.isRejoin && !window.isSpectator) {
         showCoinFlip(data.turn === myPlayerIndex);
@@ -243,11 +260,32 @@ function renderHand() {
     myHandEl.innerHTML = '';
     if (!myData || !myData.hand) return;
 
+    const now = Date.now();
     if (window.isSpectator) {
         // Render Player 1's cards as beautiful card backs
-        myData.hand.forEach(() => {
+        myData.hand.forEach((card, index) => {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
+            
+            if (!cardBirthTimes.has(card.instanceId)) {
+                cardBirthTimes.set(card.instanceId, now);
+            }
+            if (!cardFirstLocation.has(card.instanceId)) {
+                cardFirstLocation.set(card.instanceId, 'hand');
+            }
+
+            // Add dealing animation if card is "new" AND in its first location
+            const elapsed = (now - cardBirthTimes.get(card.instanceId)) / 1000;
+            if (elapsed < 1.5 && cardFirstLocation.get(card.instanceId) === 'hand') {
+                const totalDelay = (index * 0.1) - elapsed;
+                cardEl.classList.add('card-deal');
+                cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
+                
+                // Remove class after animation to restore pointer-events
+                setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
+            }
+            // Removed setTimeout as negative delay + re-renders handle it better
+
             cardEl.innerHTML = `
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #3b0764, #1e1b4b); border: 2px solid rgba(147, 51, 234, 0.4); border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
                     <span style="color: #c084fc; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 8px #9333ea; letter-spacing: 1.5px;">DARK</span>
@@ -256,8 +294,27 @@ function renderHand() {
             myHandEl.appendChild(cardEl);
         });
     } else {
-        myData.hand.forEach(card => {
+        myData.hand.forEach((card, index) => {
             const cardEl = createCardElement(card);
+            
+            if (!cardBirthTimes.has(card.instanceId)) {
+                cardBirthTimes.set(card.instanceId, now);
+            }
+            if (!cardFirstLocation.has(card.instanceId)) {
+                cardFirstLocation.set(card.instanceId, 'hand');
+            }
+
+            // Add dealing animation for new cards
+            const elapsed = (now - cardBirthTimes.get(card.instanceId)) / 1000;
+            if (elapsed < 1.5 && cardFirstLocation.get(card.instanceId) === 'hand') {
+                const totalDelay = (index * 0.1) - elapsed;
+                cardEl.classList.add('card-deal');
+                cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
+                
+                // Remove class after animation to restore pointer-events
+                setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
+            }
+
             if (isMyTurn && myData.energy >= card.cost) {
                 cardEl.classList.add('playable-card');
             }
@@ -266,17 +323,26 @@ function renderHand() {
                 if (!isMyTurn) return;
                 
                 if (isTrashMode) {
+                    changeOneCardSound.currentTime = 0;
+                    changeOneCardSound.play().catch(e => { });
                     socket.emit('trashCard', { gameId, cardInstanceId: card.instanceId });
                     isTrashMode = false;
                     return;
                 }
 
                 if (myData.energy < card.cost) return;
+                
+                // Mark as "old" immediately when played to prevent re-animation on field
+                cardBirthTimes.set(card.instanceId, 0);
+                
                 socket.emit('playCard', { gameId, cardInstanceId: card.instanceId });
             });
             myHandEl.appendChild(cardEl);
         });
     }
+    
+    // Cleanup: remove IDs that are no longer in the hand from birthTimes 
+    // (but keep them if they might be on the field - we'll do a full cleanup in renderField)
 }
 
 function renderField() {
@@ -284,8 +350,27 @@ function renderField() {
     oppFieldEl.innerHTML = '';
     if (!myData || !oppData) return;
 
-    myData.field.forEach(card => {
+    const now = Date.now();
+    myData.field.forEach((card, index) => {
         const cardEl = createCardElement(card);
+        
+        if (!cardBirthTimes.has(card.instanceId)) {
+            cardBirthTimes.set(card.instanceId, now);
+        }
+        if (!cardFirstLocation.has(card.instanceId)) {
+            cardFirstLocation.set(card.instanceId, 'field');
+        }
+
+        const elapsed = (now - cardBirthTimes.get(card.instanceId)) / 1000;
+        if (elapsed < 1.5 && cardFirstLocation.get(card.instanceId) === 'field') {
+            const totalDelay = (index * 0.05) - elapsed;
+            cardEl.classList.add('card-deal');
+            cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
+            
+            // Remove class after animation to restore pointer-events
+            setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
+        }
+
         if (card.isSummoning) cardEl.classList.add('summoning-sickness');
         
         if (!window.isSpectator) {
@@ -313,8 +398,25 @@ function renderField() {
 
     const hasTaunt = oppData.field.some(c => c.has_taunt);
 
-    oppData.field.forEach(card => {
+    oppData.field.forEach((card, index) => {
         const cardEl = createCardElement(card);
+        
+        if (!cardBirthTimes.has(card.instanceId)) {
+            cardBirthTimes.set(card.instanceId, now);
+        }
+        if (!cardFirstLocation.has(card.instanceId)) {
+            cardFirstLocation.set(card.instanceId, 'field');
+        }
+
+        const elapsed = (now - cardBirthTimes.get(card.instanceId)) / 1000;
+        if (elapsed < 1.5 && cardFirstLocation.get(card.instanceId) === 'field') {
+            const totalDelay = (index * 0.05) - elapsed;
+            cardEl.classList.add('card-deal');
+            cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
+            
+            // Remove class after animation to restore pointer-events
+            setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
+        }
         
         if (!window.isSpectator) {
             const canHitThis = !hasTaunt || card.has_taunt;
@@ -346,6 +448,19 @@ function renderField() {
         }
         oppFieldEl.appendChild(cardEl);
     });
+
+    // Cleanup cardBirthTimes and cardFirstLocation
+    const currentIds = new Set([
+        ...myData.hand.map(c => c.instanceId),
+        ...myData.field.map(c => c.instanceId),
+        ...oppData.field.map(c => c.instanceId)
+    ]);
+    for (const id of cardBirthTimes.keys()) {
+        if (!currentIds.has(id)) {
+            cardBirthTimes.delete(id);
+            cardFirstLocation.delete(id);
+        }
+    }
 }
 
 // Hero attack
@@ -398,16 +513,21 @@ endTurnBtn.addEventListener('click', () => {
 // Side actions listeners
 document.getElementById('trash-btn').addEventListener('click', () => {
     if (!isMyTurn || myData.trashCount <= 0) return;
+    
     clickSound.currentTime = 0;
     clickSound.play().catch(e => { });
+    
     isTrashMode = !isTrashMode;
     updateStats(); // Refresh button state
 });
 
 document.getElementById('change-hand-btn').addEventListener('click', () => {
     if (!isMyTurn || !myData.canChangeHand) return;
-    clickSound.currentTime = 0;
-    clickSound.play().catch(e => { });
+    
+    shuffleCardsSound.currentTime = 0;
+    shuffleCardsSound.play().catch(e => { });
+    
+    // No need to clear sets manually, render functions will handle it
     socket.emit('changeHand', { gameId });
 });
 

@@ -170,17 +170,39 @@
     border-radius: 10px;
     position: relative;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
     user-select: none;
     overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
+@keyframes cardDeal {
+    0% {
+        opacity: 0;
+        transform: translate(50vw, -100vh) scale(0.2) rotate(720deg);
+        filter: blur(10px);
+    }
+    60% {
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1) rotate(0);
+    }
+}
+
+.card-deal {
+    animation: cardDeal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    pointer-events: none;
+}
+
 .card:hover {
-    transform: translateY(-10px) scale(1.05);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    transform: translateY(-15px) scale(1.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(140, 60, 200, 0.3);
     border-color: var(--color-red);
+    z-index: 50;
 }
 
 .card .card-cost {
@@ -380,7 +402,7 @@
 }
 
 .playable-card {
-    animation: playablePulse 2s infinite ease-in-out !important;
+    animation: playablePulse 2s infinite ease-in-out;
     transform: translateY(-5px);
     z-index: 5;
 }
