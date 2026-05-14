@@ -1,14 +1,23 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const Card = require('./Card');
 
 class User {
+    /**
+     * Creates a new player and automatically assigns them the 25 starter cards.
+     */
     static async create(nickname, email, password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await db.execute(
             'INSERT INTO users (nickname, email, password) VALUES (?, ?, ?)',
             [nickname, email, hashedPassword]
         );
-        return result.insertId;
+        const userId = result.insertId;
+
+        // Assign starter cards to the new player's collection
+        await Card.giveStarterCards(userId);
+
+        return userId;
     }
 
     static async findByEmail(email) {
@@ -22,22 +31,62 @@ class User {
     }
 
     static async findById(id) {
-        const [rows] = await db.execute('SELECT id, nickname, email, avatar, wins, losses, elo FROM users WHERE id = ?', [id]);
+        const [rows] = await db.execute(
+            'SELECT id, nickname, email, avatar, wins, losses, elo, coins FROM users WHERE id = ?',
+            [id]
+        );
         return rows[0];
     }
 
+    /**
+     * Updates player statistics after a match.
+     * The winner receives +50 coins, while the loser receives 0 coins.
+     */
     static async updateStats(userId, isWin) {
         const eloChange = isWin ? 25 : -25;
+        const coinsReward = isWin ? 50 : 0;
+
         if (isWin) {
-            await db.execute('UPDATE users SET wins = wins + 1, elo = elo + ? WHERE id = ?', [eloChange, userId]);
+            await db.execute(
+                'UPDATE users SET wins = wins + 1, elo = elo + ?, coins = coins + ? WHERE id = ?',
+                [eloChange, coinsReward, userId]
+            );
         } else {
-            await db.execute('UPDATE users SET losses = losses + 1, elo = elo + ? WHERE id = ?', [eloChange, userId]);
+            await db.execute(
+                'UPDATE users SET losses = losses + 1, elo = elo + ?, coins = coins + ? WHERE id = ?',
+                [eloChange, coinsReward, userId]
+            );
         }
         return await this.findById(userId);
     }
 
+    /**
+     * Adds coins to the user's balance (e.g., from level-ups, bonuses, or events).
+     */
+    static async addCoins(userId, amount) {
+        await db.execute(
+            'UPDATE users SET coins = coins + ? WHERE id = ?',
+            [parseInt(amount), userId]
+        );
+        return await this.findById(userId);
+    }
+
+    /**
+     * Deducts coins from the user's balance (e.g., for shop purchases).
+     * Returns false if the user has insufficient funds.
+     */
+    static async spendCoins(userId, amount) {
+        const user = await this.findById(userId);
+        if (!user || user.coins < amount) return false;
+
+        await db.execute(
+            'UPDATE users SET coins = coins - ? WHERE id = ?',
+            [parseInt(amount), userId]
+        );
+        return true;
+    }
+
     static async updateAvatar(userId, avatarPath) {
-        await db.execute('SELECT * FROM users WHERE id = ?', [userId]);
         await db.execute('UPDATE users SET avatar = ? WHERE id = ?', [avatarPath, userId]);
     }
 
@@ -81,16 +130,16 @@ class User {
     }
 
     static getRank(elo) {
-        if (elo >= 2500) return { name: 'Netherite', icon: 'netherite.png' };
-        if (elo >= 2250) return { name: 'Emerald', icon: 'emerald.png' };
-        if (elo >= 2000) return { name: 'Diamond', icon: 'diamond.png' };
-        if (elo >= 1800) return { name: 'Lapis', icon: 'lapis.png' };
-        if (elo >= 1600) return { name: 'Redstone', icon: 'redstone.png' };
-        if (elo >= 1400) return { name: 'Gold', icon: 'gold.png' };
-        if (elo >= 1200) return { name: 'Iron', icon: 'iron.png' };
-        if (elo >= 1000) return { name: 'Copper', icon: 'copper.png' };
-        if (elo >= 800) return { name: 'Coal', icon: 'coal.png' };
-        return { name: 'Cobblestone', icon: 'cobblestone.png' };
+        if (elo >= 2500) return { name: 'Netherite',   icon: 'netherite.png' };
+        if (elo >= 2250) return { name: 'Emerald',     icon: 'emerald.png' };
+        if (elo >= 2000) return { name: 'Diamond',     icon: 'diamond.png' };
+        if (elo >= 1800) return { name: 'Lapis',       icon: 'lapis.png' };
+        if (elo >= 1600) return { name: 'Redstone',    icon: 'redstone.png' };
+        if (elo >= 1400) return { name: 'Gold',        icon: 'gold.png' };
+        if (elo >= 1200) return { name: 'Iron',        icon: 'iron.png' };
+        if (elo >= 1000) return { name: 'Copper',      icon: 'copper.png' };
+        if (elo >=  800) return { name: 'Coal',        icon: 'coal.png' };
+        return             { name: 'Cobblestone',  icon: 'cobblestone.png' };
     }
 }
 

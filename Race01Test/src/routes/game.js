@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     fileFilter: function (req, file, cb) {
@@ -64,11 +64,12 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         f.isPlaying = f.activeGameId !== null;
     });
     const pendingRequests = await Friendship.getPendingIncomingRequests(req.session.userId);
-    res.render('lobby', { 
-        nickname: req.session.nickname, 
+    res.render('lobby', {
+        nickname: req.session.nickname,
         userId: req.session.userId,
         elo: user.elo,
         avatar: user.avatar,
+        coins: user.coins,
         leaders: leaders,
         friends: friends,
         pendingRequests: pendingRequests,
@@ -93,13 +94,13 @@ router.get('/profile', authController.isAuthenticated, async (req, res) => {
             f.activeGameId = gameSocket.getUserActiveGameId(f.id);
             f.isPlaying = f.activeGameId !== null;
         });
-        res.render('profile', { 
-            user, 
+        res.render('profile', {
+            user,
             matches,
             friends,
             isOwnProfile: true,
-            error: req.query.error, 
-            success: req.query.success 
+            error: req.query.error,
+            success: req.query.success
         });
     } catch (error) {
         console.error('Profile error:', error);
@@ -110,7 +111,7 @@ router.get('/profile', authController.isAuthenticated, async (req, res) => {
 router.get('/profile/:nickname', authController.isAuthenticated, async (req, res) => {
     try {
         const { nickname } = req.params;
-        
+
         // If it's the current user, redirect to /profile
         if (nickname === req.session.nickname) {
             return res.redirect('/profile');
@@ -144,14 +145,14 @@ router.get('/profile/:nickname', authController.isAuthenticated, async (req, res
             }
         });
         const relation = await Friendship.getRelation(req.session.userId, user.id);
-        res.render('profile', { 
-            user, 
+        res.render('profile', {
+            user,
             matches,
             friends,
             relation,
             isOwnProfile: false,
-            error: req.query.error, 
-            success: req.query.success 
+            error: req.query.error,
+            success: req.query.success
         });
     } catch (error) {
         console.error('Foreign profile error:', error);
@@ -168,8 +169,8 @@ router.get('/profile/:nickname/history', authController.isAuthenticated, async (
         }
 
         const matches = await Match.getHistoryForUser(user.id, 100); // Fetch up to 100 recent matches
-        res.render('history', { 
-            user, 
+        res.render('history', {
+            user,
             matches,
             isOwnProfile: nickname === req.session.nickname,
             error: req.query.error,
@@ -262,7 +263,7 @@ router.post('/profile/:nickname/add-friend', authController.isAuthenticated, asy
             return redirectBackWithParam(req, res, 'error', 'User not found.');
         }
         await Friendship.sendRequest(req.session.userId, targetUser.id);
-        
+
         // Emit real-time notification
         const io = req.app.get('io');
         if (io) {

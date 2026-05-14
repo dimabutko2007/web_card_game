@@ -308,37 +308,49 @@
 </head>
 
 <body style="background: url('/assets/background1.png') no-repeat center center fixed; background-size: cover;">
-    <% if (typeof error !== 'undefined' && error) { %>
-        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
-                <h4 style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>⚠️</span> Error</h4>
-                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+    <% if (typeof error !=='undefined' && error) { %>
+        <div class="popup-notification-box"
+            style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4
+                    style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <span>⚠️</span> Error
+                </h4>
+                <button onclick="this.parentElement.parentElement.remove()"
+                    style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
             </div>
             <div style="color: #fee2e2; font-size: 1rem; font-weight: 500; margin-top: 5px;">
                 <%= error %>
             </div>
         </div>
-        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
-    <% } %>
-    <% if (typeof success !== 'undefined' && success) { %>
-        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
-                <h4 style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><span>✓</span> Success</h4>
-                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
-            </div>
-            <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
-                <%= success %>
-            </div>
-        </div>
-        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if(b) b.remove(); }, 5000);</script>
-    <% } %>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if (b) b.remove(); }, 5000);</script>
+        <% } %>
+            <% if (typeof success !=='undefined' && success) { %>
+                <div class="popup-notification-box"
+                    style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                        <h4
+                            style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                            <span>✓</span> Success
+                        </h4>
+                        <button onclick="this.parentElement.parentElement.remove()"
+                            style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+                    </div>
+                    <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                        <%= success %>
+                    </div>
+                </div>
+                <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if (b) b.remove(); }, 5000);</script>
+                <% } %>
 
-    <canvas id="bg-particles"
-        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
+                    <canvas id="bg-particles"
+                        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
 
-    <div class="container">
-        <div class="lobby-content">
-            <h1 class="dark-fantasy-title">Lobby</h1>
+                    <div class="container">
+                        <div class="lobby-content">
+                            <h1 class="dark-fantasy-title">Lobby</h1>
 
                             <div class="lobby-controls"
                                 style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; margin-top: 50px;">
@@ -419,12 +431,21 @@
                                                         <% } %>
                                                 </h3>
                                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;" title="Show online friends only">
-                                                        <span style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #a78bfa; letter-spacing: 0.5px;">🟢 Online</span>
-                                                        <div style="position: relative; display: inline-block; width: 34px; height: 18px;">
-                                                            <input type="checkbox" id="lobby-online-filter-checkbox" style="opacity: 0; width: 0; height: 0; position: absolute;" onchange="filterLobbyFriends()">
-                                                            <span class="custom-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); border: 1px solid rgba(140,60,200,0.4); border-radius: 18px; transition: .3s;"></span>
-                                                            <span class="custom-toggle-dot" style="position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background-color: #a78bfa; border-radius: 50%; transition: .3s;"></span>
+                                                    <label
+                                                        style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;"
+                                                        title="Show online friends only">
+                                                        <span
+                                                            style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #a78bfa; letter-spacing: 0.5px;">🟢
+                                                            Online</span>
+                                                        <div
+                                                            style="position: relative; display: inline-block; width: 34px; height: 18px;">
+                                                            <input type="checkbox" id="lobby-online-filter-checkbox"
+                                                                style="opacity: 0; width: 0; height: 0; position: absolute;"
+                                                                onchange="filterLobbyFriends()">
+                                                            <span class="custom-toggle-slider"
+                                                                style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); border: 1px solid rgba(140,60,200,0.4); border-radius: 18px; transition: .3s;"></span>
+                                                            <span class="custom-toggle-dot"
+                                                                style="position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background-color: #a78bfa; border-radius: 50%; transition: .3s;"></span>
                                                         </div>
                                                     </label>
                                                     <button id="toggle-lobby-search-btn" title="Search Friends"
@@ -435,11 +456,12 @@
                                             </div>
 
                                             <style>
-                                                #lobby-online-filter-checkbox:checked ~ .custom-toggle-slider {
+                                                #lobby-online-filter-checkbox:checked~.custom-toggle-slider {
                                                     background-color: rgba(16, 185, 129, 0.25) !important;
                                                     border-color: #10b981 !important;
                                                 }
-                                                #lobby-online-filter-checkbox:checked ~ .custom-toggle-dot {
+
+                                                #lobby-online-filter-checkbox:checked~.custom-toggle-dot {
                                                     transform: translateX(16px);
                                                     background-color: #10b981 !important;
                                                     box-shadow: 0 0 8px #10b981;
@@ -544,44 +566,55 @@
                                                                         data-nickname="<%= friend.nickname.toLowerCase() %>"
                                                                         data-online="<%= (friend.activeGameId || friend.isPlaying || friend.isOnline) ? 'true' : 'false' %>"
                                                                         style="display: flex; align-items: center; gap: 15px;">
-                                                                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                                                                            <div style="position: relative; display: inline-block; width: 40px; height: 40px; flex-shrink: 0;">
+                                                                        <div
+                                                                            style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                                                                            <div
+                                                                                style="position: relative; display: inline-block; width: 40px; height: 40px; flex-shrink: 0;">
                                                                                 <img src="<%= friend.avatar || '/assets/default_avatar.png' %>"
                                                                                     alt="<%= friend.nickname %>"
                                                                                     class="<%= (friend.activeGameId || friend.isPlaying) ? 'avatar-playing' : (friend.isOnline ? 'avatar-online' : 'avatar-offline') %>"
                                                                                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                                                                                <% if (friend.activeGameId || friend.isPlaying) { %>
-                                                                                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #c084fc; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
-                                                                                <% } else if (friend.isOnline) { %>
-                                                                                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #10b981; display: block;"></span>
-                                                                                <% } %>
+                                                                                <% if (friend.activeGameId ||
+                                                                                    friend.isPlaying) { %>
+                                                                                    <span
+                                                                                        style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #c084fc; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                                                                    <% } else if (friend.isOnline) { %>
+                                                                                        <span
+                                                                                            style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #10b981; display: block;"></span>
+                                                                                        <% } %>
                                                                             </div>
-                                                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                                            <div
+                                                                                style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                                                                 <a href="/profile/<%= friend.nickname %>"
                                                                                     class="<%= (friend.activeGameId || friend.isPlaying) ? 'name-playing' : (friend.isOnline ? 'name-online' : 'name-offline') %>"
                                                                                     style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
                                                                                     <%= friend.nickname %>
                                                                                 </a>
-                                                                                <% if (friend.activeGameId || friend.isPlaying) { %>
-                                                                                    <span style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 2px 6px; border-radius: 6px; display: inline-block;">playing</span>
-                                                                                <% } %>
-                                                                                <% if (friend.activeGameId) { %>
-                                                                                    <a href="/game/<%= friend.activeGameId %>"
-                                                                                        class="spectate-badge-link"
-                                                                                        style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;"
-                                                                                        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 15px rgba(168, 85, 247, 0.7)';"
-                                                                                        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px rgba(168, 85, 247, 0.4)';">
-                                                                                        <span style="font-size: 0.8rem; line-height: 1;">👁️</span>Spec
-                                                                                    </a>
-                                                                                <% } %>
+                                                                                <% if (friend.activeGameId ||
+                                                                                    friend.isPlaying) { %>
+                                                                                    <span
+                                                                                        style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 2px 6px; border-radius: 6px; display: inline-block;">playing</span>
+                                                                                    <% } %>
+                                                                                        <% if (friend.activeGameId) { %>
+                                                                                            <a href="/game/<%= friend.activeGameId %>"
+                                                                                                class="spectate-badge-link"
+                                                                                                style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;"
+                                                                                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 15px rgba(168, 85, 247, 0.7)';"
+                                                                                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px rgba(168, 85, 247, 0.4)';">
+                                                                                                <span
+                                                                                                    style="font-size: 0.8rem; line-height: 1;">👁️</span>Spec
+                                                                                            </a>
+                                                                                            <% } %>
                                                                             </div>
                                                                         </div>
-                                                                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 90px; flex-shrink: 0;">
+                                                                        <div
+                                                                            style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 90px; flex-shrink: 0;">
                                                                             <img src="/assets/ranks/<%= friendRank.icon %>"
                                                                                 alt="<%= friendRank.name %>"
                                                                                 title="<%= friendRank.name %>"
                                                                                 style="width: 30px; height: 30px; border-radius: 0;">
-                                                                            <span style="color: var(--color-gold); font-size: 0.95rem; font-weight: bold; width: 45px; text-align: right;">
+                                                                            <span
+                                                                                style="color: var(--color-gold); font-size: 0.95rem; font-weight: bold; width: 45px; text-align: right;">
                                                                                 <%= friend.elo %>
                                                                             </span>
                                                                         </div>
@@ -606,9 +639,11 @@
                                         </div>
                                     </div>
 
-                                    <div class="leaderboard-panel" style="flex: 1; min-width: 400px; height: 530px; box-sizing: border-box; display: flex; flex-direction: column;">
+                                    <div class="leaderboard-panel"
+                                        style="flex: 1; min-width: 400px; height: 530px; box-sizing: border-box; display: flex; flex-direction: column;">
                                         <h3>Top Players</h3>
-                                        <div class="table-scroll-wrapper" style="flex: 1; overflow-y: auto; max-height: none;">
+                                        <div class="table-scroll-wrapper"
+                                            style="flex: 1; overflow-y: auto; max-height: none;">
                                             <table class="leaderboard-table">
                                                 <thead>
                                                     <tr>
@@ -688,98 +723,98 @@
                                 </div>
 
                             </div>
-        </div>
-    </div>
+                        </div>
+                    </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const findMatchBtn = document.getElementById('find-match-btn');
-        const statusMsg = document.getElementById('status-msg');
-        let hasActiveGame = false;
+                    <script src="/socket.io/socket.io.js"></script>
+                    <script>
+                        const socket = io();
+                        const findMatchBtn = document.getElementById('find-match-btn');
+                        const statusMsg = document.getElementById('status-msg');
+                        let hasActiveGame = false;
 
-        // Join personal room for notifications
-        socket.emit('joinUserRoom', { userId: '<%= userId %>' });
+                        // Join personal room for notifications
+                        socket.emit('joinUserRoom', { userId: '<%= userId %>' });
 
-        // Check for active game on load
-        socket.emit('checkActiveGame', { userId: '<%= userId %>' });
+                        // Check for active game on load
+                        socket.emit('checkActiveGame', { userId: '<%= userId %>' });
 
-        socket.on('lobbyStatsUpdate', (data) => {
-            const statOnline = document.getElementById('stat-online');
-            const statSearching = document.getElementById('stat-searching');
-            if (statOnline) statOnline.textContent = data.online;
-            if (statSearching) statSearching.textContent = data.searching;
-        });
+                        socket.on('lobbyStatsUpdate', (data) => {
+                            const statOnline = document.getElementById('stat-online');
+                            const statSearching = document.getElementById('stat-searching');
+                            if (statOnline) statOnline.textContent = data.online;
+                            if (statSearching) statSearching.textContent = data.searching;
+                        });
 
-        socket.on('activeGameFound', (data) => {
-            hasActiveGame = true;
-            findMatchBtn.textContent = 'Return to Battle';
-            findMatchBtn.classList.add('active-game-button');
-            statusMsg.textContent = 'You have an active battle!';
-        });
+                        socket.on('activeGameFound', (data) => {
+                            hasActiveGame = true;
+                            findMatchBtn.textContent = 'Return to Battle';
+                            findMatchBtn.classList.add('active-game-button');
+                            statusMsg.textContent = 'You have an active battle!';
+                        });
 
-        socket.on('activeGameEnded', () => {
-            hasActiveGame = false;
-            findMatchBtn.textContent = 'Search Battle';
-            findMatchBtn.classList.remove('active-game-button');
-            statusMsg.textContent = 'Previous battle has ended.';
-        });
+                        socket.on('activeGameEnded', () => {
+                            hasActiveGame = false;
+                            findMatchBtn.textContent = 'Search Battle';
+                            findMatchBtn.classList.remove('active-game-button');
+                            statusMsg.textContent = 'Previous battle has ended.';
+                        });
 
-        socket.on('statsUpdate', (data) => {
-            const eloDisplay = document.getElementById('user-elo-display');
-            if (eloDisplay) {
-                eloDisplay.textContent = `(Elo: ${data.elo})`;
-                eloDisplay.style.animation = 'pulse 1s ease-in-out';
-                setTimeout(() => eloDisplay.style.animation = '', 1000);
-            }
-        });
+                        socket.on('statsUpdate', (data) => {
+                            const eloDisplay = document.getElementById('user-elo-display');
+                            if (eloDisplay) {
+                                eloDisplay.textContent = `(Elo: ${data.elo})`;
+                                eloDisplay.style.animation = 'pulse 1s ease-in-out';
+                                setTimeout(() => eloDisplay.style.animation = '', 1000);
+                            }
+                        });
 
-        findMatchBtn.addEventListener('click', () => {
-            if (findMatchBtn.classList.contains('searching')) return;
+                        findMatchBtn.addEventListener('click', () => {
+                            if (findMatchBtn.classList.contains('searching')) return;
 
-            findMatchBtn.classList.add('searching');
-            findMatchBtn.textContent = 'Searching...';
-            statusMsg.textContent = 'Waiting for opponent...';
+                            findMatchBtn.classList.add('searching');
+                            findMatchBtn.textContent = 'Searching...';
+                            statusMsg.textContent = 'Waiting for opponent...';
 
-            socket.emit('findMatch', {
-                nickname: '<%= nickname %>',
-                userId: '<%= userId %>',
-                avatar: '<%= typeof avatar !== "undefined" ? avatar : "/assets/default_avatar.png" %>',
-                elo: '<%= elo %>'
-            });
-        });
+                            socket.emit('findMatch', {
+                                nickname: '<%= nickname %>',
+                                userId: '<%= userId %>',
+                                avatar: '<%= typeof avatar !== "undefined" ? avatar : "/assets/default_avatar.png" %>',
+                                elo: '<%= elo %>'
+                            });
+                        });
 
-        socket.on('matchFound', (data) => {
-            statusMsg.textContent = 'Opponent found! Entering battle...';
-            if (typeof playMatchStartSound === 'function') playMatchStartSound();
-            setTimeout(() => {
-                window.location.href = `/game/${data.gameId}`;
-            }, 2000);
-        });
+                        socket.on('matchFound', (data) => {
+                            statusMsg.textContent = 'Opponent found! Entering battle...';
+                            if (typeof playMatchStartSound === 'function') playMatchStartSound();
+                            setTimeout(() => {
+                                window.location.href = `/game/${data.gameId}`;
+                            }, 2000);
+                        });
 
-        // Clear query parameters from URL after load so they don't persist on reload
-        window.addEventListener('load', () => {
-            if (window.location.search.includes('error=') || window.location.search.includes('success=')) {
-                const url = new URL(window.location);
-                url.searchParams.delete('error');
-                url.searchParams.delete('success');
-                window.history.replaceState({}, document.title, url.pathname + url.search);
-            }
-        });
+                        // Clear query parameters from URL after load so they don't persist on reload
+                        window.addEventListener('load', () => {
+                            if (window.location.search.includes('error=') || window.location.search.includes('success=')) {
+                                const url = new URL(window.location);
+                                url.searchParams.delete('error');
+                                url.searchParams.delete('success');
+                                window.history.replaceState({}, document.title, url.pathname + url.search);
+                            }
+                        });
 
-        // Listen for real-time friend requests
-        socket.on('friendRequestReceived', (data) => {
-            // Check if toast already exists
-            const existing = document.getElementById('friend-request-notification-box');
-            if (existing) {
-                existing.remove();
-            }
+                        // Listen for real-time friend requests
+                        socket.on('friendRequestReceived', (data) => {
+                            // Check if toast already exists
+                            const existing = document.getElementById('friend-request-notification-box');
+                            if (existing) {
+                                existing.remove();
+                            }
 
-            const toast = document.createElement('div');
-            toast.id = 'friend-request-notification-box';
-            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid #a78bfa; border-radius: 12px; padding: 15px 20px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
+                            const toast = document.createElement('div');
+                            toast.id = 'friend-request-notification-box';
+                            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid #a78bfa; border-radius: 12px; padding: 15px 20px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
 
-            toast.innerHTML = `
+                            toast.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
                     <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">New Friend Request</h4>
                     <button onclick="document.getElementById('friend-request-notification-box').remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</button>
@@ -800,118 +835,118 @@
                     </form>
                 </div>
             `;
-            document.body.appendChild(toast);
+                            document.body.appendChild(toast);
 
-            // Dynamically increment the badge in the header if it exists
-            const existingBadge = document.querySelector('.lobby-pending-badge');
-            if (existingBadge) {
-                const count = parseInt(existingBadge.textContent) || 0;
-                existingBadge.textContent = count + 1;
-                existingBadge.style.display = 'inline-block';
-            } else {
-                // Create a badge next to "My Friends"
-                const heading = document.querySelector('.lobby-friends-panel h3');
-                if (heading) {
-                    const badge = document.createElement('span');
-                    badge.className = 'lobby-pending-badge';
-                    badge.title = '1 pending requests';
-                    badge.style.cssText = "background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; box-shadow: 0 0 10px #ef4444; animation: badgePulse 1.5s infinite ease-in-out; display: inline-block; margin-left: 10px;";
-                    badge.textContent = '1';
-                    heading.appendChild(badge);
-                }
-            }
-        });
+                            // Dynamically increment the badge in the header if it exists
+                            const existingBadge = document.querySelector('.lobby-pending-badge');
+                            if (existingBadge) {
+                                const count = parseInt(existingBadge.textContent) || 0;
+                                existingBadge.textContent = count + 1;
+                                existingBadge.style.display = 'inline-block';
+                            } else {
+                                // Create a badge next to "My Friends"
+                                const heading = document.querySelector('.lobby-friends-panel h3');
+                                if (heading) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'lobby-pending-badge';
+                                    badge.title = '1 pending requests';
+                                    badge.style.cssText = "background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; box-shadow: 0 0 10px #ef4444; animation: badgePulse 1.5s infinite ease-in-out; display: inline-block; margin-left: 10px;";
+                                    badge.textContent = '1';
+                                    heading.appendChild(badge);
+                                }
+                            }
+                        });
 
-        // Lobby Friend search toggle and filtering
-        const toggleSearchBtn = document.getElementById('toggle-lobby-search-btn');
-        const searchContainer = document.getElementById('lobby-friend-search-container');
-        const lobbySearchInput = document.getElementById('lobby-friend-search-input');
-        const lobbyFriendRows = document.querySelectorAll('.lobby-friend-row');
-        const lobbyNoFriendsMessage = document.getElementById('lobby-no-friends-filtered');
+                        // Lobby Friend search toggle and filtering
+                        const toggleSearchBtn = document.getElementById('toggle-lobby-search-btn');
+                        const searchContainer = document.getElementById('lobby-friend-search-container');
+                        const lobbySearchInput = document.getElementById('lobby-friend-search-input');
+                        const lobbyFriendRows = document.querySelectorAll('.lobby-friend-row');
+                        const lobbyNoFriendsMessage = document.getElementById('lobby-no-friends-filtered');
 
-        if (toggleSearchBtn && searchContainer) {
-            toggleSearchBtn.addEventListener('click', () => {
-                if (searchContainer.style.display === 'none') {
-                    searchContainer.style.display = 'block';
-                    // Force reflow for transitions
-                    searchContainer.offsetHeight;
-                    searchContainer.style.opacity = '1';
-                    searchContainer.style.transform = 'translateY(0)';
-                    if (lobbySearchInput) lobbySearchInput.focus();
-                } else {
-                    searchContainer.style.opacity = '0';
-                    searchContainer.style.transform = 'translateY(-10px)';
-                    setTimeout(() => {
-                        searchContainer.style.display = 'none';
-                        // Reset search filter when closed
-                        if (lobbySearchInput) {
-                            lobbySearchInput.value = '';
-                            lobbySearchInput.dispatchEvent(new Event('input'));
+                        if (toggleSearchBtn && searchContainer) {
+                            toggleSearchBtn.addEventListener('click', () => {
+                                if (searchContainer.style.display === 'none') {
+                                    searchContainer.style.display = 'block';
+                                    // Force reflow for transitions
+                                    searchContainer.offsetHeight;
+                                    searchContainer.style.opacity = '1';
+                                    searchContainer.style.transform = 'translateY(0)';
+                                    if (lobbySearchInput) lobbySearchInput.focus();
+                                } else {
+                                    searchContainer.style.opacity = '0';
+                                    searchContainer.style.transform = 'translateY(-10px)';
+                                    setTimeout(() => {
+                                        searchContainer.style.display = 'none';
+                                        // Reset search filter when closed
+                                        if (lobbySearchInput) {
+                                            lobbySearchInput.value = '';
+                                            lobbySearchInput.dispatchEvent(new Event('input'));
+                                        }
+                                    }, 300);
+                                }
+                            });
                         }
-                    }, 300);
-                }
-            });
-        }
 
-        function filterLobbyFriends() {
-            const isOnlineOnly = document.getElementById('lobby-online-filter-checkbox')?.checked;
-            const query = (document.getElementById('lobby-friend-search-input')?.value || '').toLowerCase().trim();
-            let visibleCount = 0;
+                        function filterLobbyFriends() {
+                            const isOnlineOnly = document.getElementById('lobby-online-filter-checkbox')?.checked;
+                            const query = (document.getElementById('lobby-friend-search-input')?.value || '').toLowerCase().trim();
+                            let visibleCount = 0;
 
-            lobbyFriendRows.forEach(row => {
-                const nickname = row.getAttribute('data-nickname');
-                const isOnline = row.getAttribute('data-online') === 'true';
-                if (nickname.includes(query) && (!isOnlineOnly || isOnline)) {
-                    row.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+                            lobbyFriendRows.forEach(row => {
+                                const nickname = row.getAttribute('data-nickname');
+                                const isOnline = row.getAttribute('data-online') === 'true';
+                                if (nickname.includes(query) && (!isOnlineOnly || isOnline)) {
+                                    row.style.display = 'flex';
+                                    visibleCount++;
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            });
 
-            if (lobbyNoFriendsMessage) {
-                if (visibleCount === 0 && lobbyFriendRows.length > 0) {
-                    lobbyNoFriendsMessage.style.display = 'block';
-                } else {
-                    lobbyNoFriendsMessage.style.display = 'none';
-                }
-            }
-        }
+                            if (lobbyNoFriendsMessage) {
+                                if (visibleCount === 0 && lobbyFriendRows.length > 0) {
+                                    lobbyNoFriendsMessage.style.display = 'block';
+                                } else {
+                                    lobbyNoFriendsMessage.style.display = 'none';
+                                }
+                            }
+                        }
 
-        if (lobbySearchInput) {
-            lobbySearchInput.addEventListener('input', filterLobbyFriends);
-        }
-    </script>
-    <script src="/js/particles.js"></script>
-    <style>
-        @keyframes slideInUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
-            }
+                        if (lobbySearchInput) {
+                            lobbySearchInput.addEventListener('input', filterLobbyFriends);
+                        }
+                    </script>
+                    <script src="/js/particles.js"></script>
+                    <style>
+                        @keyframes slideInUp {
+                            from {
+                                transform: translateY(100px);
+                                opacity: 0;
+                            }
 
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+                            to {
+                                transform: translateY(0);
+                                opacity: 1;
+                            }
+                        }
 
-        @keyframes spectatePulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
-            }
+                        @keyframes spectatePulse {
+                            0% {
+                                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+                            }
 
-            70% {
-                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
-            }
+                            70% {
+                                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
+                            }
 
-            100% {
-                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
-            }
-        }
-    </style>
-    <script src="/js/volume-controls.js"></script>
-    <script src="/js/sounds.js"></script>
+                            100% {
+                                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+                            }
+                        }
+                    </style>
+                    <script src="/js/volume-controls.js"></script>
+                    <script src="/js/sounds.js"></script>
 </body>
 
 </html>
