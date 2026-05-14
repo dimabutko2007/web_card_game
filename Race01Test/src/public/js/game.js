@@ -729,16 +729,42 @@ function showGameOverScreen(isWinner, winnerName) {
     ctx.textAlign = 'center';
     ctx.shadowBlur = 30;
     ctx.shadowColor = mainColor;
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 80);
 
     ctx.font = 'bold 45px Outfit';
-    ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 + 30);
+    ctx.fillText(eloText, canvas.width / 2, canvas.height / 2 - 10);
+
+    // Add Coins Display for winner
+    if (isWinner && !window.isSpectator) {
+        const coinImg = new Image();
+        coinImg.src = '/assets/coins.png';
+        coinImg.onload = () => {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 50;
+            
+            ctx.font = 'bold 45px Outfit';
+            ctx.fillStyle = '#FFD700'; // Gold color
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+            ctx.shadowBlur = 15;
+            
+            const rewardText = '+50';
+            const textWidth = ctx.measureText(rewardText).width;
+            const iconSize = 45;
+            const gap = 15;
+            const totalWidth = textWidth + gap + iconSize;
+            
+            const startX = centerX - totalWidth / 2;
+            
+            ctx.fillText(rewardText, startX + textWidth / 2, centerY + 12);
+            ctx.drawImage(coinImg, startX + textWidth + gap, centerY - iconSize / 2, iconSize, iconSize);
+        };
+    }
 
     ctx.shadowBlur = 0;
     ctx.font = '24px Outfit';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`Winner: ${winnerName}`, canvas.width / 2, canvas.height / 2 + 100);
-    ctx.fillText('Returning to lobby in 5 seconds...', canvas.width / 2, canvas.height / 2 + 140);
+    ctx.fillText(`Winner: ${winnerName}`, canvas.width / 2, canvas.height / 2 + 130);
+    ctx.fillText('Returning to lobby in 5 seconds...', canvas.width / 2, canvas.height / 2 + 170);
 
     setTimeout(() => {
         window.location.href = '/lobby';

@@ -113,7 +113,7 @@ module.exports = (io) => {
                         p.hp = 20;
                         p.energy = 1;
                         p.maxEnergy = 1;
-                        const cards = await Card.getBalancedInitialHand(5);
+                        const cards = await Card.getBalancedInitialHand(5, p.dbUserId);
                         p.hand = cards.map(c => ({ ...c, instanceId: uuidv4() }));
                         p.field = [];
                         p.trashCount = 3;
@@ -216,7 +216,7 @@ module.exports = (io) => {
                 player.trashCount--;
 
                 // Give one new card
-                const newCards = await Card.getWeightedRandomCards(1, player.hand);
+                const newCards = await Card.getWeightedRandomCards(1, player.hand, [], player.dbUserId);
                 player.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
 
                 io.to(data.gameId).emit('gameStateUpdate', {
@@ -237,7 +237,7 @@ module.exports = (io) => {
             player.hand = [];
             player.canChangeHand = false;
 
-            const newCards = await Card.getBalancedInitialHand(handSize);
+            const newCards = await Card.getBalancedInitialHand(handSize, player.dbUserId);
             player.hand = newCards.map(c => ({ ...c, instanceId: uuidv4() }));
 
             io.to(data.gameId).emit('gameStateUpdate', {
@@ -408,7 +408,7 @@ async function switchTurn(gameId, io) {
             excludedCosts = [1, 2];
         }
 
-        const newCards = await Card.getWeightedRandomCards(needed, currentPlayer.hand, excludedCosts);
+        const newCards = await Card.getWeightedRandomCards(needed, currentPlayer.hand, excludedCosts, currentPlayer.dbUserId);
         currentPlayer.hand.push(...newCards.map(c => ({ ...c, instanceId: uuidv4() })));
     }
 
