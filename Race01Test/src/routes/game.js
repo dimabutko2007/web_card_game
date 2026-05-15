@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Friendship = require('../models/Friendship');
+const Card = require('../models/Card');
 const gameSocket = require('../sockets/gameSocket');
 const multer = require('multer');
 const path = require('path');
@@ -64,6 +65,13 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         f.isPlaying = f.activeGameId !== null;
     });
     const pendingRequests = await Friendship.getPendingIncomingRequests(req.session.userId);
+    const allCards = await Card.getAll();
+    let userCardIdsSet = await Card.getUserCardIds(req.session.userId);
+    if (userCardIdsSet.size === 0) {
+        await Card.giveStarterCards(req.session.userId);
+        userCardIdsSet = await Card.getUserCardIds(req.session.userId);
+    }
+    const userCardIds = Array.from(userCardIdsSet);
     res.render('lobby', {
         nickname: req.session.nickname,
         userId: req.session.userId,
@@ -73,6 +81,8 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         leaders: leaders,
         friends: friends,
         pendingRequests: pendingRequests,
+        allCards: allCards,
+        userCardIds: userCardIds,
         error: req.query.error,
         success: req.query.success
     });
