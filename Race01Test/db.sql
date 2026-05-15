@@ -53,6 +53,21 @@ CREATE TABLE IF NOT EXISTS user_cards (
     FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS abilities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    image_url VARCHAR(255),
+    cooldown INT DEFAULT 2
+);
+
+INSERT INTO abilities (name, description, image_url, cooldown) VALUES
+('Freeze', 'Choose an enemy card to freeze. It cannot attack next turn.', '/assets/cards/freeze.png', 2),
+('Lightning', 'Deal 4 damage to an enemy card or 2 damage to the enemy hero.', '/assets/cards/lightning.png', 2),
+('Poison', 'Deal 2 damage to 2 random enemy cards.', '/assets/cards/poison.png', 2),
+('Regeneration', 'Restore a friendly card to its maximum HP.', '/assets/cards/regeneration.png', 2),
+('Totem of Undying', 'Grant a friendly card a second life. If its HP falls to 0 or less, it restores to 75% HP.', '/assets/cards/totem_of_undying.png', 3);
+
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE cards;
 SET FOREIGN_KEY_CHECKS = 1;

@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const Card = require('../models/Card');
 const User = require('../models/User');
 const Match = require('../models/Match');
+const Ability = require('../models/Ability');
 
 let waitingPlayer = null;
 const activeGames = new Map();
@@ -129,6 +130,13 @@ module.exports = (io) => {
                         const rank = User.getRank(p.elo);
                         p.rankName = rank.name;
                         p.rankIcon = rank.icon;
+                        
+                        // Assign random ability
+                        const randomAbility = await Ability.getRandomAbility();
+                        p.ability = {
+                            ...randomAbility,
+                            currentCooldown: 0
+                        };
                     }
 
                     io.to(data.gameId).emit('startGame', {
@@ -141,7 +149,12 @@ module.exports = (io) => {
                         isRejoin: false
                     });
 
-                    startTimer(data.gameId, io);
+                    setTimeout(() => {
+                        const currentGame = activeGames.get(data.gameId);
+                        if (currentGame && currentGame.gameState === 'active') {
+                            startTimer(data.gameId, io);
+                        }
+                    }, 5000);
                 } else if (room && room.size >= 2 && game.gameState === 'active') {
                     // Rejoining active game or Spectator joining mid-game
                     if (player) {
@@ -287,10 +300,20 @@ module.exports = (io) => {
 
                         // Remove dead cards
                         if (defenderCard.currentDefense <= 0) {
-                            defenderPlayer.field = defenderPlayer.field.filter(c => c !== defenderCard);
+                            if (defenderCard.hasTotem) {
+                                defenderCard.currentDefense = Math.floor(defenderCard.defense * 0.75);
+                                defenderCard.hasTotem = false;
+                            } else {
+                                defenderPlayer.field = defenderPlayer.field.filter(c => c !== defenderCard);
+                            }
                         }
                         if (attackerCard.currentDefense <= 0) {
-                            attackerPlayer.field = attackerPlayer.field.filter(c => c !== attackerCard);
+                            if (attackerCard.hasTotem) {
+                                attackerCard.currentDefense = Math.floor(attackerCard.defense * 0.75);
+                                attackerCard.hasTotem = false;
+                            } else {
+                                attackerPlayer.field = attackerPlayer.field.filter(c => c !== attackerCard);
+                            }
                         }
                     }
                 }
@@ -304,6 +327,112 @@ module.exports = (io) => {
                         turn: game.turn
                     });
                 }
+            }
+        });
+
+        socket.on('useAbility', async (data) => {
+            const game = activeGames.get(data.gameId);
+            if (!game) return;
+            const player = game.players[game.turn];
+            if (player.socketId !== socket.id) return;
+            if (!player.ability || player.ability.currentCooldown > 0) return;
+
+            const oppPlayer = game.players[game.turn === 0 ? 1 : 0];
+            let used = false;
+
+            switch (player.ability.name) {
+                case 'Freeze':
+                    const targetFreeze = oppPlayer.field.find(c => c.instanceId === data.targetInstanceId);
+                    if (targetFreeze) {
+                        targetFreeze.isFrozen = true;
+                        targetFreeze.canAttack = false;
+                        used = true;
+                    }
+                    break;
+                case 'Lightning':
+                    if (data.target === 'hero') {
+                        oppPlayer.hp -= 2;
+                        used = true;
+                    } else {
+                        const targetLightning = oppPlayer.field.find(c => c.instanceId === data.targetInstanceId);
+                        if (targetLightning) {
+                            targetLightning.currentDefense -= 4;
+                            if (targetLightning.currentDefense <= 0) {
+                                if (targetLightning.hasTotem) {
+                                    targetLightning.currentDefense = Math.floor(targetLightning.defense * 0.75);
+                                    targetLightning.hasTotem = false;
+                                } else {
+                                    oppPlayer.field = oppPlayer.field.filter(c => c !== targetLightning);
+                                }
+                            }
+                            used = true;
+                        }
+                    }
+                    break;
+                case 'Poison':
+                    const enemyCards = [...oppPlayer.field];
+                    const targetsCount = Math.min(2, enemyCards.length);
+                    const poisonedTargets = [];
+                    for (let i = 0; i < targetsCount; i++) {
+                        const randomIndex = Math.floor(Math.random() * enemyCards.length);
+                        const card = enemyCards.splice(randomIndex, 1)[0];
+                        card.currentDefense -= 2;
+                        poisonedTargets.push(card.instanceId);
+                        if (card.currentDefense <= 0) {
+                            if (card.hasTotem) {
+                                card.currentDefense = Math.floor(card.defense * 0.75);
+                                card.hasTotem = false;
+                            }
+                        }
+                    }
+                    oppPlayer.field = oppPlayer.field.filter(c => c.currentDefense > 0);
+                    used = true;
+                    data.poisonedTargets = poisonedTargets;
+                    break;
+                case 'Regeneration':
+                    const targetRegen = player.field.find(c => c.instanceId === data.targetInstanceId);
+                    if (targetRegen && targetRegen.currentDefense < targetRegen.defense) {
+                        targetRegen.currentDefense = targetRegen.defense;
+                        used = true;
+                    }
+                    break;
+                case 'Totem of Undying':
+                    const targetTotem = player.field.find(c => c.instanceId === data.targetInstanceId);
+                    if (targetTotem) {
+                        targetTotem.hasTotem = true;
+                        used = true;
+                    }
+                    break;
+            }
+
+            if (used) {
+                player.ability.currentCooldown = player.ability.cooldown;
+                
+                io.to(data.gameId).emit('abilityEvent', { 
+                    type: player.ability.name, 
+                    playerIndex: game.turn,
+                    targetInstanceId: data.targetInstanceId,
+                    target: data.target,
+                    poisonedTargets: data.poisonedTargets
+                });
+
+                // Wait for animations to finish before updating state
+                setTimeout(async () => {
+                    const updatedGame = activeGames.get(data.gameId);
+                    if (!updatedGame) return;
+                    
+                    const p1 = updatedGame.players[0];
+                    const p2 = updatedGame.players[1];
+
+                    if (p1.hp <= 0 || p2.hp <= 0) {
+                        await endGame(data.gameId, io, p1, p2);
+                    } else {
+                        io.to(data.gameId).emit('gameStateUpdate', {
+                            players: updatedGame.players,
+                            turn: updatedGame.turn
+                        });
+                    }
+                }, 2000);
             }
         });
 
@@ -397,6 +526,14 @@ async function switchTurn(gameId, io) {
     const game = activeGames.get(gameId);
     if (!game) return;
 
+    // Clear frozen status for the player who just finished their turn
+    const finishedPlayer = game.players[game.turn];
+    finishedPlayer.field.forEach(c => {
+        if (c.isFrozen) {
+            c.isFrozen = false;
+        }
+    });
+
     game.turn = game.turn === 0 ? 1 : 0;
 
     // If it's the starting player's turn again, increase round/energy
@@ -407,6 +544,11 @@ async function switchTurn(gameId, io) {
     const currentPlayer = game.players[game.turn];
     currentPlayer.maxEnergy = Math.min(game.round, 10);
     currentPlayer.energy = currentPlayer.maxEnergy;
+
+    // Update ability cooldown
+    if (currentPlayer.ability && currentPlayer.ability.currentCooldown > 0) {
+        currentPlayer.ability.currentCooldown--;
+    }
 
     // Draw cards to 5
     if (currentPlayer.hand.length < 5) {
@@ -422,8 +564,13 @@ async function switchTurn(gameId, io) {
 
     // Reset summoning sickness for cards on field
     currentPlayer.field.forEach(c => {
-        c.canAttack = true;
-        c.isSummoning = false; // Important: Clear summoning sickness
+        if (c.isFrozen) {
+            c.canAttack = false;
+            // Keep isFrozen = true so the icon remains visible during their turn
+        } else {
+            c.canAttack = true;
+        }
+        c.isSummoning = false; 
     });
 
     io.to(gameId).emit('turnUpdate', {
@@ -443,7 +590,8 @@ async function switchTurn(gameId, io) {
             trashCount: p.trashCount,
             canChangeHand: p.canChangeHand,
             rankName: p.rankName,
-            rankIcon: p.rankIcon
+            rankIcon: p.rankIcon,
+            ability: p.ability
         }))
     });
 

@@ -56,6 +56,21 @@
         </div>
     </div>
 
+    <!-- Ability Announcement Overlay -->
+    <div id="ability-announcement" class="ability-announcement hidden">
+        <div class="announcement-content">
+            <span class="announcement-label">YOUR SUPER ABILITY</span>
+            <div class="ability-card-showcase">
+                <img id="announced-ability-img" src="" alt="Ability">
+                <div class="ability-info-large">
+                    <h2 id="announced-ability-name">Ability Name</h2>
+                    <p id="announced-ability-desc">Ability Description</p>
+                </div>
+            </div>
+            <button id="close-announcement-btn" class="close-announcement-btn">READY TO BATTLE</button>
+        </div>
+    </div>
+
     <div class="battlefield-container">
         <!-- Opponent Area -->
         <div class="player-area opponent-area">
@@ -71,6 +86,7 @@
                     </div>
                     <span class="energy-display">Energy: <span id="opp-energy">0/0</span></span>
                 </div>
+                <div class="lightning-overlay"></div>
             </div>
         </div>
 
@@ -93,6 +109,16 @@
         <!-- My Area -->
         <div class="player-area">
             <div class="hand-container">
+                <div id="my-ability-btn" class="ability-container my-ability disabled" title="Use Super Ability">
+                    <img id="my-ability-img" src="" alt="Ability" class="ability-icon">
+                    <div id="my-ability-cooldown" class="ability-cooldown hidden">0</div>
+                    <div class="ability-tooltip">
+                        <strong id="tooltip-ability-name">Ability</strong>
+                        <p id="tooltip-ability-desc">Description</p>
+                        <span class="cooldown-info">Cooldown: <span id="tooltip-ability-cd">2</span> rounds</span>
+                    </div>
+                </div>
+                <div class="hand-separator"></div>
                 <div class="hand" id="my-hand">
                     <!-- Cards in hand -->
                 </div>
@@ -122,6 +148,7 @@
                     <span class="energy-display">Energy: <span id="my-energy">0/0</span></span>
                 </div>
                 <button id="end-turn-btn" class="end-turn-btn">End Turn</button>
+                <div class="lightning-overlay"></div>
             </div>
         </div>
 
