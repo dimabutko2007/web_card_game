@@ -69,6 +69,7 @@ let isMyTurn = false;
 let selectedFieldCard = null;
 let myPlayerIndex = -1;
 let isTrashMode = false;
+let isAbilityMode = false;
 
 const timerEl = document.getElementById('timer');
 const myHandEl = document.getElementById('my-hand');
@@ -119,6 +120,14 @@ socket.on('startGame', (data) => {
 
     if (!data.isRejoin && !window.isSpectator) {
         showCoinFlip(data.turn === myPlayerIndex);
+        
+        // Show ability announcement after coin flip
+        setTimeout(() => {
+            const myAbility = data.players[myPlayerIndex].ability;
+            if (myAbility) {
+                showAbilityAnnouncement(myAbility);
+            }
+        }, 4000);
     }
     processState(data.players, data.turn);
 });
@@ -131,7 +140,73 @@ socket.on('timerUpdate', (data) => {
 socket.on('turnUpdate', (data) => {
     console.log('Turn update:', data);
     isTrashMode = false;
+    isAbilityMode = false;
     processState(data.players, data.turn);
+});
+
+socket.on('abilityEvent', (data) => {
+    console.log('Ability Event:', data);
+    if (data.type === 'Freeze') {
+        const cardEl = document.querySelector(`[data-instance-id="${data.targetInstanceId}"]`);
+        if (cardEl) {
+            cardEl.classList.add('freeze-impact');
+            setTimeout(() => cardEl.classList.remove('freeze-impact'), 1500);
+        }
+    } else if (data.type === 'Poison') {
+        if (data.poisonedTargets && data.poisonedTargets.length > 0) {
+            data.poisonedTargets.forEach(id => {
+                const cardEl = document.querySelector(`[data-instance-id="${id}"]`);
+                if (cardEl) {
+                    cardEl.classList.add('poison-impact');
+                    setTimeout(() => cardEl.classList.remove('poison-impact'), 2000);
+                }
+            });
+        }
+    } else if (data.type === 'Lightning') {
+        let targetEl;
+        if (data.target === 'card' || data.targetInstanceId) {
+            targetEl = document.querySelector(`[data-instance-id="${data.targetInstanceId}"]`);
+        } else if (data.target === 'hero') {
+            if (data.playerIndex === myPlayerIndex) {
+                // I used it, target is opponent
+                targetEl = document.querySelector('.opponent-area .player-info');
+            } else {
+                // Opponent used it, target is me
+                targetEl = document.querySelector('.player-area:not(.opponent-area) .player-info');
+            }
+        }
+        
+        if (targetEl) {
+            targetEl.classList.add('lightning-impact');
+            setTimeout(() => {
+                targetEl.classList.remove('lightning-impact');
+            }, 2000);
+        }
+    } else if (data.type === 'Regeneration') {
+        const cardEl = document.querySelector(`[data-instance-id="${data.targetInstanceId}"]`);
+        if (cardEl) {
+            cardEl.classList.add('healing-effect');
+            cardEl.classList.add('regen-impact');
+            setTimeout(() => {
+                cardEl.classList.remove('healing-effect');
+                cardEl.classList.remove('regen-impact');
+            }, 1500);
+        }
+    } else if (data.type === 'Totem of Undying') {
+        const cardEl = document.querySelector(`[data-instance-id="${data.targetInstanceId}"]`);
+        if (cardEl) {
+            cardEl.classList.add('totem-apply-effect');
+            cardEl.classList.add('totem-impact');
+            setTimeout(() => {
+                cardEl.classList.remove('totem-apply-effect');
+                cardEl.classList.remove('totem-impact');
+            }, 1500);
+        }
+    }
+    
+    // Refresh UI to show updated stats
+    // processState will be called by gameStateUpdate from server, 
+    // but we can do a quick local update if needed.
 });
 
 socket.on('gameStateUpdate', (data) => {
@@ -161,6 +236,7 @@ function processState(players, turnIndex) {
     renderHand();
     renderField();
     updateStats();
+    updateHeroTargeting();
 
     const turnIndicator = document.getElementById('turn-indicator');
     const endTurnBtn = document.getElementById('end-turn-btn');
@@ -227,6 +303,60 @@ function updateStats() {
     const oppAvatar = document.getElementById('opp-avatar');
     if (myAvatar && myData.avatar) myAvatar.src = myData.avatar;
     if (oppAvatar && oppData.avatar) oppAvatar.src = oppData.avatar;
+
+    // Update abilities
+    const myAbilityBtn = document.getElementById('my-ability-btn');
+    const myAbilityImg = document.getElementById('my-ability-img');
+    const myAbilityCooldown = document.getElementById('my-ability-cooldown');
+    
+    const oppAbilityImg = document.getElementById('opp-ability-img');
+    const oppAbilityCooldown = document.getElementById('opp-ability-cooldown');
+
+    if (myData && myData.ability && myAbilityImg && myAbilityBtn && myAbilityCooldown) {
+        myAbilityImg.src = myData.ability.image_url;
+        const nameEl = document.getElementById('tooltip-ability-name');
+        const descEl = document.getElementById('tooltip-ability-desc');
+        const cdEl = document.getElementById('tooltip-ability-cd');
+        
+        if (nameEl) nameEl.textContent = myData.ability.name;
+        if (descEl) descEl.textContent = myData.ability.description;
+        if (cdEl) cdEl.textContent = myData.ability.cooldown;
+        
+        if (window.isSpectator) {
+            myAbilityImg.style.display = 'none';
+            myAbilityBtn.classList.add('spectator-ability-back');
+            myAbilityBtn.classList.add('disabled');
+            // Hide tooltip for spectators so they don't see the name/desc
+            const tooltip = myAbilityBtn.querySelector('.ability-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        } else {
+            myAbilityImg.style.display = 'block';
+            myAbilityBtn.classList.remove('spectator-ability-back');
+            const tooltip = myAbilityBtn.querySelector('.ability-tooltip');
+            if (tooltip) tooltip.style.display = '';
+        }
+
+        if (myData.ability.currentCooldown > 0) {
+            myAbilityCooldown.textContent = myData.ability.currentCooldown;
+            myAbilityCooldown.classList.remove('hidden');
+            myAbilityBtn.classList.add('disabled');
+        } else {
+            myAbilityCooldown.classList.add('hidden');
+            if (!window.isSpectator) {
+                myAbilityBtn.classList.toggle('disabled', !isMyTurn);
+            }
+        }
+    }
+
+    if (oppData && oppData.ability && oppAbilityImg && oppAbilityCooldown) {
+        oppAbilityImg.src = oppData.ability.image_url;
+        if (oppData.ability.currentCooldown > 0) {
+            oppAbilityCooldown.textContent = oppData.ability.currentCooldown;
+            oppAbilityCooldown.classList.remove('hidden');
+        } else {
+            oppAbilityCooldown.classList.add('hidden');
+        }
+    }
 
     // Spectator: make avatar & nickname clickable to open player profiles
     if (window.isSpectator) {
@@ -374,6 +504,18 @@ function renderField() {
         if (card.isSummoning) cardEl.classList.add('summoning-sickness');
         
         if (!window.isSpectator) {
+            if (isAbilityMode && myData && myData.ability) {
+                const abilityName = myData.ability.name;
+                if (abilityName === 'Regeneration') {
+                    if (card.currentDefense < card.defense) {
+                        cardEl.classList.add('valid-ability-target');
+                    }
+                } else if (abilityName === 'Totem of Undying') {
+                    cardEl.classList.add('valid-ability-target');
+                }
+            }
+        }
+
             if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) cardEl.classList.add('selected-card');
 
             // Add "Ready to Attack" indicator
@@ -383,7 +525,25 @@ function renderField() {
 
             cardEl.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!isMyTurn || card.isSummoning || card.canAttack === false) return;
+                if (!isMyTurn) return;
+
+                if (isAbilityMode) {
+                    const abilityName = myData.ability.name;
+                    if (abilityName === 'Regeneration') {
+                        if (card.currentDefense < card.defense) {
+                            socket.emit('useAbility', { gameId, targetInstanceId: card.instanceId });
+                            isAbilityMode = false;
+                            updateAbilityUI();
+                        }
+                    } else if (abilityName === 'Totem of Undying') {
+                        socket.emit('useAbility', { gameId, targetInstanceId: card.instanceId });
+                        isAbilityMode = false;
+                        updateAbilityUI();
+                    }
+                    return;
+                }
+
+                if (card.isSummoning || card.canAttack === false) return;
 
                 if (selectedFieldCard && selectedFieldCard.instanceId === card.instanceId) {
                     selectedFieldCard = null;
@@ -392,8 +552,7 @@ function renderField() {
                 }
                 renderField(); // Re-render to show selection
             });
-        }
-        myFieldEl.appendChild(cardEl);
+            myFieldEl.appendChild(cardEl);
     });
 
     const hasTaunt = oppData.field.some(c => c.has_taunt);
@@ -419,6 +578,13 @@ function renderField() {
         }
         
         if (!window.isSpectator) {
+            if (isAbilityMode) {
+                const abilityName = myData.ability.name;
+                if (abilityName === 'Freeze' || abilityName === 'Lightning') {
+                    cardEl.classList.add('valid-ability-target');
+                }
+            }
+
             const canHitThis = !hasTaunt || card.has_taunt;
 
             if (selectedFieldCard && canHitThis) {
@@ -429,6 +595,18 @@ function renderField() {
 
             cardEl.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (!isMyTurn) return;
+
+                if (isAbilityMode) {
+                    const abilityName = myData.ability.name;
+                    if (abilityName === 'Freeze' || abilityName === 'Lightning') {
+                        socket.emit('useAbility', { gameId, targetInstanceId: card.instanceId });
+                        isAbilityMode = false;
+                        updateAbilityUI();
+                    }
+                    return;
+                }
+
                 if (selectedFieldCard) {
                     if (hasTaunt && !card.has_taunt) return;
 
@@ -463,9 +641,29 @@ function renderField() {
     }
 }
 
+// Update hero targeting highlighting
+function updateHeroTargeting() {
+    const oppInfo = document.querySelector('.opponent-area .player-info');
+    if (!oppInfo) return;
+
+    if (isAbilityMode && myData && myData.ability && myData.ability.name === 'Lightning') {
+        oppInfo.classList.add('valid-hero-ability-target');
+    } else {
+        oppInfo.classList.remove('valid-hero-ability-target');
+    }
+}
+
 // Hero attack
 document.querySelector('.opponent-area .player-info').addEventListener('click', () => {
     if (window.isSpectator) return;
+
+    if (isAbilityMode && myData.ability.name === 'Lightning') {
+        socket.emit('useAbility', { gameId, target: 'hero' });
+        isAbilityMode = false;
+        updateAbilityUI();
+        return;
+    }
+
     if (selectedFieldCard) {
         const hasTaunt = oppData.field.some(c => c.has_taunt);
         if (hasTaunt) {
@@ -487,18 +685,28 @@ document.querySelector('.opponent-area .player-info').addEventListener('click', 
 function createCardElement(card) {
     const cardEl = document.createElement('div');
     cardEl.className = 'card';
+    cardEl.dataset.instanceId = card.instanceId;
     if (card.has_taunt) cardEl.classList.add('taunt-border');
 
     const displayDef = card.currentDefense !== undefined ? card.currentDefense : card.defense;
 
     cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>
+        ${card.isFrozen ? '<div class="frozen-overlay">❄️</div>' : ''}
         <div class="card-image" style="background-image: url('${card.image_url}')"></div>
         <div class="card-name">${card.name}</div>
         <div class="card-stats">
             <span class="card-atk">${card.attack}</span>
-            <span class="card-def">${displayDef}</span>
+            <div class="def-container" style="position: relative; display: flex; align-items: center;">
+                <span class="card-def">${displayDef}</span>
+                ${card.hasTotem ? '<img src="/assets/cards/small_totem_of_undying.png" class="totem-icon-mini" title="Totem of Undying">' : ''}
+            </div>
         </div>
+        <div class="poison-overlay"></div>
+        <div class="lightning-overlay"></div>
+        <div class="regen-overlay"></div>
+        <div class="freeze-overlay-card"></div>
+        <div class="totem-overlay-card"></div>
     `;
     return cardEl;
 }
@@ -507,6 +715,7 @@ endTurnBtn.addEventListener('click', () => {
     clickSound.currentTime = 0;
     clickSound.play().catch(e => { });
     isTrashMode = false;
+    isAbilityMode = false;
     socket.emit('endTurn', { gameId });
 });
 
@@ -530,6 +739,33 @@ document.getElementById('change-hand-btn').addEventListener('click', () => {
     // No need to clear sets manually, render functions will handle it
     socket.emit('changeHand', { gameId });
 });
+
+// Ability usage logic
+document.getElementById('my-ability-btn').addEventListener('click', () => {
+    if (!isMyTurn || myData.ability.currentCooldown > 0 || window.isSpectator) return;
+    
+    clickSound.currentTime = 0;
+    clickSound.play().catch(e => { });
+
+    if (myData.ability.name === 'Poison') {
+        socket.emit('useAbility', { gameId });
+        return;
+    }
+    
+    isAbilityMode = !isAbilityMode;
+    isTrashMode = false;
+    selectedFieldCard = null;
+    updateAbilityUI();
+    renderField();
+});
+
+function updateAbilityUI() {
+    const btn = document.getElementById('my-ability-btn');
+    if (!btn) return;
+    if (isAbilityMode) btn.classList.add('active');
+    else btn.classList.remove('active');
+    updateHeroTargeting();
+}
 
 // Leave Battle logic
 const leaveBtn = document.getElementById('leave-battle-btn');
@@ -771,6 +1007,28 @@ function showGameOverScreen(isWinner, winnerName) {
     }, 5000);
 }
 
+function showAbilityAnnouncement(ability) {
+    const overlay = document.getElementById('ability-announcement');
+    const img = document.getElementById('announced-ability-img');
+    const name = document.getElementById('announced-ability-name');
+    const desc = document.getElementById('announced-ability-desc');
+    const closeBtn = document.getElementById('close-announcement-btn');
+
+    if (!overlay || !img || !name || !desc || !closeBtn) return;
+
+    img.src = ability.image_url;
+    name.textContent = ability.name;
+    desc.textContent = ability.description;
+
+    overlay.classList.remove('hidden');
+
+    closeBtn.onclick = () => {
+        overlay.classList.add('hidden');
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => { });
+    };
+}
+
 // Add CSS for selected card
 const style = document.createElement('style');
 style.textContent = `
@@ -780,6 +1038,67 @@ style.textContent = `
         box-shadow: 0 0 25px var(--marvel-gold) !important;
         z-index: 100;
     }
+    .healing-effect {
+    animation: healGlow 1s ease-out !important;
+    z-index: 100;
+}
+
+@keyframes totemGlow {
+    0% { box-shadow: 0 0 0px #fbbf24; }
+    50% { box-shadow: 0 0 40px #fbbf24; border-color: #fbbf24; }
+    100% { box-shadow: 0 0 0px #fbbf24; }
+}
+
+.totem-apply-effect {
+    animation: totemGlow 1s ease-out !important;
+}
+
+.totem-icon-mini {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    right: -28px;
+    top: 50%;
+    transform: translateY(-50%);
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.8));
+    animation: totemMiniFloat 2s infinite ease-in-out;
+    z-index: 5;
+}
+
+@keyframes totemMiniFloat {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-60%) scale(1.1); }
+}
+
+    @keyframes poisonImpact {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.2); }
+        70% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .poison-impact {
+        animation: poisonImpact 1.5s ease-out !important;
+        z-index: 100;
+    }
+
+    .poison-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/cards/poison.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        z-index: 15;
+        transition: opacity 0.3s ease;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .poison-impact .poison-overlay {
+        opacity: 1;
+    }
+
     .ready-to-attack {
         box-shadow: 0 0 15px rgba(0, 255, 0, 0.5) !important;
         border-color: #00ff00 !important;
@@ -809,5 +1128,129 @@ style.textContent = `
         transform: scale(1.1);
     }
 
+    .lightning-impact {
+        animation: poisonImpact 1.5s ease-out !important;
+        z-index: 100;
+    }
+
+    .regen-impact {
+        animation: poisonImpact 1.5s ease-out !important;
+        z-index: 100;
+    }
+
+    .freeze-impact {
+        animation: poisonImpact 1.5s ease-out !important;
+        z-index: 100;
+    }
+
+    .totem-impact {
+        animation: poisonImpact 1.5s ease-out !important;
+        z-index: 100;
+    }
+
+    .lightning-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/cards/lightning.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        z-index: 20;
+        transition: opacity 0.3s ease;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .lightning-impact .lightning-overlay {
+        opacity: 1 !important;
+    }
+
+    .regen-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/cards/regeneration.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        z-index: 20;
+        transition: opacity 0.3s ease;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .regen-impact .regen-overlay {
+        opacity: 1 !important;
+    }
+
+    .freeze-overlay-card {
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/cards/freeze.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        z-index: 20;
+        transition: opacity 0.3s ease;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .freeze-impact .freeze-overlay-card {
+        opacity: 1 !important;
+    }
+
+    .totem-overlay-card {
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/cards/totem_of_undying.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        z-index: 20;
+        transition: opacity 0.3s ease;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .totem-impact .totem-overlay-card {
+        opacity: 1 !important;
+    }
+
+    .player-info .lightning-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('/assets/cards/small_lightning.png');
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        top: 0;
+        left: 0;
+        transform: none;
+    }
+
+    .player-info {
+        position: relative;
+    }
+
+    .spectator-ability-back {
+        background: radial-gradient(circle, #3b0764, #1e1b4b) !important;
+        border: 2px solid rgba(147, 51, 234, 0.4) !important;
+        position: relative;
+    }
+
+    .spectator-ability-back::after {
+        content: 'DARK';
+        color: #c084fc;
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-shadow: 0 0 5px #9333ea;
+        letter-spacing: 1px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
 `;
 document.head.appendChild(style);
