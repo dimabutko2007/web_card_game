@@ -47,6 +47,17 @@ const redirectBackWithParam = (req, res, paramName, paramValue) => {
     }
 };
 
+const requireJsonAuth = (req, res, next) => {
+    if (req.session.userId) {
+        return next();
+    }
+
+    return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+    });
+};
+
 router.get('/', (req, res) => {
     if (req.session.userId) {
         res.redirect('/lobby');
@@ -72,6 +83,7 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         userCardIdsSet = await Card.getUserCardIds(req.session.userId);
     }
     const userCardIds = Array.from(userCardIdsSet);
+    const shopCards = await Card.getUnownedShopCards(req.session.userId);
     res.render('lobby', {
         nickname: req.session.nickname,
         userId: req.session.userId,
@@ -83,6 +95,7 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         pendingRequests: pendingRequests,
         allCards: allCards,
         userCardIds: userCardIds,
+        shopCards: shopCards,
         error: req.query.error,
         success: req.query.success
     });
@@ -401,6 +414,43 @@ router.post('/profile/nickname', authController.isAuthenticated, async (req, res
     } catch (error) {
         console.error('Database error during nickname update:', error);
         res.redirect('/profile?error=' + encodeURIComponent('Database error.'));
+    }
+});
+
+router.post('/shop/buy', requireJsonAuth, async (req, res) => {
+    try {
+        const result = await Card.purchaseForUser(req.session.userId, req.body.cardId);
+        const ownedCards = await Card.getUserCards(req.session.userId);
+        const shopCards = await Card.getUnownedShopCards(req.session.userId);
+
+        res.json({
+            success: true,
+            message: 'Purchase successful',
+            coins: result.coins,
+            card: result.card,
+            ownedCards,
+            shopCards
+        });
+    } catch (error) {
+        const messages = {
+            NOT_ENOUGH_COINS: 'Not enough coins',
+            ALREADY_OWNED: 'Card already owned',
+            CARD_NOT_FOUND: 'Card not found'
+        };
+        const statuses = {
+            NOT_ENOUGH_COINS: 400,
+            ALREADY_OWNED: 409,
+            CARD_NOT_FOUND: 404
+        };
+
+        if (!messages[error.code]) {
+            console.error('Shop purchase error:', error);
+        }
+
+        res.status(statuses[error.code] || 500).json({
+            success: false,
+            message: messages[error.code] || 'Purchase failed'
+        });
     }
 });
 

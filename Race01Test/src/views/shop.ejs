@@ -1,0 +1,445 @@
+<% const availableShopCards = typeof shopCards !== 'undefined' ? shopCards : []; %>
+
+<style>
+    .shop-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        box-sizing: border-box;
+    }
+
+    .shop-modal.is-open {
+        display: flex;
+    }
+
+    .shop-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 0, 20, 0.78);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .shop-window {
+        position: relative;
+        width: min(1080px, 100%);
+        max-height: min(760px, calc(100vh - 36px));
+        background:
+            radial-gradient(circle at 20% 0%, rgba(168, 85, 247, 0.18), transparent 34%),
+            linear-gradient(180deg, rgba(38, 0, 68, 0.98), rgba(15, 0, 28, 0.98));
+        border: 1px solid rgba(192, 132, 252, 0.55);
+        border-radius: 8px;
+        box-shadow:
+            0 22px 70px rgba(0, 0, 0, 0.75),
+            0 0 28px rgba(147, 51, 234, 0.28),
+            inset 0 0 36px rgba(192, 132, 252, 0.08);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .shop-window::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: 8px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+        z-index: 1;
+    }
+
+    .shop-window > * {
+        position: relative;
+        z-index: 2;
+    }
+
+    .shop-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(140, 60, 200, 0.4);
+        background: rgba(0, 0, 0, 0.24);
+    }
+
+    .shop-header h2 {
+        margin: 0;
+        color: #c084fc;
+        text-shadow: 0 0 12px rgba(147, 51, 234, 0.75);
+        font-size: 1.65rem;
+        letter-spacing: 2px;
+    }
+
+    .shop-header-main {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    .shop-balance {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 13px;
+        border: 1px solid rgba(255, 215, 0, 0.28);
+        border-radius: 17px;
+        background: rgba(0, 0, 0, 0.3);
+        color: #ffd700;
+        font-weight: 900;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.1);
+    }
+
+    .shop-balance img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .shop-close-btn {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.28);
+        color: #e9d5ff;
+        font-size: 1.45rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+
+    .shop-close-btn:hover {
+        background: rgba(239, 68, 68, 0.18);
+        border-color: rgba(239, 68, 68, 0.55);
+        transform: scale(1.06);
+    }
+
+    .shop-message {
+        min-height: 22px;
+        margin: 14px 22px 0;
+        color: #e9d5ff;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .shop-message.is-error {
+        color: #fca5a5;
+    }
+
+    .shop-message.is-success {
+        color: #86efac;
+    }
+
+    .shop-content {
+        padding: 18px 24px 24px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(192, 132, 252, 0.72) rgba(8, 0, 20, 0.6);
+        background:
+            linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.04)),
+            radial-gradient(circle at 50% 0%, rgba(192, 132, 252, 0.08), transparent 40%);
+    }
+
+    .shop-content::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .shop-content::-webkit-scrollbar-track {
+        background: rgba(8, 0, 20, 0.72);
+        border-left: 1px solid rgba(140, 60, 200, 0.16);
+        border-radius: 10px;
+    }
+
+    .shop-content::-webkit-scrollbar-thumb {
+        background:
+            linear-gradient(180deg, rgba(216, 180, 254, 0.95), rgba(147, 51, 234, 0.82) 45%, rgba(88, 28, 135, 0.9));
+        border: 2px solid rgba(8, 0, 20, 0.72);
+        border-radius: 10px;
+        box-shadow: 0 0 12px rgba(192, 132, 252, 0.45);
+    }
+
+    .shop-content::-webkit-scrollbar-thumb:hover {
+        background:
+            linear-gradient(180deg, rgba(245, 208, 254, 1), rgba(168, 85, 247, 0.95) 45%, rgba(109, 40, 217, 0.98));
+        box-shadow: 0 0 16px rgba(216, 180, 254, 0.72);
+    }
+
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .shop-card {
+        position: relative;
+        min-width: 0;
+        background:
+            linear-gradient(180deg, rgba(32, 0, 54, 0.78), rgba(0, 0, 0, 0.52)),
+            rgba(0, 0, 0, 0.42);
+        border: 1px solid rgba(140, 60, 200, 0.48);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-sizing: border-box;
+        box-shadow:
+            0 8px 22px rgba(0, 0, 0, 0.34),
+            inset 0 0 18px rgba(147, 51, 234, 0.08);
+        overflow: hidden;
+        transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, filter 0.24s ease;
+    }
+
+    .shop-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 28%, transparent 72%, rgba(192, 132, 252, 0.1));
+        opacity: 0;
+        transition: opacity 0.24s ease;
+    }
+
+    .shop-card:hover {
+        transform: translateY(-6px) scale(1.015);
+        border-color: rgba(216, 180, 254, 0.92);
+        box-shadow:
+            0 14px 32px rgba(0, 0, 0, 0.48),
+            0 0 22px rgba(168, 85, 247, 0.38),
+            inset 0 0 22px rgba(192, 132, 252, 0.14);
+        filter: saturate(1.08);
+    }
+
+    .shop-card:hover::before {
+        opacity: 1;
+    }
+
+    .shop-card img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: contain;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.22);
+        transition: filter 0.24s ease, transform 0.24s ease;
+    }
+
+    .shop-card:hover > img {
+        filter: brightness(1.12) drop-shadow(0 0 10px rgba(192, 132, 252, 0.22));
+        transform: translateY(-1px);
+    }
+
+    .shop-card-name,
+    .armory-card-name {
+        min-height: 34px;
+        color: #e9d5ff;
+        font-size: 0.94rem;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .card-stats-line {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #f5e8ff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .card-stats-line.is-muted {
+        color: rgba(255, 255, 255, 0.66);
+    }
+
+    .armory-card .card-stats-line,
+    .armory-card-locked .card-stats-line {
+        gap: 5px;
+        font-size: 0.68rem;
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+
+    .shop-card-price {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: #ffd700;
+        font-weight: 800;
+    }
+
+    .shop-card-price img {
+        width: 18px;
+        height: 18px;
+        aspect-ratio: auto;
+        background: transparent;
+        border-radius: 0;
+    }
+
+    .shop-buy-btn {
+        position: relative;
+        width: 100%;
+        height: 34px;
+        border: 1px solid rgba(255, 177, 66, 0.72);
+        border-radius: 6px;
+        background:
+            linear-gradient(180deg, rgba(255, 213, 92, 0.18), transparent 48%, rgba(0, 0, 0, 0.32)),
+            linear-gradient(135deg, #4c1d95 0%, #7c3aed 38%, #b45309 100%);
+        color: #fff8e7;
+        font-weight: 900;
+        letter-spacing: 1.4px;
+        cursor: pointer;
+        text-shadow: 0 0 8px rgba(255, 190, 90, 0.75), 0 1px 2px rgba(0, 0, 0, 0.9);
+        box-shadow:
+            0 0 12px rgba(168, 85, 247, 0.34),
+            0 0 18px rgba(217, 119, 6, 0.2),
+            inset 0 0 14px rgba(0, 0, 0, 0.34);
+        transition: transform 0.18s ease, box-shadow 0.24s ease, filter 0.24s ease, border-color 0.24s ease;
+        overflow: hidden;
+        isolation: isolate;
+    }
+
+    .shop-buy-btn::before {
+        content: '';
+        position: absolute;
+        top: -80%;
+        bottom: -80%;
+        left: -55%;
+        width: 42%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        transform: rotate(18deg);
+        opacity: 0;
+        transition: left 0.55s ease, opacity 0.2s ease;
+        z-index: -1;
+    }
+
+    .shop-buy-btn::after {
+        content: '';
+        position: absolute;
+        inset: 2px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        pointer-events: none;
+    }
+
+    .shop-buy-btn:hover:not(:disabled) {
+        filter: brightness(1.18) saturate(1.12);
+        transform: translateY(-2px) scale(1.035);
+        border-color: rgba(255, 219, 122, 0.95);
+        box-shadow:
+            0 0 18px rgba(192, 132, 252, 0.58),
+            0 0 30px rgba(217, 119, 6, 0.35),
+            0 7px 16px rgba(0, 0, 0, 0.35),
+            inset 0 0 15px rgba(255, 255, 255, 0.08);
+    }
+
+    .shop-buy-btn:hover:not(:disabled)::before {
+        left: 112%;
+        opacity: 1;
+    }
+
+    .shop-buy-btn:active:not(:disabled) {
+        transform: translateY(1px) scale(0.985);
+        filter: brightness(0.92);
+        box-shadow:
+            0 0 10px rgba(147, 51, 234, 0.42),
+            inset 0 4px 12px rgba(0, 0, 0, 0.55);
+    }
+
+    .shop-buy-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+        filter: grayscale(0.25);
+        box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .shop-empty {
+        margin: 18px 0 4px;
+        color: rgba(255, 255, 255, 0.62);
+        text-align: center;
+        font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+        .shop-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .shop-window {
+            max-height: calc(100vh - 20px);
+        }
+
+        .shop-header {
+            padding: 14px 16px;
+        }
+
+        .shop-content {
+            padding: 14px 16px 18px;
+        }
+
+        .shop-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .card-stats-line {
+            gap: 5px;
+            font-size: 0.7rem;
+        }
+    }
+</style>
+
+<div id="shop-modal" class="shop-modal" aria-hidden="true">
+    <div class="shop-backdrop" data-shop-close></div>
+    <section class="shop-window" role="dialog" aria-modal="true" aria-labelledby="shop-title">
+        <div class="shop-header">
+            <div class="shop-header-main">
+                <h2 id="shop-title">SHOP</h2>
+                <div class="shop-balance" title="Coins">
+                    <img src="/assets/coins.png" alt="Coins">
+                    <span id="shop-coin-amount"><%= typeof coins !== 'undefined' ? coins : 0 %></span>
+                </div>
+            </div>
+            <button type="button" id="shop-close-btn" class="shop-close-btn" aria-label="Close shop">&times;</button>
+        </div>
+        <div id="shop-message" class="shop-message" aria-live="polite"></div>
+        <div class="shop-content">
+            <div id="shop-grid" class="shop-grid">
+                <% availableShopCards.forEach(card => { %>
+                    <article class="shop-card" data-card-id="<%= card.id %>">
+                        <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                        <div class="shop-card-name"><%= card.name %></div>
+                        <div class="card-stats-line" aria-label="Card stats">
+                            <span title="Damage">⚔️ <%= card.attack %></span>
+                            <span title="HP">❤️ <%= card.defense %></span>
+                            <span title="Energy">⚡ <%= card.cost %></span>
+                        </div>
+                        <div class="shop-card-price">
+                            <img src="/assets/coins.png" alt="Coins">
+                            <span><%= card.shop_price %></span>
+                        </div>
+                        <button type="button" class="shop-buy-btn" data-card-id="<%= card.id %>">BUY</button>
+                    </article>
+                <% }) %>
+            </div>
+            <p id="shop-empty" class="shop-empty" <%= availableShopCards.length > 0 ? 'hidden' : '' %>>All cards owned</p>
+        </div>
+    </section>
+</div>
+
+<script src="/js/shop.js"></script>
