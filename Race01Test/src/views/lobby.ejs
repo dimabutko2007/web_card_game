@@ -714,6 +714,116 @@
                                                 .name-offline:hover {
                                                     color: #c084fc !important;
                                                 }
+
+                                                .battle-invite-btn {
+                                                    width: 34px;
+                                                    height: 34px;
+                                                    flex: 0 0 34px;
+                                                    display: inline-flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                    border-radius: 9px;
+                                                    border: 1px solid rgba(192, 132, 252, 0.65);
+                                                    background: linear-gradient(135deg, rgba(88, 28, 135, 0.92), rgba(40, 0, 70, 0.88));
+                                                    color: #f5d0fe;
+                                                    box-shadow: 0 0 12px rgba(168, 85, 247, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.04);
+                                                    cursor: pointer;
+                                                    font-family: 'Outfit', sans-serif;
+                                                    font-size: 0.95rem;
+                                                    font-weight: 800;
+                                                    line-height: 1;
+                                                    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+                                                }
+
+                                                .battle-invite-btn:hover:not(:disabled) {
+                                                    transform: translateY(-2px) scale(1.04);
+                                                    border-color: #f0abfc;
+                                                    color: #fff;
+                                                    box-shadow: 0 0 18px rgba(217, 70, 239, 0.55), inset 0 0 12px rgba(192, 132, 252, 0.16);
+                                                }
+
+                                                .battle-invite-btn:active:not(:disabled) {
+                                                    transform: translateY(0) scale(0.98);
+                                                }
+
+                                                .battle-invite-btn:disabled {
+                                                    cursor: not-allowed;
+                                                    opacity: 0.42;
+                                                    filter: grayscale(0.45);
+                                                    box-shadow: none;
+                                                }
+
+                                                .battle-invite-btn.is-sent {
+                                                    width: 44px;
+                                                    flex-basis: 44px;
+                                                    font-size: 0.62rem;
+                                                    text-transform: uppercase;
+                                                    letter-spacing: 0.4px;
+                                                    opacity: 0.9;
+                                                    color: #e9d5ff;
+                                                    background: linear-gradient(135deg, rgba(126, 34, 206, 0.85), rgba(76, 29, 149, 0.85));
+                                                    border-color: rgba(216, 180, 254, 0.65);
+                                                    box-shadow: 0 0 14px rgba(168, 85, 247, 0.36);
+                                                }
+
+                                                .battle-invite-rating {
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: flex-end;
+                                                    gap: 8px;
+                                                    min-width: 82px;
+                                                }
+
+                                                .battle-toast-action {
+                                                    flex: 1;
+                                                    border-radius: 7px;
+                                                    padding: 9px 12px;
+                                                    border: 1px solid rgba(255, 255, 255, 0.14);
+                                                    color: white;
+                                                    cursor: pointer;
+                                                    font-family: 'Outfit', sans-serif;
+                                                    font-size: 0.82rem;
+                                                    font-weight: 800;
+                                                    letter-spacing: 0.5px;
+                                                    text-transform: uppercase;
+                                                    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+                                                }
+
+                                                .battle-toast-action:hover {
+                                                    transform: translateY(-1px);
+                                                }
+
+                                                .battle-toast-accept {
+                                                    background: linear-gradient(45deg, #4ade80, #15803d);
+                                                    box-shadow: 0 0 12px rgba(74, 222, 128, 0.28);
+                                                }
+
+                                                .battle-toast-decline {
+                                                    background: rgba(255, 255, 255, 0.08);
+                                                    color: #ddd6fe;
+                                                }
+
+                                                .battle-toast-decline:hover {
+                                                    background: rgba(255, 255, 255, 0.15);
+                                                }
+
+                                                @media (max-width: 520px) {
+                                                    .battle-invite-rating {
+                                                        min-width: 74px;
+                                                        gap: 5px;
+                                                    }
+
+                                                    .battle-invite-btn {
+                                                        width: 32px;
+                                                        height: 32px;
+                                                        flex-basis: 32px;
+                                                    }
+
+                                                    .battle-invite-btn.is-sent {
+                                                        width: 40px;
+                                                        flex-basis: 40px;
+                                                    }
+                                                }
                                             </style>
 
                                             <div class="friends-scroll-wrapper"
@@ -727,6 +837,7 @@
                                                                     <div class="lobby-friend-row <%= (friend.activeGameId || friend.isPlaying) ? 'row-playing' : (friend.isOnline ? 'row-online' : 'row-offline') %>"
                                                                         data-nickname="<%= friend.nickname.toLowerCase() %>"
                                                                         data-online="<%= (friend.activeGameId || friend.isPlaying || friend.isOnline) ? 'true' : 'false' %>"
+                                                                        data-friend-id="<%= friend.id %>"
                                                                         style="display: flex; align-items: center; gap: 15px;">
                                                                         <div
                                                                             style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
@@ -770,15 +881,27 @@
                                                                             </div>
                                                                         </div>
                                                                         <div
-                                                                            style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 90px; flex-shrink: 0;">
-                                                                            <img src="/assets/ranks/<%= friendRank.icon %>"
-                                                                                alt="<%= friendRank.name %>"
-                                                                                title="<%= friendRank.name %>"
-                                                                                style="width: 30px; height: 30px; border-radius: 0;">
-                                                                            <span
-                                                                                style="color: var(--color-gold); font-size: 0.95rem; font-weight: bold; width: 45px; text-align: right;">
-                                                                                <%= friend.elo %>
-                                                                            </span>
+                                                                            style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 132px; flex-shrink: 0;">
+                                                                            <% const canBattleInvite=friend.isOnline && !(friend.activeGameId || friend.isPlaying); %>
+                                                                                <div class="battle-invite-rating">
+                                                                                    <img src="/assets/ranks/<%= friendRank.icon %>"
+                                                                                        alt="<%= friendRank.name %>"
+                                                                                        title="<%= friendRank.name %>"
+                                                                                        style="width: 30px; height: 30px; border-radius: 0;">
+                                                                                    <span
+                                                                                        style="color: var(--color-gold); font-size: 0.95rem; font-weight: bold; width: 45px; text-align: right;">
+                                                                                        <%= friend.elo %>
+                                                                                    </span>
+                                                                                </div>
+                                                                                <button type="button"
+                                                                                    class="battle-invite-btn"
+                                                                                    data-friend-id="<%= friend.id %>"
+                                                                                    data-friend-nickname="<%= friend.nickname %>"
+                                                                                    data-can-invite="<%= canBattleInvite ? 'true' : 'false' %>"
+                                                                                    title="<%= canBattleInvite ? 'Invite to battle' : ((friend.activeGameId || friend.isPlaying) ? 'Friend is already in battle' : 'Friend is offline') %>"
+                                                                                    <%= canBattleInvite ? '' : 'disabled' %>>
+                                                                                    &#9876;
+                                                                                </button>
                                                                         </div>
                                                                     </div>
                                                                     <% }); %>
@@ -826,11 +949,17 @@
                         const findMatchBtn = document.getElementById('find-match-btn');
                         const statusMsg = document.getElementById('status-msg');
                         let hasActiveGame = false;
+                        let activeGameId = null;
+                        const lobbyPlayer = <%- JSON.stringify({
+                            userId: String(userId),
+                            nickname: nickname,
+                            avatar: typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png',
+                            elo: elo
+                        }) %>;
+                        const pendingBattleInviteTargets = new Map();
 
-                        // Join personal room for notifications
                         socket.emit('joinUserRoom', { userId: '<%= userId %>' });
 
-                        // Check for active game on load
                         socket.emit('checkActiveGame', { userId: '<%= userId %>' });
 
                         socket.on('lobbyStatsUpdate', (data) => {
@@ -842,16 +971,20 @@
 
                         socket.on('activeGameFound', (data) => {
                             hasActiveGame = true;
+                            activeGameId = data.gameId;
                             findMatchBtn.textContent = 'Return to Battle';
                             findMatchBtn.classList.add('active-game-button');
                             statusMsg.textContent = 'You have an active battle!';
+                            refreshBattleInviteButtons();
                         });
 
                         socket.on('activeGameEnded', () => {
                             hasActiveGame = false;
+                            activeGameId = null;
                             findMatchBtn.textContent = 'Search Battle';
                             findMatchBtn.classList.remove('active-game-button');
                             statusMsg.textContent = 'Previous battle has ended.';
+                            refreshBattleInviteButtons();
                         });
 
                         socket.on('statsUpdate', (data) => {
@@ -864,19 +997,27 @@
                         });
 
                         findMatchBtn.addEventListener('click', () => {
+                            if (hasActiveGame && activeGameId) {
+                                window.location.href = `/game/${activeGameId}`;
+                                return;
+                            }
+
                             // If currently searching, cancel it
                             if (findMatchBtn.classList.contains('searching')) {
                                 socket.emit('cancelSearch');
                                 findMatchBtn.classList.remove('searching');
                                 findMatchBtn.textContent = 'Search Battle';
                                 statusMsg.textContent = 'Search cancelled.';
+                                refreshBattleInviteButtons();
                                 return;
                             }
 
                             // Normal search start
+                            clearAllBattleInviteButtons();
                             findMatchBtn.classList.add('searching');
                             findMatchBtn.textContent = 'Searching...';
                             statusMsg.textContent = 'Waiting for opponent...';
+                            refreshBattleInviteButtons();
 
                             socket.emit('findMatch', {
                                 nickname: '<%= nickname %>',
@@ -892,6 +1033,234 @@
                             setTimeout(() => {
                                 window.location.href = `/game/${data.gameId}`;
                             }, 2000);
+                        });
+
+                        socket.on('matchSearchError', (data) => {
+                            findMatchBtn.classList.remove('searching');
+                            findMatchBtn.textContent = 'Search Battle';
+                            statusMsg.textContent = data.message || 'Could not start battle search.';
+                            refreshBattleInviteButtons();
+                        });
+
+                        function escapeHtml(value) {
+                            const chars = {
+                                '&': '&amp;',
+                                '<': '&lt;',
+                                '>': '&gt;',
+                                '"': '&quot;',
+                                "'": '&#039;'
+                            };
+                            return String(value || '').replace(/[&<>"']/g, char => chars[char]);
+                        }
+
+                        function isSearchingBattle() {
+                            return findMatchBtn.classList.contains('searching');
+                        }
+
+                        function getBattleInviteButton(friendId) {
+                            return document.querySelector(`.battle-invite-btn[data-friend-id="${friendId}"]`);
+                        }
+
+                        function setBattleInviteButtonState(friendId, state) {
+                            const button = getBattleInviteButton(friendId);
+                            if (!button) return;
+
+                            if (!button.dataset.originalLabel) {
+                                button.dataset.originalLabel = button.innerHTML.trim();
+                            }
+
+                            if (state === 'sent') {
+                                button.disabled = true;
+                                button.classList.add('is-sent');
+                                button.textContent = 'Sent';
+                                button.title = 'Battle invite sent';
+                                return;
+                            }
+
+                            pendingBattleInviteTargets.delete(String(friendId));
+                            button.classList.remove('is-sent');
+                            button.innerHTML = button.dataset.originalLabel || '&#9876;';
+
+                            const canInvite = button.dataset.canInvite === 'true';
+                            button.disabled = !canInvite || hasActiveGame || isSearchingBattle();
+                            button.title = canInvite ? 'Invite to battle' : button.title;
+                        }
+
+                        function refreshBattleInviteButtons() {
+                            document.querySelectorAll('.battle-invite-btn').forEach(button => {
+                                const friendId = button.dataset.friendId;
+                                if (pendingBattleInviteTargets.has(String(friendId))) {
+                                    button.disabled = true;
+                                    return;
+                                }
+
+                                const canInvite = button.dataset.canInvite === 'true';
+                                button.disabled = !canInvite || hasActiveGame || isSearchingBattle();
+                            });
+                        }
+
+                        function clearAllBattleInviteButtons() {
+                            [...pendingBattleInviteTargets.keys()].forEach(friendId => setBattleInviteButtonState(friendId, 'idle'));
+                            pendingBattleInviteTargets.clear();
+                            refreshBattleInviteButtons();
+                        }
+
+                        function showBattleNotice(message, type = 'info') {
+                            const existing = document.getElementById('battle-invite-status-box');
+                            if (existing) existing.remove();
+
+                            const toast = document.createElement('div');
+                            toast.id = 'battle-invite-status-box';
+                            const border = type === 'error' ? '#ef4444' : (type === 'success' ? '#4ade80' : '#a78bfa');
+                            const titleColor = type === 'error' ? '#fecaca' : (type === 'success' ? '#bbf7d0' : '#e9d5ff');
+                            toast.style.cssText = `position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid ${border}; border-radius: 12px; padding: 14px 18px; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 18px rgba(168,85,247,0.22); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;`;
+                            toast.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                                    <div>
+                                        <h4 style="color: ${titleColor}; margin: 0 0 6px 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Battle Invite</h4>
+                                        <div style="color: #ddd6fe; font-size: 0.92rem; line-height: 1.35;">${escapeHtml(message)}</div>
+                                    </div>
+                                    <button type="button" aria-label="Close" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.35rem; line-height: 1; padding: 0;">&times;</button>
+                                </div>
+                            `;
+                            toast.querySelector('button').addEventListener('click', () => toast.remove());
+                            document.body.appendChild(toast);
+                            setTimeout(() => {
+                                if (toast.isConnected) toast.remove();
+                            }, 4500);
+                        }
+
+                        function closeBattleInvitePopup(inviteId) {
+                            const popup = document.getElementById(`battle-invite-${inviteId}`);
+                            if (popup) popup.remove();
+                        }
+
+                        function showBattleInvitePopup(data) {
+                            closeBattleInvitePopup(data.inviteId);
+
+                            const sender = data.sender || {};
+                            const toast = document.createElement('div');
+                            toast.id = `battle-invite-${data.inviteId}`;
+                            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.96); border: 2px solid #c084fc; border-radius: 12px; padding: 15px 20px; width: min(350px, calc(100vw - 40px)); box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.55), 0 0 22px rgba(168,85,247,0.32); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
+
+                            toast.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
+                                    <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Battle Invite</h4>
+                                    <button type="button" class="battle-invite-close" aria-label="Close" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0; transition: color 0.2s;">&times;</button>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                    <img src="${escapeHtml(sender.avatar || '/assets/default_avatar.png')}" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #e9d5ff; box-shadow: 0 0 12px rgba(192,132,252,0.38);">
+                                    <div style="min-width: 0;">
+                                        <a href="/profile/${encodeURIComponent(sender.nickname || '')}" style="color: #e9d5ff; text-decoration: none; font-weight: bold; font-size: 1rem; display: block; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sender.nickname)}</a>
+                                        <span style="color: #c4b5fd; font-size: 0.82rem; display: block; margin-top: 2px;">${escapeHtml(sender.nickname)} invites you to battle</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="button" class="battle-toast-action battle-toast-accept" data-action="accept">Accept</button>
+                                    <button type="button" class="battle-toast-action battle-toast-decline" data-action="decline">Decline</button>
+                                </div>
+                            `;
+
+                            toast.querySelector('.battle-invite-close').addEventListener('click', () => {
+                                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                                toast.remove();
+                            });
+                            toast.querySelector('[data-action="accept"]').addEventListener('click', () => {
+                                toast.querySelectorAll('button').forEach(button => button.disabled = true);
+                                statusMsg.textContent = 'Accepting battle invite...';
+                                socket.emit('acceptBattleInvite', { inviteId: data.inviteId });
+                            });
+                            toast.querySelector('[data-action="decline"]').addEventListener('click', () => {
+                                toast.querySelectorAll('button').forEach(button => button.disabled = true);
+                                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                                toast.remove();
+                            });
+
+                            document.body.appendChild(toast);
+                        }
+
+                        document.querySelectorAll('.battle-invite-btn').forEach(button => {
+                            button.addEventListener('click', () => {
+                                if (button.disabled) return;
+
+                                const friendId = button.dataset.friendId;
+                                const friendNickname = button.dataset.friendNickname || 'friend';
+
+                                pendingBattleInviteTargets.set(String(friendId), true);
+                                setBattleInviteButtonState(friendId, 'sent');
+                                statusMsg.textContent = `Battle invite sent to ${friendNickname}...`;
+
+                                socket.emit('sendBattleInvite', {
+                                    targetUserId: friendId,
+                                    userId: lobbyPlayer.userId,
+                                    nickname: lobbyPlayer.nickname,
+                                    avatar: lobbyPlayer.avatar,
+                                    elo: lobbyPlayer.elo
+                                });
+                            });
+                        });
+
+                        socket.on('battleInviteSent', (data) => {
+                            pendingBattleInviteTargets.set(String(data.targetUserId), true);
+                            setBattleInviteButtonState(data.targetUserId, 'sent');
+                            showBattleNotice(`Battle invite sent to ${data.targetNickname}.`, 'success');
+                        });
+
+                        socket.on('battleInviteError', (data) => {
+                            if (data && data.targetUserId) {
+                                setBattleInviteButtonState(data.targetUserId, 'idle');
+                            }
+                            showBattleNotice(data.message || 'Failed to send battle invite.', 'error');
+                            statusMsg.textContent = data.message || 'Failed to send battle invite.';
+                        });
+
+                        socket.on('battleInviteReceived', (data) => {
+                            if (hasActiveGame || isSearchingBattle()) {
+                                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                                return;
+                            }
+                            showBattleInvitePopup(data);
+                        });
+
+                        socket.on('battleInviteAccepted', (data) => {
+                            statusMsg.textContent = `Battle invite accepted! Entering battle against ${data.opponentNickname}...`;
+                        });
+
+                        socket.on('battleInviteDeclined', (data) => {
+                            if (data && data.targetUserId) {
+                                setBattleInviteButtonState(data.targetUserId, 'idle');
+                            }
+                            showBattleNotice(data.message || 'Battle invite declined.', 'info');
+                            statusMsg.textContent = data.message || 'Battle invite declined.';
+                        });
+
+                        socket.on('battleInviteExpired', (data) => {
+                            if (data && data.targetUserId) {
+                                setBattleInviteButtonState(data.targetUserId, 'idle');
+                            }
+                            if (data && data.inviteId) {
+                                closeBattleInvitePopup(data.inviteId);
+                            }
+                            if (data && data.message) {
+                                showBattleNotice(data.message, 'info');
+                            }
+                        });
+
+                        socket.on('battleInviteClosed', (data) => {
+                            if (data && data.inviteId) {
+                                closeBattleInvitePopup(data.inviteId);
+                            }
+                        });
+
+                        socket.on('battleInviteUnavailable', (data) => {
+                            if (data && data.targetUserId) {
+                                setBattleInviteButtonState(data.targetUserId, 'idle');
+                            }
+                            if (data && data.inviteId) {
+                                closeBattleInvitePopup(data.inviteId);
+                            }
+                            showBattleNotice(data.message || 'Battle invite is no longer available.', 'error');
+                            statusMsg.textContent = data.message || 'Battle invite is no longer available.';
                         });
 
                         // Clear query parameters from URL after load so they don't persist on reload

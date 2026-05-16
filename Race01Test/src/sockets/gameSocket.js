@@ -3,11 +3,146 @@ const Card = require('../models/Card');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Ability = require('../models/Ability');
+const Friendship = require('../models/Friendship');
 
 let waitingPlayer = null;
 const activeGames = new Map();
 const disconnectTimeouts = new Map();
 const onlineUsers = new Map(); // userId -> Set of socket.id
+const activeBattleInvites = new Map();
+const BATTLE_INVITE_TIMEOUT_MS = 30000;
+
+function normalizeUserId(userId) {
+    if (userId === undefined || userId === null || userId === '') return null;
+    return String(userId);
+}
+
+function getUserActiveGameIdInternal(userId) {
+    if (!userId) return null;
+    for (const [gameId, game] of activeGames.entries()) {
+        const player = game.players.find(p => String(p.dbUserId) === String(userId));
+        if (player) {
+            return gameId;
+        }
+    }
+    return null;
+}
+
+function isUserSearching(userId) {
+    return !!waitingPlayer && String(waitingPlayer.dbUserId) === String(userId);
+}
+
+function isUserBusy(userId) {
+    return isUserSearching(userId) || getUserActiveGameIdInternal(userId) !== null;
+}
+
+function isUserOnlineInternal(userId) {
+    if (!userId) return false;
+    return onlineUsers.has(normalizeUserId(userId)) || getUserActiveGameIdInternal(userId) !== null;
+}
+
+function getOnlineSocket(io, userId) {
+    const sockets = onlineUsers.get(normalizeUserId(userId));
+    if (!sockets) return null;
+
+    for (const socketId of sockets) {
+        const connectedSocket = io.sockets.sockets.get(socketId);
+        if (connectedSocket) {
+            return connectedSocket;
+        }
+    }
+
+    return null;
+}
+
+function createBattle(io, playerOne, playerTwo) {
+    const gameId = uuidv4();
+
+    playerOne.socket.join(gameId);
+    playerTwo.socket.join(gameId);
+
+    activeGames.set(gameId, {
+        players: [
+            {
+                dbUserId: playerOne.dbUserId,
+                nickname: playerOne.nickname,
+                avatar: playerOne.avatar,
+                elo: playerOne.elo,
+                socketId: playerOne.socket.id,
+                ready: false
+            },
+            {
+                dbUserId: playerTwo.dbUserId,
+                nickname: playerTwo.nickname,
+                avatar: playerTwo.avatar,
+                elo: playerTwo.elo,
+                socketId: playerTwo.socket.id,
+                ready: false
+            }
+        ],
+        gameState: 'initializing'
+    });
+
+    console.log(`[MATCH] Battle found: ${playerOne.nickname} vs ${playerTwo.nickname} (GameID: ${gameId})`);
+    io.to(gameId).emit('matchFound', { gameId });
+    return gameId;
+}
+
+function clearBattleInvite(inviteId) {
+    const invite = activeBattleInvites.get(inviteId);
+    if (!invite) return null;
+
+    if (invite.timeout) {
+        clearTimeout(invite.timeout);
+    }
+
+    activeBattleInvites.delete(inviteId);
+    return invite;
+}
+
+function hasPendingInviteBetween(fromUserId, toUserId) {
+    for (const invite of activeBattleInvites.values()) {
+        if (String(invite.fromUserId) === String(fromUserId) && String(invite.toUserId) === String(toUserId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function hasOutgoingInvite(userId) {
+    for (const invite of activeBattleInvites.values()) {
+        if (String(invite.fromUserId) === String(userId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function clearInvitesForUser(userId, io, message = 'Battle invite is no longer available.') {
+    const normalizedUserId = normalizeUserId(userId);
+
+    for (const [inviteId, invite] of [...activeBattleInvites.entries()]) {
+        if (String(invite.fromUserId) !== normalizedUserId && String(invite.toUserId) !== normalizedUserId) {
+            continue;
+        }
+
+        clearBattleInvite(inviteId);
+
+        io.to(`user_${invite.fromUserId}`).emit('battleInviteExpired', {
+            inviteId,
+            targetUserId: invite.toUserId,
+            targetNickname: invite.receiver.nickname,
+            message
+        });
+
+        io.to(`user_${invite.toUserId}`).emit('battleInviteExpired', {
+            inviteId,
+            senderUserId: invite.fromUserId,
+            senderNickname: invite.sender.nickname,
+            message
+        });
+    }
+}
 
 module.exports = (io) => {
     function broadcastLobbyStats() {
@@ -23,12 +158,13 @@ module.exports = (io) => {
         broadcastLobbyStats();
         socket.on('joinUserRoom', (data) => {
             if (data.userId) {
-                socket.dbUserId = data.userId;
-                if (!onlineUsers.has(data.userId)) {
-                    onlineUsers.set(data.userId, new Set());
+                const userId = normalizeUserId(data.userId);
+                socket.dbUserId = userId;
+                if (!onlineUsers.has(userId)) {
+                    onlineUsers.set(userId, new Set());
                 }
-                onlineUsers.get(data.userId).add(socket.id);
-                socket.join(`user_${data.userId}`);
+                onlineUsers.get(userId).add(socket.id);
+                socket.join(`user_${userId}`);
             }
         });
 
@@ -60,32 +196,263 @@ module.exports = (io) => {
                 }
             }
 
+            clearInvitesForUser(data.userId, io, 'Battle invite cancelled because a player started searching.');
+
+            if (waitingPlayer && String(waitingPlayer.dbUserId) === String(data.userId)) {
+                socket.emit('matchSearchError', {
+                    message: 'You are already searching for a battle.'
+                });
+                return;
+            }
+
             if (waitingPlayer && waitingPlayer.socket.id !== socket.id) {
                 // Match found
-                const gameId = uuidv4();
                 const opponent = waitingPlayer;
                 waitingPlayer = null;
                 broadcastLobbyStats();
 
-                // Join both to a room
-                socket.join(gameId);
-                opponent.socket.join(gameId);
-
-                activeGames.set(gameId, {
-                    players: [
-                        { dbUserId: opponent.dbUserId, nickname: opponent.nickname, avatar: opponent.avatar, elo: opponent.elo, socketId: opponent.socket.id, ready: false },
-                        { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socketId: socket.id, ready: false }
-                    ],
-                    gameState: 'initializing'
+                createBattle(io, opponent, {
+                    dbUserId: data.userId,
+                    nickname: data.nickname,
+                    avatar: data.avatar,
+                    elo: data.elo,
+                    socket
                 });
-
-                console.log(`[MATCH] Battle found: ${opponent.nickname} vs ${data.nickname} (GameID: ${gameId})`);
-                io.to(gameId).emit('matchFound', { gameId });
             } else {
                 // Start waiting
                 waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socket: socket };
                 broadcastLobbyStats();
             }
+        });
+
+        socket.on('sendBattleInvite', async (data = {}) => {
+            try {
+                const senderId = normalizeUserId(socket.dbUserId || data.userId);
+                const targetUserId = normalizeUserId(data.targetUserId);
+
+                if (!senderId || !targetUserId || senderId === targetUserId) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'Invalid battle invite target.'
+                    });
+                    return;
+                }
+
+                if (isUserBusy(senderId)) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'You cannot send a battle invite while searching or already in battle.'
+                    });
+                    return;
+                }
+
+                if (!isUserOnlineInternal(targetUserId)) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'Friend is offline.'
+                    });
+                    return;
+                }
+
+                if (isUserBusy(targetUserId)) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'Friend is busy.'
+                    });
+                    return;
+                }
+
+                if (hasOutgoingInvite(senderId)) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'You already have a pending battle invite.'
+                    });
+                    return;
+                }
+
+                if (hasPendingInviteBetween(senderId, targetUserId)) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'Battle invite already sent.'
+                    });
+                    return;
+                }
+
+                const relation = await Friendship.getRelation(senderId, targetUserId);
+                if (!relation || relation.status !== 'accepted') {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'You can only invite friends to battle.'
+                    });
+                    return;
+                }
+
+                const sender = await User.findById(senderId);
+                const receiver = await User.findById(targetUserId);
+
+                if (!sender || !receiver) {
+                    socket.emit('battleInviteError', {
+                        targetUserId,
+                        message: 'Player not found.'
+                    });
+                    return;
+                }
+
+                const inviteId = uuidv4();
+                const invite = {
+                    inviteId,
+                    fromUserId: senderId,
+                    toUserId: targetUserId,
+                    senderSocketId: socket.id,
+                    sender: {
+                        id: sender.id,
+                        nickname: sender.nickname,
+                        avatar: sender.avatar || '/assets/default_avatar.png',
+                        elo: sender.elo
+                    },
+                    receiver: {
+                        id: receiver.id,
+                        nickname: receiver.nickname,
+                        avatar: receiver.avatar || '/assets/default_avatar.png',
+                        elo: receiver.elo
+                    }
+                };
+
+                invite.timeout = setTimeout(() => {
+                    const timedOutInvite = clearBattleInvite(inviteId);
+                    if (!timedOutInvite) return;
+
+                    io.to(`user_${timedOutInvite.fromUserId}`).emit('battleInviteExpired', {
+                        inviteId,
+                        targetUserId: timedOutInvite.toUserId,
+                        targetNickname: timedOutInvite.receiver.nickname,
+                        message: `Battle invite to ${timedOutInvite.receiver.nickname} expired.`
+                    });
+
+                    io.to(`user_${timedOutInvite.toUserId}`).emit('battleInviteExpired', {
+                        inviteId,
+                        senderUserId: timedOutInvite.fromUserId,
+                        senderNickname: timedOutInvite.sender.nickname,
+                        message: 'Battle invite expired.'
+                    });
+                }, BATTLE_INVITE_TIMEOUT_MS);
+
+                activeBattleInvites.set(inviteId, invite);
+
+                socket.emit('battleInviteSent', {
+                    inviteId,
+                    targetUserId,
+                    targetNickname: receiver.nickname
+                });
+
+                io.to(`user_${targetUserId}`).emit('battleInviteReceived', {
+                    inviteId,
+                    sender: invite.sender
+                });
+            } catch (error) {
+                console.error('[BATTLE INVITE] Failed to send invite:', error);
+                socket.emit('battleInviteError', {
+                    targetUserId: data.targetUserId,
+                    message: 'Failed to send battle invite.'
+                });
+            }
+        });
+
+        socket.on('declineBattleInvite', (data = {}) => {
+            const pendingInvite = activeBattleInvites.get(data.inviteId);
+            if (!pendingInvite || String(pendingInvite.toUserId) !== String(socket.dbUserId)) {
+                return;
+            }
+            const invite = clearBattleInvite(data.inviteId);
+
+            io.to(`user_${invite.fromUserId}`).emit('battleInviteDeclined', {
+                inviteId: invite.inviteId,
+                targetUserId: invite.toUserId,
+                targetNickname: invite.receiver.nickname,
+                message: `${invite.receiver.nickname} declined your battle invite.`
+            });
+
+            io.to(`user_${invite.toUserId}`).emit('battleInviteClosed', {
+                inviteId: invite.inviteId
+            });
+        });
+
+        socket.on('acceptBattleInvite', (data = {}) => {
+            const invite = activeBattleInvites.get(data.inviteId);
+            if (!invite || String(invite.toUserId) !== String(socket.dbUserId)) {
+                socket.emit('battleInviteUnavailable', {
+                    inviteId: data.inviteId,
+                    message: 'Battle invite is no longer available.'
+                });
+                return;
+            }
+
+            if (isUserBusy(invite.fromUserId) || isUserBusy(invite.toUserId)) {
+                clearBattleInvite(invite.inviteId);
+                io.to(`user_${invite.fromUserId}`).emit('battleInviteUnavailable', {
+                    inviteId: invite.inviteId,
+                    targetUserId: invite.toUserId,
+                    targetNickname: invite.receiver.nickname,
+                    message: 'Battle invite cancelled because a player is busy.'
+                });
+                io.to(`user_${invite.toUserId}`).emit('battleInviteUnavailable', {
+                    inviteId: invite.inviteId,
+                    senderUserId: invite.fromUserId,
+                    senderNickname: invite.sender.nickname,
+                    message: 'Battle invite cancelled because a player is busy.'
+                });
+                return;
+            }
+
+            const senderSocket = io.sockets.sockets.get(invite.senderSocketId) || getOnlineSocket(io, invite.fromUserId);
+            const receiverSocket = socket.connected ? socket : getOnlineSocket(io, invite.toUserId);
+
+            if (!senderSocket || !receiverSocket) {
+                clearBattleInvite(invite.inviteId);
+                io.to(`user_${invite.fromUserId}`).emit('battleInviteUnavailable', {
+                    inviteId: invite.inviteId,
+                    targetUserId: invite.toUserId,
+                    targetNickname: invite.receiver.nickname,
+                    message: 'Battle invite cancelled because a player went offline.'
+                });
+                io.to(`user_${invite.toUserId}`).emit('battleInviteUnavailable', {
+                    inviteId: invite.inviteId,
+                    senderUserId: invite.fromUserId,
+                    senderNickname: invite.sender.nickname,
+                    message: 'Battle invite cancelled because a player went offline.'
+                });
+                return;
+            }
+
+            clearBattleInvite(invite.inviteId);
+            clearInvitesForUser(invite.fromUserId, io);
+            clearInvitesForUser(invite.toUserId, io);
+
+            const gameId = createBattle(io, {
+                dbUserId: invite.fromUserId,
+                nickname: invite.sender.nickname,
+                avatar: invite.sender.avatar,
+                elo: invite.sender.elo,
+                socket: senderSocket
+            }, {
+                dbUserId: invite.toUserId,
+                nickname: invite.receiver.nickname,
+                avatar: invite.receiver.avatar,
+                elo: invite.receiver.elo,
+                socket: receiverSocket
+            });
+
+            io.to(`user_${invite.fromUserId}`).emit('battleInviteAccepted', {
+                inviteId: invite.inviteId,
+                gameId,
+                opponentNickname: invite.receiver.nickname
+            });
+
+            io.to(`user_${invite.toUserId}`).emit('battleInviteAccepted', {
+                inviteId: invite.inviteId,
+                gameId,
+                opponentNickname: invite.sender.nickname
+            });
         });
 
         socket.on('joinGame', async (data) => {
@@ -458,6 +825,7 @@ module.exports = (io) => {
                     sockets.delete(socket.id);
                     if (sockets.size === 0) {
                         onlineUsers.delete(socket.dbUserId);
+                        clearInvitesForUser(socket.dbUserId, io, 'Battle invite cancelled because a player went offline.');
                     }
                 }
             }
@@ -633,17 +1001,9 @@ async function endGame(gameId, io, winner, loser, reason = '') {
 }
 
 module.exports.isUserOnline = (userId) => {
-    if (!userId) return false;
-    return onlineUsers.has(userId) || onlineUsers.has(Number(userId)) || onlineUsers.has(String(userId)) || module.exports.getUserActiveGameId(userId) !== null;
+    return isUserOnlineInternal(userId);
 };
 
 module.exports.getUserActiveGameId = (userId) => {
-    if (!userId) return null;
-    for (const [gameId, game] of activeGames.entries()) {
-        const player = game.players.find(p => String(p.dbUserId) === String(userId));
-        if (player) {
-            return gameId;
-        }
-    }
-    return null;
+    return getUserActiveGameIdInternal(userId);
 };
