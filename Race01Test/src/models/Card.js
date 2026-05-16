@@ -26,6 +26,24 @@ class Card {
     }
 
     /**
+     * Returns shop cards that the player has not bought yet.
+     * @param {number} userId
+     */
+    static async getUnownedShopCards(userId) {
+        const [rows] = await db.execute(
+            `SELECT c.* FROM cards c
+             WHERE c.is_starter = FALSE
+               AND NOT EXISTS (
+                   SELECT 1 FROM user_cards uc
+                   WHERE uc.user_id = ? AND uc.card_id = c.id
+               )
+             ORDER BY c.cost, c.shop_price, c.name`,
+            [userId]
+        );
+        return rows;
+    }
+
+    /**
      * Returns all cards currently owned by the player (starter deck + purchased cards).
      * @param {number} userId
      */
@@ -84,6 +102,87 @@ class Card {
     static async getById(id) {
         const [rows] = await db.execute('SELECT * FROM cards WHERE id = ?', [id]);
         return rows[0];
+    }
+
+    /**
+     * Buys a shop card for a player using a transaction.
+     * Validates existence, ownership, and coin balance before saving changes.
+     * @param {number} userId
+     * @param {number|string} cardId
+     */
+    static async purchaseForUser(userId, cardId) {
+        const parsedCardId = Number.parseInt(cardId, 10);
+        if (!Number.isInteger(parsedCardId) || parsedCardId <= 0) {
+            throw this._shopError('CARD_NOT_FOUND', 'Card not found');
+        }
+
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [cardRows] = await connection.execute(
+                'SELECT * FROM cards WHERE id = ? AND is_starter = FALSE FOR UPDATE',
+                [parsedCardId]
+            );
+            const card = cardRows[0];
+            if (!card) {
+                throw this._shopError('CARD_NOT_FOUND', 'Card not found');
+            }
+
+            const [userRows] = await connection.execute(
+                'SELECT id, coins FROM users WHERE id = ? FOR UPDATE',
+                [userId]
+            );
+            const user = userRows[0];
+            if (!user) {
+                throw this._shopError('USER_NOT_FOUND', 'User not found');
+            }
+
+            const [ownedRows] = await connection.execute(
+                'SELECT id FROM user_cards WHERE user_id = ? AND card_id = ?',
+                [userId, parsedCardId]
+            );
+            if (ownedRows.length > 0) {
+                throw this._shopError('ALREADY_OWNED', 'Card already owned');
+            }
+
+            const price = Number.parseInt(card.shop_price, 10);
+            if (!Number.isInteger(price) || price < 0) {
+                throw this._shopError('CARD_NOT_FOUND', 'Card not found');
+            }
+
+            if (user.coins < price) {
+                throw this._shopError('NOT_ENOUGH_COINS', 'Not enough coins');
+            }
+
+            await connection.execute(
+                'INSERT INTO user_cards (user_id, card_id) VALUES (?, ?)',
+                [userId, parsedCardId]
+            );
+            await connection.execute(
+                'UPDATE users SET coins = coins - ? WHERE id = ?',
+                [price, userId]
+            );
+
+            const [updatedUserRows] = await connection.execute(
+                'SELECT coins FROM users WHERE id = ?',
+                [userId]
+            );
+
+            await connection.commit();
+            return {
+                card,
+                coins: updatedUserRows[0].coins
+            };
+        } catch (error) {
+            await connection.rollback();
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw this._shopError('ALREADY_OWNED', 'Card already owned');
+            }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     /**
@@ -177,6 +276,12 @@ class Card {
             }
         }
         return results;
+    }
+
+    static _shopError(code, message) {
+        const error = new Error(message);
+        error.code = code;
+        return error;
     }
 }
 

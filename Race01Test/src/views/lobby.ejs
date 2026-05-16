@@ -426,13 +426,12 @@
                                                                                                                         <div class="deck-shop-panel"
                                             style="position: relative; background: rgba(40, 0, 70, 0.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(140, 60, 200, 0.25); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8); border-radius: 27px; padding: 25px; width: 100%; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; animation: fadeIn 0.8s ease-out; color: white;">
                                             <div style="position: absolute; top: 18px; right: 20px; display: flex; align-items: center; gap: 12px; z-index: 10;">
-                                                <a href="/shop" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; color: rgba(255,255,255,0.6); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-sizing: border-box;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.color='#fff'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
-                                                    <span style="font-size: 1.1rem; opacity: 0.8;">🛒</span>
-                                                    <span>Shop</span>
-                                                </a>
+                                                <button type="button" id="open-shop-btn" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; color: rgba(255,255,255,0.6); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-sizing: border-box; cursor: pointer; font-family: inherit; appearance: none;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.color='#fff'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
+                                                    <span>SHOP</span>
+                                                </button>
                                                 <div class="user-coins" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); cursor: default; transition: all 0.3s ease; box-sizing: border-box;" onmouseover="this.style.background='rgba(140, 60, 200, 0.1)'; this.style.borderColor='rgba(140, 60, 200, 0.4)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)';">
                                                     <img src="/assets/coins.png" alt="Coins" style="width: 18px; height: 18px; border: none; opacity: 0.9; margin: 0;">
-                                                    <span style="color: #ffd700; font-weight: bold; font-size: 1rem; margin-top: 1px;"><%= coins %></span>
+                                                    <span id="lobby-coin-amount" style="color: #ffd700; font-weight: bold; font-size: 1rem; margin-top: 1px;"><%= coins %></span>
                                                 </div>
                                             </div>
                                             <h3 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px; text-transform: uppercase; color: #c084fc; text-shadow: 0 0 10px rgba(147, 51, 234, 0.7); text-align: left; border-bottom: 1px solid rgba(140, 60, 200, 0.4); padding-bottom: 10px;">My Cards</h3>
@@ -457,7 +456,7 @@
                                                         filter: grayscale(100%) opacity(0.5); transition: filter 0.3s; cursor: not-allowed; height: 100%; box-sizing: border-box;
                                                     }
                                                     .armory-card-locked:hover { filter: grayscale(80%) opacity(0.8); }
-                                                    .armory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+                                                    .armory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; }
                                                     .armory-card img, .armory-card-locked img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; object-fit: contain; }
                                                 </style>
                                                 
@@ -466,26 +465,36 @@
                                                    const lockedCards = allCards.filter(c => !userCardIds.includes(c.id));
                                                 %>
                                                 
-                                                <div class="armory-grid">
+                                                <div id="owned-cards-grid" class="armory-grid">
                                                     <% unlockedCards.forEach(card => { %>
-                                                        <div class="armory-card" title="<%= card.name %> (Atk: <%= card.attack %> / Def: <%= card.defense %>)">
+                                                        <div class="armory-card" data-card-id="<%= card.id %>" title="<%= card.name %> (Atk: <%= card.attack %> / Def: <%= card.defense %>)">
                                                             <img src="<%= card.image_url %>" alt="<%= card.name %>">
-                                                            <div style="font-weight: bold; font-size: 0.8rem; color: #e9d5ff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;"><%= card.name %></div>
-                                                            <div style="font-size: 0.75rem; color: #60a5fa; font-weight: bold;">⚡ <%= card.cost %></div>
+                                                            <div class="armory-card-name"><%= card.name %></div>
+                                                            <div class="card-stats-line" aria-label="Card stats">
+                                                                <span title="Damage">⚔️ <%= card.attack %></span>
+                                                                <span title="HP">❤️ <%= card.defense %></span>
+                                                                <span title="Energy">⚡ <%= card.cost %></span>
+                                                            </div>
                                                         </div>
                                                     <% }) %>
                                                 </div>
                                                 
                                                 <% if (lockedCards.length > 0) { %>
-                                                    <div style="margin: 20px 0 15px 0; border-top: 1px dashed rgba(140, 60, 200, 0.4); padding-top: 15px; text-align: center; color: rgba(255,255,255,0.4); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; font-weight: bold;">Locked Cards</div>
-                                                    <div class="armory-grid">
-                                                        <% lockedCards.forEach(card => { %>
-                                                            <div class="armory-card-locked" title="<%= card.name %> - Shop Price: <%= card.shop_price %>">
-                                                                <img src="<%= card.image_url %>" alt="<%= card.name %>">
-                                                                <div style="font-weight: bold; font-size: 0.8rem; color: #ccc; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;"><%= card.name %></div>
-                                                                <div style="font-size: 0.75rem; color: #aaa; font-weight: bold;">🛒 <%= card.shop_price %></div>
-                                                            </div>
-                                                        <% }) %>
+                                                    <div id="locked-cards-section">
+                                                        <div style="margin: 20px 0 15px 0; border-top: 1px dashed rgba(140, 60, 200, 0.4); padding-top: 15px; text-align: center; color: rgba(255,255,255,0.4); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; font-weight: bold;">Locked Cards</div>
+                                                        <div id="locked-cards-grid" class="armory-grid">
+                                                            <% lockedCards.forEach(card => { %>
+                                                                <div class="armory-card-locked" data-card-id="<%= card.id %>" title="<%= card.name %> - Shop Price: <%= card.shop_price %>">
+                                                                    <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                                                                    <div class="armory-card-name" style="color: #ccc;"><%= card.name %></div>
+                                                                    <div class="card-stats-line is-muted" aria-label="Card stats">
+                                                                        <span title="Damage">⚔️ <%= card.attack %></span>
+                                                                        <span title="HP">❤️ <%= card.defense %></span>
+                                                                        <span title="Energy">⚡ <%= card.cost %></span>
+                                                                    </div>
+                                                                </div>
+                                                            <% }) %>
+                                                        </div>
                                                     </div>
                                                 <% } %>
                                             </div>
@@ -808,6 +817,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <%- include('shop') %>
 
                     <script src="/socket.io/socket.io.js"></script>
                     <script>
