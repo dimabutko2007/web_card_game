@@ -62,11 +62,11 @@ CREATE TABLE IF NOT EXISTS abilities (
 );
 
 INSERT INTO abilities (name, description, image_url, cooldown) VALUES
-('Freeze', 'Choose an enemy card to freeze. It cannot attack next turn.', '/assets/cards/freeze.png', 2),
-('Lightning', 'Deal 4 damage to an enemy card or 2 damage to the enemy hero.', '/assets/cards/lightning.png', 2),
-('Poison', 'Deal 2 damage to 2 random enemy cards.', '/assets/cards/poison.png', 2),
-('Regeneration', 'Restore a friendly card to its maximum HP.', '/assets/cards/regeneration.png', 2),
-('Totem of Undying', 'Grant a friendly card a second life. If its HP falls to 0 or less, it restores to 75% HP.', '/assets/cards/totem_of_undying.png', 3);
+('Freeze', 'Choose an enemy card to freeze. It cannot attack next turn.', '/assets/cards/freeze.png', 3),
+('Lightning', 'Deal 4 damage to an enemy card or 2 damage to the enemy hero.', '/assets/cards/lightning.png', 3),
+('Poison', 'Deal 2 damage to 2 random enemy cards.', '/assets/cards/poison.png', 3),
+('Regeneration', 'Restore a friendly card to its maximum HP.', '/assets/cards/regeneration.png', 3),
+('Totem of Undying', 'Grant a friendly card a second life. If its HP falls to 0 or less, it restores to 50% HP.', '/assets/cards/totem_of_undying.png', 3);
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE cards;
@@ -77,72 +77,84 @@ INSERT INTO cards (name, attack, defense, cost, image_url, has_taunt, is_starter
 -- STARTER DECK (25 Cards, is_starter = TRUE)
 -- =============================================
 
--- 1 Energy (4 Cards) - All starter
-('Endermite',        2, 1, 1, '/assets/cards/endermite.png',        FALSE, TRUE,  0),
+-- 1 Energy (2 Cards) - Starter
 ('Silverfish',       1, 2, 1, '/assets/cards/silverfish.png',       FALSE, TRUE,  0),
 ('Baby Zombie',      1, 2, 1, '/assets/cards/baby_zombie.png',      FALSE, TRUE,  0),
-('Bee',              2, 1, 1, '/assets/cards/bee.png',              FALSE, TRUE,  0),
 
--- 2 Energy (10 Cards) - All starter
-('Zombie',           1, 3, 2, '/assets/cards/zombie.png',           TRUE,  TRUE,  0),
-('Drowned',          3, 2, 2, '/assets/cards/drowned.png',          FALSE, TRUE,  0),
-('Husk',             2, 2, 2, '/assets/cards/husk.png',             TRUE,  TRUE,  0),
+-- 2 Energy (6 Cards) - Starter
+('Zombie',           1, 3, 2, '/assets/cards/zombie.png',           TRUE,  TRUE,  0), -- Taunt
 ('Skeleton',         4, 1, 2, '/assets/cards/skeleton.png',         FALSE, TRUE,  0),
-('Stray',            3, 2, 2, '/assets/cards/stray.png',            FALSE, TRUE,  0),
 ('Bogged',           2, 2, 2, '/assets/cards/bogged.png',           FALSE, TRUE,  0),
 ('Parched',          3, 1, 2, '/assets/cards/parched.png',          FALSE, TRUE,  0),
-('Zombie Villager',  1, 3, 2, '/assets/cards/zombie_villager.png',  TRUE,  TRUE,  0),
-('Slime',            1, 3, 2, '/assets/cards/slime.png',            TRUE,  TRUE,  0),
+('Slime',            1, 3, 2, '/assets/cards/slime.png',            TRUE,  TRUE,  0), -- Taunt
 ('Wolf',             2, 2, 2, '/assets/cards/wolf.png',             FALSE, TRUE,  0),
 
--- 3 Energy (8 Cards) - All starter
+-- 3 Energy (5 Cards) - Starter
 ('Spider',           3, 3, 3, '/assets/cards/spider.png',           FALSE, TRUE,  0),
 ('Creeper',          5, 1, 3, '/assets/cards/creeper.png',          FALSE, TRUE,  0),
-('Phantom',          3, 3, 3, '/assets/cards/phantom.png',          TRUE,  TRUE,  0),
-('Magma Cube',       1, 4, 3, '/assets/cards/magma_cube.png',       TRUE,  TRUE,  0),
-('Piglin',           2, 3, 3, '/assets/cards/piglin.png',           TRUE,  TRUE,  0),
+('Magma Cube',       1, 4, 3, '/assets/cards/magma_cube.png',       TRUE,  TRUE,  0), -- Taunt
+('Piglin',           2, 3, 3, '/assets/cards/piglin.png',           TRUE,  TRUE,  0), -- Taunt
 ('Pillager',         3, 3, 3, '/assets/cards/pillager.png',         FALSE, TRUE,  0),
-('Vex',              5, 2, 3, '/assets/cards/vex.png',              FALSE, TRUE,  0),
-('Cave Spider',      3, 3, 3, '/assets/cards/cave_spider.png',      FALSE, TRUE,  0),
 
--- 4 Energy (3 Starter Cards)
-('Zombified Piglin', 3, 4, 4, '/assets/cards/zombified_piglin.png', TRUE,  TRUE,  0),
-('Witch',            5, 4, 4, '/assets/cards/witch.png',            FALSE, TRUE,  0),
-('Blaze',            6, 3, 4, '/assets/cards/blaze.png',            FALSE, TRUE,  0),
+-- 4 Energy (6 Cards) - Starter
+('Zombified Piglin', 3, 4, 4, '/assets/cards/zombified_piglin.png', TRUE,  TRUE,  0), -- Taunt
+('Shulker',          1, 6, 4, '/assets/cards/shulker.png',          TRUE,  TRUE,  0), -- Taunt
+('Ghast',            5, 3, 4, '/assets/cards/ghast.png',            FALSE, TRUE,  0),
+('Guardian',         4, 4, 4, '/assets/cards/guardian.png',         FALSE, TRUE, 0),
+('Vindicator',       6, 2, 4, '/assets/cards/vindicator.png',       FALSE, TRUE, 0),
+('Witch',            5, 4, 4, '/assets/cards/witch.png',            FALSE, TRUE, 0),
+
+-- 5 Energy (4 Cards) - Starter
+('Creaking',         2, 7, 5, '/assets/cards/creaking.png',         TRUE,  TRUE, 0), -- Taunt
+('Breeze',           6, 4, 5, '/assets/cards/breeze.png',           FALSE, TRUE, 0),
+('Enderman',         7, 3, 5, '/assets/cards/enderman.png',         FALSE, TRUE, 0),
+('Iron Golem',       5, 5, 5, '/assets/cards/iron_golem.png',       FALSE, TRUE, 0),
+
+-- 6 Energy (1 Card) - Starter
+('Giant',            3, 9, 6, '/assets/cards/giant.png',            TRUE,  TRUE, 0), -- Taunt
+
+-- 7 Energy (1 Card) - Starter
+('Wither',           8, 7, 7, '/assets/cards/wither.png',           FALSE, TRUE, 0),
 
 -- =============================================
 -- SHOP CATALOG (20 Cards, is_starter = FALSE)
 -- =============================================
 
+-- 1 Energy - Shop items
+('Endermite',        2, 1, 1, '/assets/cards/endermite.png',        FALSE, FALSE, 100),
+('Bee',              2, 1, 1, '/assets/cards/bee.png',              FALSE, FALSE, 100),
+
+-- 2 Energy - Shop items
+('Husk',             2, 2, 2, '/assets/cards/husk.png',             TRUE,  FALSE, 150), -- Taunt
+('Zombie Villager',  1, 3, 2, '/assets/cards/zombie_villager.png',  TRUE,  FALSE, 150), -- Taunt
+('Drowned',          3, 2, 2, '/assets/cards/drowned.png',          FALSE, FALSE, 150),
+('Stray',            3, 2, 2, '/assets/cards/stray.png',            FALSE, FALSE, 150),
+
+-- 3 Energy - Shop items
+('Vex',              5, 2, 3, '/assets/cards/vex.png',              FALSE, FALSE, 150),
+('Phantom',          3, 3, 3, '/assets/cards/phantom.png',          TRUE,  FALSE, 150), -- Taunt
+('Cave Spider',      3, 3, 3, '/assets/cards/cave_spider.png',      FALSE, FALSE, 150),
+
 -- 4 Energy - Shop items
-('Ghast',            5, 3, 4, '/assets/cards/ghast.png',            FALSE, FALSE, 150),
-('Hoglin',           4, 3, 4, '/assets/cards/hoglin.png',           TRUE,  FALSE, 150),
-('Guardian',         4, 4, 4, '/assets/cards/guardian.png',         FALSE, FALSE, 150),
-('Vindicator',       6, 2, 4, '/assets/cards/vindicator.png',       FALSE, FALSE, 150),
-('Shulker',          1, 6, 4, '/assets/cards/shulker.png',          TRUE,  FALSE, 150),
-('Zoglin',           3, 4, 4, '/assets/cards/zoglin.png',           TRUE,  FALSE, 150),
-('Jockey',           5, 3, 4, '/assets/cards/jockey.png',           FALSE, FALSE, 150),
-('Snow Golem',       4, 4, 4, '/assets/cards/snow_golem.png',       FALSE, FALSE, 150),
+('Blaze',            6, 3, 4, '/assets/cards/blaze.png',            FALSE, FALSE, 200),
+('Hoglin',           4, 3, 4, '/assets/cards/hoglin.png',           TRUE,  FALSE, 200), -- Taunt
+('Zoglin',           3, 4, 4, '/assets/cards/zoglin.png',           TRUE,  FALSE, 200), -- Taunt
+('Jockey',           5, 3, 4, '/assets/cards/jockey.png',           FALSE, FALSE, 200),
+('Snow Golem',       4, 4, 4, '/assets/cards/snow_golem.png',       FALSE, FALSE, 200),
 
 -- 5 Energy - Shop items
 ('Piglin Brute',     7, 4, 5, '/assets/cards/piglin_brute.png',     FALSE, FALSE, 250),
 ('Evoker',           6, 5, 5, '/assets/cards/evoker.png',           FALSE, FALSE, 250),
-('Ravager',          4, 6, 5, '/assets/cards/ravager.png',          TRUE,  FALSE, 250),
-('Breeze',           6, 4, 5, '/assets/cards/breeze.png',           FALSE, FALSE, 250),
-('Creaking',         1, 8, 5, '/assets/cards/creaking.png',         TRUE,  FALSE, 250),
-('Enderman',         7, 3, 5, '/assets/cards/enderman.png',         FALSE, FALSE, 250),
-('Iron Golem',       5, 5, 5, '/assets/cards/iron_golem.png',       FALSE, FALSE, 250),
+('Ravager',          4, 6, 5, '/assets/cards/ravager.png',          TRUE,  FALSE, 250), -- Taunt
 
 -- 6 Energy - Shop items
 ('Wither Skeleton',  8, 5, 6, '/assets/cards/wither_skeleton.png',  FALSE, FALSE, 400),
-('Elder Guardian',   4, 8, 6, '/assets/cards/elder_guardian.png',   TRUE,  FALSE, 400),
-('Giant',            2, 9, 6, '/assets/cards/giant.png',            TRUE,  FALSE, 400),
 
--- 7 Energy - Shop item (Rare)
-('Wither',           8, 7, 7, '/assets/cards/wither.png',           FALSE, FALSE, 600),
+-- 7 Energy - Shop item
+('Elder Guardian',   6, 8, 7, '/assets/cards/elder_guardian.png',   TRUE,  FALSE, 600), -- Taunt
 
--- 8 Energy - Shop item (Legendary)
-('Warden',           8, 9, 8, '/assets/cards/warden.png',           TRUE,  FALSE, 800),
+-- 8 Energy - Shop item
+('Warden',           8, 9, 8, '/assets/cards/warden.png',           TRUE,  FALSE, 800), -- Taunt
 
--- 10 Energy - Shop item (Mythical)
+-- 10 Energy - Shop item
 ('Ender Dragon',    12,12,10, '/assets/cards/ender_dragon.png',     FALSE, FALSE, 1500);

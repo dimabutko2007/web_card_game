@@ -130,12 +130,12 @@ module.exports = (io) => {
                         const rank = User.getRank(p.elo);
                         p.rankName = rank.name;
                         p.rankIcon = rank.icon;
-                        
+
                         // Assign random ability
                         const randomAbility = await Ability.getRandomAbility();
                         p.ability = {
                             ...randomAbility,
-                            currentCooldown: 0
+                            currentCooldown: 2
                         };
                     }
 
@@ -301,7 +301,7 @@ module.exports = (io) => {
                         // Remove dead cards
                         if (defenderCard.currentDefense <= 0) {
                             if (defenderCard.hasTotem) {
-                                defenderCard.currentDefense = Math.floor(defenderCard.defense * 0.75);
+                                defenderCard.currentDefense = Math.ceil(defenderCard.defense * 0.5);
                                 defenderCard.hasTotem = false;
                             } else {
                                 defenderPlayer.field = defenderPlayer.field.filter(c => c !== defenderCard);
@@ -309,7 +309,7 @@ module.exports = (io) => {
                         }
                         if (attackerCard.currentDefense <= 0) {
                             if (attackerCard.hasTotem) {
-                                attackerCard.currentDefense = Math.floor(attackerCard.defense * 0.75);
+                                attackerCard.currentDefense = Math.ceil(attackerCard.defense * 0.5);
                                 attackerCard.hasTotem = false;
                             } else {
                                 attackerPlayer.field = attackerPlayer.field.filter(c => c !== attackerCard);
@@ -359,7 +359,7 @@ module.exports = (io) => {
                             targetLightning.currentDefense -= 4;
                             if (targetLightning.currentDefense <= 0) {
                                 if (targetLightning.hasTotem) {
-                                    targetLightning.currentDefense = Math.floor(targetLightning.defense * 0.75);
+                                    targetLightning.currentDefense = Math.ceil(targetLightning.defense * 0.5);
                                     targetLightning.hasTotem = false;
                                 } else {
                                     oppPlayer.field = oppPlayer.field.filter(c => c !== targetLightning);
@@ -380,7 +380,7 @@ module.exports = (io) => {
                         poisonedTargets.push(card.instanceId);
                         if (card.currentDefense <= 0) {
                             if (card.hasTotem) {
-                                card.currentDefense = Math.floor(card.defense * 0.75);
+                                card.currentDefense = Math.ceil(card.defense * 0.5);
                                 card.hasTotem = false;
                             }
                         }
@@ -407,9 +407,9 @@ module.exports = (io) => {
 
             if (used) {
                 player.ability.currentCooldown = player.ability.cooldown;
-                
-                io.to(data.gameId).emit('abilityEvent', { 
-                    type: player.ability.name, 
+
+                io.to(data.gameId).emit('abilityEvent', {
+                    type: player.ability.name,
                     playerIndex: game.turn,
                     targetInstanceId: data.targetInstanceId,
                     target: data.target,
@@ -420,7 +420,7 @@ module.exports = (io) => {
                 setTimeout(async () => {
                     const updatedGame = activeGames.get(data.gameId);
                     if (!updatedGame) return;
-                    
+
                     const p1 = updatedGame.players[0];
                     const p2 = updatedGame.players[1];
 
@@ -570,7 +570,7 @@ async function switchTurn(gameId, io) {
         } else {
             c.canAttack = true;
         }
-        c.isSummoning = false; 
+        c.isSummoning = false;
     });
 
     io.to(gameId).emit('turnUpdate', {
