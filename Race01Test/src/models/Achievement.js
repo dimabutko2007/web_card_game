@@ -52,10 +52,10 @@ const DEFINITIONS = [
     {
         code: 'collector',
         title: 'Collector',
-        description: 'Buy or own 10 different cards.',
-        reward_coins: 200,
+        description: 'Buy or own 35 different cards.',
+        reward_coins: 300,
         category: 'Shop',
-        target: 10
+        target: 35
     },
     {
         code: 'first_purchase',
@@ -350,7 +350,7 @@ class Achievement {
         const codes = [];
 
         if (metrics.coinsSpent >= 1) codes.push('first_purchase');
-        if (metrics.cardCount >= 10) codes.push('collector');
+        if (metrics.cardCount >= 35) codes.push('collector');
         if (metrics.coinsSpent >= 1000) codes.push('big_spender');
 
         return this.unlockMany(userId, codes);
@@ -405,9 +405,33 @@ class Achievement {
     }
 
     static async getUserAchievements(userId) {
-        await this.ensureDefinitionsSynced();
+        if (!userId) return [];
 
+        await this.ensureDefinitionsSynced();
         const metrics = await this.getUserMetrics(userId);
+
+        // Pre-check and unlock achievements immediately based on current user metrics
+        const autoCheckCodes = [];
+        if (metrics.totalBattles >= 5) autoCheckCodes.push('warriors_path');
+        if (metrics.totalBattles >= 50) autoCheckCodes.push('battle_veteran');
+        if (metrics.wins >= 1) autoCheckCodes.push('first_blood');
+        if (Math.max(metrics.winStreak, metrics.maxWinStreak) >= 3) autoCheckCodes.push('no_mercy');
+        if (metrics.wins >= 10) autoCheckCodes.push('dark_champion');
+        if (metrics.elo >= 1200) autoCheckCodes.push('elite_fighter');
+        if (metrics.elo >= 1500) autoCheckCodes.push('legend_division');
+        if (metrics.coinsSpent >= 1) autoCheckCodes.push('first_purchase');
+        if (metrics.cardCount >= 35) autoCheckCodes.push('collector');
+        if (metrics.coinsSpent >= 1000) autoCheckCodes.push('big_spender');
+        if (metrics.friendCount >= 1) autoCheckCodes.push('first_friend');
+        if (metrics.friendCount >= 10) autoCheckCodes.push('social_player');
+        if (metrics.loginStreak >= 2) autoCheckCodes.push('daily_visitor');
+        if (metrics.loginStreak >= 5) autoCheckCodes.push('loyal_warrior');
+        if (metrics.loginStreak >= 10) autoCheckCodes.push('dark_ritual');
+
+        if (autoCheckCodes.length > 0) {
+            await this.unlockMany(userId, autoCheckCodes);
+        }
+
         const [unlockedRows] = await db.execute(
             `SELECT achievement_code, unlocked_at, reward_given
              FROM user_achievements
