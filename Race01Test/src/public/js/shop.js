@@ -155,6 +155,12 @@
                 removeLockedCard(data.card.id);
                 removeShopCard(data.card.id);
                 showMessage(data.message || 'Purchase successful', 'success');
+                if (window.Achievements && typeof window.Achievements.setData === 'function') {
+                    window.Achievements.setData({
+                        achievements: data.achievements,
+                        achievementsUnlocked: data.achievementsUnlocked
+                    });
+                }
                 playShopSound(buySuccessSound);
             } catch (error) {
                 showMessage(error.message || 'Purchase failed', 'error');

@@ -160,8 +160,8 @@ class Card {
                 [userId, parsedCardId]
             );
             await connection.execute(
-                'UPDATE users SET coins = coins - ? WHERE id = ?',
-                [price, userId]
+                'UPDATE users SET coins = coins - ?, coins_spent = coins_spent + ? WHERE id = ?',
+                [price, price, userId]
             );
 
             const [updatedUserRows] = await connection.execute(

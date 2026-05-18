@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
     losses INT DEFAULT 0,
     elo INT DEFAULT 1000,
     coins INT DEFAULT 100,
+    win_streak INT DEFAULT 0,
+    max_win_streak INT DEFAULT 0,
+    coins_spent INT DEFAULT 0,
+    last_login_date DATE NULL,
+    login_streak INT DEFAULT 0,
     reset_token VARCHAR(255),
     reset_expires TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -51,6 +56,27 @@ CREATE TABLE IF NOT EXISTS user_cards (
     UNIQUE KEY unique_user_card (user_id, card_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(80) NOT NULL UNIQUE,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    reward_coins INT NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    target INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    achievement_code VARCHAR(80) NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reward_given BOOLEAN DEFAULT FALSE,
+    UNIQUE KEY unique_user_achievement (user_id, achievement_code),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_code) REFERENCES achievements(code) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS abilities (

@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Match = require('../models/Match');
 const Friendship = require('../models/Friendship');
 const Card = require('../models/Card');
+const Achievement = require('../models/Achievement');
 const gameSocket = require('../sockets/gameSocket');
 const multer = require('multer');
 const path = require('path');
@@ -58,6 +59,51 @@ const requireJsonAuth = (req, res, next) => {
     });
 };
 
+const mergeAchievementUnlocks = (...groups) => {
+    const merged = [];
+    const seen = new Set();
+
+    groups.flat().filter(Boolean).forEach((achievement) => {
+        if (!achievement.code || seen.has(achievement.code)) return;
+        seen.add(achievement.code);
+        merged.push(achievement);
+    });
+
+    return merged;
+};
+
+const queueSessionAchievementUnlocks = (req, unlocks) => {
+    if (!unlocks || unlocks.length === 0) return;
+    const current = Array.isArray(req.session.achievementUnlocks) ? req.session.achievementUnlocks : [];
+    req.session.achievementUnlocks = mergeAchievementUnlocks(current, unlocks);
+};
+
+const emitAchievementUnlocksToUser = (io, userId, unlocks) => {
+    if (!io || !unlocks || unlocks.length === 0) return;
+    unlocks.forEach((achievement) => {
+        io.to(`user_${userId}`).emit('achievementUnlocked', achievement);
+    });
+};
+
+const handleFriendAchievementUnlocks = async (req, io, userIdA, userIdB) => {
+    const [unlocksA, unlocksB] = await Promise.all([
+        Achievement.checkFriendAchievements(userIdA),
+        Achievement.checkFriendAchievements(userIdB)
+    ]);
+
+    if (String(req.session.userId) === String(userIdA)) {
+        queueSessionAchievementUnlocks(req, unlocksA);
+    } else {
+        emitAchievementUnlocksToUser(io, userIdA, unlocksA);
+    }
+
+    if (String(req.session.userId) === String(userIdB)) {
+        queueSessionAchievementUnlocks(req, unlocksB);
+    } else {
+        emitAchievementUnlocksToUser(io, userIdB, unlocksB);
+    }
+};
+
 router.get('/', (req, res) => {
     if (req.session.userId) {
         res.redirect('/lobby');
@@ -67,6 +113,9 @@ router.get('/', (req, res) => {
 });
 
 router.get('/lobby', authController.isAuthenticated, async (req, res) => {
+    const queuedAchievementUnlocks = Array.isArray(req.session.achievementUnlocks) ? req.session.achievementUnlocks : [];
+    req.session.achievementUnlocks = [];
+    const dailyUnlocks = await Achievement.checkDailyLoginAchievements(req.session.userId);
     const user = await User.findById(req.session.userId);
     const leaders = await User.getTopPlayers(25);
     const friends = await Friendship.getFriends(req.session.userId);
@@ -84,6 +133,8 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
     }
     const userCardIds = Array.from(userCardIdsSet);
     const shopCards = await Card.getUnownedShopCards(req.session.userId);
+    const achievements = await Achievement.getUserAchievements(req.session.userId);
+    const recentAchievementUnlocks = mergeAchievementUnlocks(queuedAchievementUnlocks, dailyUnlocks);
     res.render('lobby', {
         nickname: req.session.nickname,
         userId: req.session.userId,
@@ -96,6 +147,8 @@ router.get('/lobby', authController.isAuthenticated, async (req, res) => {
         allCards: allCards,
         userCardIds: userCardIds,
         shopCards: shopCards,
+        achievements: achievements,
+        recentAchievementUnlocks: recentAchievementUnlocks,
         error: req.query.error,
         success: req.query.success
     });
@@ -260,9 +313,13 @@ router.post('/profile/add-friend-by-nickname', authController.isAuthenticated, a
         }
 
         await Friendship.sendRequest(req.session.userId, targetUser.id);
+        const io = req.app.get('io');
+        const relation = await Friendship.getRelation(req.session.userId, targetUser.id);
+        if (relation && relation.status === 'accepted') {
+            await handleFriendAchievementUnlocks(req, io, req.session.userId, targetUser.id);
+        }
 
         // Emit real-time notification
-        const io = req.app.get('io');
         if (io) {
             const sender = await User.findById(req.session.userId);
             io.to(`user_${targetUser.id}`).emit('friendRequestReceived', {
@@ -286,9 +343,13 @@ router.post('/profile/:nickname/add-friend', authController.isAuthenticated, asy
             return redirectBackWithParam(req, res, 'error', 'User not found.');
         }
         await Friendship.sendRequest(req.session.userId, targetUser.id);
+        const io = req.app.get('io');
+        const relation = await Friendship.getRelation(req.session.userId, targetUser.id);
+        if (relation && relation.status === 'accepted') {
+            await handleFriendAchievementUnlocks(req, io, req.session.userId, targetUser.id);
+        }
 
         // Emit real-time notification
-        const io = req.app.get('io');
         if (io) {
             const sender = await User.findById(req.session.userId);
             io.to(`user_${targetUser.id}`).emit('friendRequestReceived', {
@@ -328,6 +389,7 @@ router.post('/profile/:nickname/accept-friend', authController.isAuthenticated, 
             return redirectBackWithParam(req, res, 'error', 'User not found.');
         }
         await Friendship.acceptRequest(req.session.userId, targetUser.id);
+        await handleFriendAchievementUnlocks(req, req.app.get('io'), req.session.userId, targetUser.id);
         redirectBackWithParam(req, res, 'success', `You are now friends with ${nickname}!`);
     } catch (error) {
         if (error.message !== "This friend request is no longer valid.") {
@@ -420,16 +482,21 @@ router.post('/profile/nickname', authController.isAuthenticated, async (req, res
 router.post('/shop/buy', requireJsonAuth, async (req, res) => {
     try {
         const result = await Card.purchaseForUser(req.session.userId, req.body.cardId);
+        const achievementsUnlocked = await Achievement.checkShopAchievements(req.session.userId);
+        const achievements = await Achievement.getUserAchievements(req.session.userId);
+        const user = await User.findById(req.session.userId);
         const ownedCards = await Card.getUserCards(req.session.userId);
         const shopCards = await Card.getUnownedShopCards(req.session.userId);
 
         res.json({
             success: true,
             message: 'Purchase successful',
-            coins: result.coins,
+            coins: user.coins,
             card: result.card,
             ownedCards,
-            shopCards
+            shopCards,
+            achievements,
+            achievementsUnlocked
         });
     } catch (error) {
         const messages = {
@@ -450,6 +517,49 @@ router.post('/shop/buy', requireJsonAuth, async (req, res) => {
         res.status(statuses[error.code] || 500).json({
             success: false,
             message: messages[error.code] || 'Purchase failed'
+        });
+    }
+});
+
+router.post('/achievements/claim', requireJsonAuth, async (req, res) => {
+    try {
+        const achievementCode = req.body.achievementCode || req.body.code;
+        if (!achievementCode || typeof achievementCode !== 'string') {
+            return res.status(400).json({
+                success: false,
+                message: 'Achievement code is required'
+            });
+        }
+
+        const claimedAchievement = await Achievement.claimAchievementReward(req.session.userId, achievementCode);
+        const achievements = await Achievement.getUserAchievements(req.session.userId);
+
+        res.json({
+            success: true,
+            message: 'Reward claimed',
+            coins: claimedAchievement.coins,
+            achievement: claimedAchievement,
+            achievements
+        });
+    } catch (error) {
+        const messages = {
+            ACHIEVEMENT_NOT_FOUND: 'Achievement not found',
+            ACHIEVEMENT_NOT_COMPLETED: 'Achievement is not completed yet',
+            ACHIEVEMENT_ALREADY_CLAIMED: 'Achievement reward already claimed'
+        };
+        const statuses = {
+            ACHIEVEMENT_NOT_FOUND: 404,
+            ACHIEVEMENT_NOT_COMPLETED: 400,
+            ACHIEVEMENT_ALREADY_CLAIMED: 409
+        };
+
+        if (!messages[error.code]) {
+            console.error('Achievement claim error:', error);
+        }
+
+        res.status(statuses[error.code] || 500).json({
+            success: false,
+            message: messages[error.code] || 'Failed to claim reward'
         });
     }
 });

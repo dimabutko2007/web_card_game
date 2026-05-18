@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Match = require('../models/Match');
 const Ability = require('../models/Ability');
 const Friendship = require('../models/Friendship');
+const Achievement = require('../models/Achievement');
 
 let waitingPlayer = null;
 const activeGames = new Map();
@@ -142,6 +143,20 @@ function clearInvitesForUser(userId, io, message = 'Battle invite is no longer a
             message
         });
     }
+}
+
+function emitAchievementUnlocks(io, userId, socketId, unlocks) {
+    if (!unlocks || unlocks.length === 0) return;
+
+    const userRoom = `user_${userId}`;
+    const playerSocket = io.sockets.sockets.get(socketId);
+
+    unlocks.forEach((achievement) => {
+        io.to(userRoom).emit('achievementUnlocked', achievement);
+        if (playerSocket && !playerSocket.rooms.has(userRoom)) {
+            playerSocket.emit('achievementUnlocked', achievement);
+        }
+    });
 }
 
 module.exports = (io) => {
@@ -984,16 +999,50 @@ async function endGame(gameId, io, winner, loser, reason = '') {
     io.to(`user_${winner.dbUserId}`).emit('activeGameEnded');
     io.to(`user_${loser.dbUserId}`).emit('activeGameEnded');
 
-    const winnerStats = await User.updateStats(winner.dbUserId, true);
-    const loserStats = await User.updateStats(loser.dbUserId, false);
+    await User.updateStats(winner.dbUserId, true);
+    await User.updateStats(loser.dbUserId, false);
 
     await Match.recordMatch(winner.dbUserId, loser.dbUserId, winner.nickname, loser.nickname);
 
+    const winnerStats = await User.findById(winner.dbUserId);
+    const loserStats = await User.findById(loser.dbUserId);
+
+    let winnerUnlocks = [];
+    let loserUnlocks = [];
+    try {
+        winnerUnlocks = await Achievement.checkBattleAchievements(winner.dbUserId, {
+            isWin: true,
+            opponentId: loser.dbUserId,
+            remainingHp: winner.hp,
+            elo: winnerStats.elo
+        });
+        loserUnlocks = await Achievement.checkBattleAchievements(loser.dbUserId, {
+            isWin: false,
+            opponentId: winner.dbUserId,
+            remainingHp: loser.hp,
+            elo: loserStats.elo
+        });
+    } catch (error) {
+        console.error('[ACHIEVEMENTS] Battle achievement check failed:', error);
+    }
+
+    emitAchievementUnlocks(io, winner.dbUserId, winner.socketId, winnerUnlocks);
+    emitAchievementUnlocks(io, loser.dbUserId, loser.socketId, loserUnlocks);
+
+    const winnerStatsAfterAchievements = await User.findById(winner.dbUserId);
+    const loserStatsAfterAchievements = await User.findById(loser.dbUserId);
+
     io.to(`user_${winner.dbUserId}`).emit('statsUpdate', {
-        elo: winnerStats.elo, wins: winnerStats.wins, losses: winnerStats.losses
+        elo: winnerStatsAfterAchievements.elo,
+        wins: winnerStatsAfterAchievements.wins,
+        losses: winnerStatsAfterAchievements.losses,
+        coins: winnerStatsAfterAchievements.coins
     });
     io.to(`user_${loser.dbUserId}`).emit('statsUpdate', {
-        elo: loserStats.elo, wins: loserStats.wins, losses: loserStats.losses
+        elo: loserStatsAfterAchievements.elo,
+        wins: loserStatsAfterAchievements.wins,
+        losses: loserStatsAfterAchievements.losses,
+        coins: loserStatsAfterAchievements.coins
     });
 
     if (game.interval) clearInterval(game.interval);
