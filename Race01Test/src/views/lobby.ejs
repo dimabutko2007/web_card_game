@@ -943,6 +943,16 @@
 
                     <%- include('shop') %>
 
+                    <div id="lobby-player-data" 
+                         data-player="<%= JSON.stringify({
+                             userId: String(userId),
+                             nickname: nickname,
+                             avatar: typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png',
+                             elo: elo
+                         }) %>" 
+                         style="display: none;">
+                    </div>
+
                     <script src="/socket.io/socket.io.js"></script>
                     <script>
                         const socket = io();
@@ -950,12 +960,7 @@
                         const statusMsg = document.getElementById('status-msg');
                         let hasActiveGame = false;
                         let activeGameId = null;
-                        const lobbyPlayer = <%- JSON.stringify({
-                            userId: String(userId),
-                            nickname: nickname,
-                            avatar: typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png',
-                            elo: elo
-                        }) %>;
+                        const lobbyPlayer = JSON.parse(document.getElementById('lobby-player-data').dataset.player);
                         const pendingBattleInviteTargets = new Map();
 
                         socket.emit('joinUserRoom', { userId: '<%= userId %>' });

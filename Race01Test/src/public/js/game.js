@@ -272,8 +272,8 @@ function updateStats() {
     const myHpText = document.querySelector('.player-area:not(.opponent-area) .hp-text');
     const oppHpText = document.querySelector('.opponent-area .hp-text');
 
-    if (myHpText) myHpText.textContent = `${myData.hp}/20`;
-    if (oppHpText) oppHpText.textContent = `${oppData.hp}/20`;
+    if (myHpText) myHpText.textContent = `❤️ ${myData.hp}/20`;
+    if (oppHpText) oppHpText.textContent = `❤️ ${oppData.hp}/20`;
 
     // Update side action buttons
     const trashBtn = document.getElementById('trash-btn');
@@ -691,14 +691,14 @@ function createCardElement(card) {
     const displayDef = card.currentDefense !== undefined ? card.currentDefense : card.defense;
 
     cardEl.innerHTML = `
-        <div class="card-cost">${card.cost}</div>
+        <div class="card-cost">⚡ ${card.cost}</div>
         ${card.isFrozen ? '<div class="frozen-overlay">❄️</div>' : ''}
         <div class="card-image" style="background-image: url('${card.image_url}')"></div>
         <div class="card-name">${card.name}</div>
         <div class="card-stats">
-            <span class="card-atk">${card.attack}</span>
+            <span class="card-atk">⚔️ ${card.attack}</span>
             <div class="def-container" style="position: relative; display: flex; align-items: center;">
-                <span class="card-def">${displayDef}</span>
+                <span class="card-def">❤️ ${displayDef}</span>
                 ${card.hasTotem ? '<img src="/assets/cards/small_totem_of_undying.png" class="totem-icon-mini" title="Totem of Undying">' : ''}
             </div>
         </div>

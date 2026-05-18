@@ -8,20 +8,32 @@ exports.getRegister = (req, res) => {
 };
 
 exports.postRegister = async (req, res) => {
-    const { nickname, email, password } = req.body;
+    const { nickname, email, password, confirmPassword } = req.body;
     
     // 1. Validation
     const nicknameRegex = /^[a-zA-Z0-9_]+$/;
     
     if (!nickname || nickname.length < 4 || nickname.length > 20 || !nicknameRegex.test(nickname)) {
         return res.render('register', { 
+            nickname,
+            email,
             error: 'Nickname must be 4-20 characters long and contain only letters, numbers, and underscores (_).' 
         });
     }
 
     if (!password || password.length < 8 || password.length > 50) {
         return res.render('register', { 
+            nickname,
+            email,
             error: 'Password must be 8-50 characters long.' 
+        });
+    }
+
+    if (password !== confirmPassword) {
+        return res.render('register', { 
+            nickname,
+            email,
+            error: 'Passwords do not match.' 
         });
     }
 
@@ -29,12 +41,12 @@ exports.postRegister = async (req, res) => {
         // 2. Uniqueness checks
         const existingNickname = await User.findByNickname(nickname);
         if (existingNickname) {
-            return res.render('register', { error: 'This nickname is already taken.' });
+            return res.render('register', { nickname, email, error: 'This nickname is already taken.' });
         }
 
         const existingEmail = await User.findByEmail(email);
         if (existingEmail) {
-            return res.render('register', { error: 'This email is already registered.' });
+            return res.render('register', { nickname, email, error: 'This email is already registered.' });
         }
 
         // 3. Create user
@@ -43,7 +55,7 @@ exports.postRegister = async (req, res) => {
         res.redirect('/auth/login');
     } catch (error) {
         console.error(error);
-        res.render('register', { error: 'An error occurred during registration. Please try again.' });
+        res.render('register', { nickname, email, error: 'An error occurred during registration. Please try again.' });
     }
 };
 
