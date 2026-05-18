@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css?v=1.2">
+    <link rel="stylesheet" href="/css/achievements.css?v=1.7">
     <style>
         .lobby-content {
             display: flex;
@@ -426,6 +427,10 @@
                                                                                                                         <div class="deck-shop-panel"
                                             style="position: relative; background: rgba(40, 0, 70, 0.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(140, 60, 200, 0.25); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8); border-radius: 27px; padding: 25px; width: 100%; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; animation: fadeIn 0.8s ease-out; color: white;">
                                             <div style="position: absolute; top: 18px; right: 20px; display: flex; align-items: center; gap: 12px; z-index: 10;">
+                                                <button type="button" id="open-achievements-btn" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 14px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; color: rgba(255,255,255,0.6); font-weight: bold; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-sizing: border-box; cursor: pointer; font-family: inherit; appearance: none;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.color='#fff'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
+                                                    <span>ACHIEVEMENTS</span>
+                                                    <span id="achievements-claim-badge" class="achievement-claim-badge" hidden>!</span>
+                                                </button>
                                                 <button type="button" id="open-shop-btn" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; color: rgba(255,255,255,0.6); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-sizing: border-box; cursor: pointer; font-family: inherit; appearance: none;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.color='#fff'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
                                                     <span>SHOP</span>
                                                 </button>
@@ -943,6 +948,35 @@
 
                     <%- include('shop') %>
 
+                    <% const achievementPayload = {
+                        achievements: typeof achievements !== 'undefined' ? achievements : [],
+                        recentUnlocks: typeof recentAchievementUnlocks !== 'undefined' ? recentAchievementUnlocks : []
+                    }; %>
+
+                    <div id="achievement-toast-root" class="achievement-toast-root" aria-live="polite"></div>
+
+                    <div id="achievements-modal" class="achievements-modal" aria-hidden="true">
+                        <div class="achievements-backdrop" data-achievements-close></div>
+                        <section class="achievements-window" role="dialog" aria-modal="true" aria-labelledby="achievements-title">
+                            <div class="achievements-header">
+                                <div>
+                                    <h2 id="achievements-title">Achievements</h2>
+                                    <div class="achievements-summary">
+                                        <span id="achievements-unlocked-count">0</span>
+                                        <span>/</span>
+                                        <span id="achievements-total-count">0</span>
+                                        <span>unlocked</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="achievements-close-btn" class="achievements-close-btn" aria-label="Close achievements">&times;</button>
+                            </div>
+                            <div id="achievements-category-tabs" class="achievements-category-tabs" aria-label="Achievement categories"></div>
+                            <div id="achievements-list" class="achievements-content achievements-list"></div>
+                        </section>
+                    </div>
+
+                    <script type="application/json" id="achievements-bootstrap"><%- JSON.stringify(achievementPayload).replace(/</g, '\\u003c') %></script>
+
                     <div id="lobby-player-data" 
                          data-player="<%= JSON.stringify({
                              userId: String(userId),
@@ -956,6 +990,7 @@
                     <script src="/socket.io/socket.io.js"></script>
                     <script>
                         const socket = io();
+                        window.lobbySocket = socket;
                         const findMatchBtn = document.getElementById('find-match-btn');
                         const statusMsg = document.getElementById('status-msg');
                         let hasActiveGame = false;
@@ -998,6 +1033,15 @@
                                 eloDisplay.textContent = `(Elo: ${data.elo})`;
                                 eloDisplay.style.animation = 'pulse 1s ease-in-out';
                                 setTimeout(() => eloDisplay.style.animation = '', 1000);
+                            }
+                            if (typeof data.coins !== 'undefined') {
+                                if (window.Achievements && typeof window.Achievements.updateCoins === 'function') {
+                                    window.Achievements.updateCoins(data.coins);
+                                } else {
+                                    document.querySelectorAll('#lobby-coin-amount, #shop-coin-amount').forEach((coinAmount) => {
+                                        coinAmount.textContent = data.coins;
+                                    });
+                                }
                             }
                         });
 
@@ -1417,6 +1461,7 @@
                         }
 
                     </script>
+                    <script src="/js/achievements.js?v=1.7"></script>
                     <script src="/js/particles.js"></script>
                     <style>
                         @keyframes slideInUp {

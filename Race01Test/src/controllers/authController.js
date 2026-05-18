@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Achievement = require('../models/Achievement');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -74,6 +75,10 @@ exports.postLogin = async (req, res) => {
         if (user && await bcrypt.compare(password, user.password)) {
             req.session.userId = user.id;
             req.session.nickname = user.nickname;
+            const dailyUnlocks = await Achievement.checkDailyLoginAchievements(user.id);
+            if (dailyUnlocks.length > 0) {
+                req.session.achievementUnlocks = dailyUnlocks;
+            }
             console.log(`[AUTH] User logged in: ${user.nickname}`);
             req.session.save((err) => {
                 if (err) console.error('[AUTH] Session save error:', err);
