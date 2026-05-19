@@ -1,6 +1,6 @@
-# 🃏 Marvel Great Battle - Card Game
+# 🃏 Dark Realms - Card Game
 
-Цей проект — це карткова онлайн-гра на тему Marvel, побудована на Node.js, Express, Socket.io та MySQL.
+Цей проект — це карткова онлайн-гра на тему Minecraft, побудована на Node.js, Express, Socket.io та MySQL.
 
 ## 🚀 Швидкий старт для розробників
 

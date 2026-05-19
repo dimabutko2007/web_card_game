@@ -208,10 +208,6 @@ socket.on('abilityEvent', (data) => {
             }, 1500);
         }
     }
-    
-    // Refresh UI to show updated stats
-    // processState will be called by gameStateUpdate from server, 
-    // but we can do a quick local update if needed.
 });
 
 socket.on('gameStateUpdate', (data) => {
@@ -259,7 +255,7 @@ function processState(players, turnIndex) {
             turnIndicator.textContent = "OPPONENT'S TURN";
             turnIndicator.className = 'turn-indicator opp-turn';
         }
-        endTurnBtn.style.display = 'block'; // Make sure it is visible for players
+        endTurnBtn.style.display = 'block';
         endTurnBtn.disabled = !isMyTurn;
     }
 }
@@ -416,10 +412,8 @@ function renderHand() {
                 cardEl.classList.add('card-deal');
                 cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
                 
-                // Remove class after animation to restore pointer-events
                 setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
             }
-            // Removed setTimeout as negative delay + re-renders handle it better
 
             cardEl.innerHTML = `
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #3b0764, #1e1b4b); border: 2px solid rgba(147, 51, 234, 0.4); border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
@@ -446,7 +440,6 @@ function renderHand() {
                 cardEl.classList.add('card-deal');
                 cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
                 
-                // Remove class after animation to restore pointer-events
                 setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
             }
 
@@ -475,9 +468,6 @@ function renderHand() {
             myHandEl.appendChild(cardEl);
         });
     }
-    
-    // Cleanup: remove IDs that are no longer in the hand from birthTimes 
-    // (but keep them if they might be on the field - we'll do a full cleanup in renderField)
 }
 
 function renderField() {
@@ -502,7 +492,6 @@ function renderField() {
             cardEl.classList.add('card-deal');
             cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
             
-            // Remove class after animation to restore pointer-events
             setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
         }
 
@@ -555,7 +544,7 @@ function renderField() {
                 } else {
                     selectedFieldCard = card;
                 }
-                renderField(); // Re-render to show selection
+                renderField();
             });
             myFieldEl.appendChild(cardEl);
     });
@@ -578,7 +567,6 @@ function renderField() {
             cardEl.classList.add('card-deal');
             cardEl.style.setProperty('animation-delay', `${totalDelay}s`, 'important');
             
-            // Remove class after animation to restore pointer-events
             setTimeout(() => cardEl.classList.remove('card-deal'), 1500);
         }
         
@@ -741,7 +729,6 @@ document.getElementById('change-hand-btn').addEventListener('click', () => {
     shuffleCardsSound.currentTime = 0;
     shuffleCardsSound.play().catch(e => { });
     
-    // No need to clear sets manually, render functions will handle it
     socket.emit('changeHand', { gameId });
 });
 
@@ -863,18 +850,16 @@ function showCoinFlip(isMeFirst) {
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Beautiful, voluminous arrow head
         ctx.save();
         ctx.translate(arrowX, arrowY);
         ctx.rotate(currentAngle);
         ctx.beginPath();
-        ctx.moveTo(15, 0); // Tip
-        ctx.lineTo(-20, -15); // Top corner
-        ctx.lineTo(-10, 0); // Inner indent
-        ctx.lineTo(-20, 15); // Bottom corner
+        ctx.moveTo(15, 0);
+        ctx.lineTo(-20, -15);
+        ctx.lineTo(-10, 0);
+        ctx.lineTo(-20, 15);
         ctx.closePath();
 
-        // Gradient for volume
         const gradient = ctx.createLinearGradient(-20, -15, 15, 15);
         gradient.addColorStop(0, '#ff5a5a');
         gradient.addColorStop(1, '#8b0000');
@@ -884,7 +869,6 @@ function showCoinFlip(isMeFirst) {
         ctx.shadowColor = '#ff0000';
         ctx.fill();
 
-        // Stroke for highlight
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -962,7 +946,7 @@ function showGameOverScreen(isWinner, winnerName) {
     if (window.isSpectator) {
         text = 'BATTLE ENDED!';
         eloText = 'Spectator Mode';
-        mainColor = '#c084fc'; // Purple spectator color
+        mainColor = '#c084fc';
     }
 
     ctx.font = 'bold 60px Outfit';
@@ -984,7 +968,7 @@ function showGameOverScreen(isWinner, winnerName) {
             const centerY = canvas.height / 2 + 50;
             
             ctx.font = 'bold 45px Outfit';
-            ctx.fillStyle = '#FFD700'; // Gold color
+            ctx.fillStyle = '#FFD700';
             ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
             ctx.shadowBlur = 15;
             
