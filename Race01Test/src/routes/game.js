@@ -14,7 +14,10 @@ const fs = require('fs');
 // Multer config for avatar uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../public/uploads/avatars/'));
+        const dest = path.join(__dirname, '../public/uploads/avatars/');
+        fs.mkdir(dest, { recursive: true }, (err) => {
+            cb(err, dest);
+        });
     },
     filename: function (req, file, cb) {
         cb(null, req.session.userId + '-' + Date.now() + path.extname(file.originalname));
