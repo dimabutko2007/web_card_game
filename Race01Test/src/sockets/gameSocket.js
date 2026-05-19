@@ -199,7 +199,6 @@ module.exports = (io) => {
             if (waitingPlayer && waitingPlayer.socket.id === socket.id) {
                 waitingPlayer = null;
                 broadcastLobbyStats();
-                console.log(`[MATCH] User cancelled search: ${socket.id}`);
             }
         });
 
