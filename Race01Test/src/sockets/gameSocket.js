@@ -171,9 +171,9 @@ module.exports = (io) => {
 
     io.on('connection', (socket) => {
         broadcastLobbyStats();
-        socket.on('joinUserRoom', (data) => {
-            if (data.userId) {
-                const userId = normalizeUserId(data.userId);
+        socket.on('joinUserRoom', () => {
+            const userId = normalizeUserId(socket.request.session.userId);
+            if (userId) {
                 socket.dbUserId = userId;
                 if (!onlineUsers.has(userId)) {
                     onlineUsers.set(userId, new Set());
@@ -183,9 +183,11 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('checkActiveGame', (data) => {
+        socket.on('checkActiveGame', () => {
+            const userId = normalizeUserId(socket.request.session.userId);
+            if (!userId) return;
             for (const [gameId, game] of activeGames.entries()) {
-                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
+                const player = game.players.find(p => String(p.dbUserId) === String(userId));
                 if (player) {
                     socket.emit('activeGameFound', { gameId });
                     return;
@@ -201,48 +203,68 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('findMatch', (data) => {
+        socket.on('findMatch', async () => {
+            const userId = normalizeUserId(socket.request.session.userId);
+            if (!userId) return;
+
             // Check for active game first
             for (const [gameId, game] of activeGames.entries()) {
-                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
+                const player = game.players.find(p => String(p.dbUserId) === String(userId));
                 if (player) {
                     socket.emit('matchFound', { gameId });
                     return;
                 }
             }
 
-            clearInvitesForUser(data.userId, io, 'Battle invite cancelled because a player started searching.');
+            clearInvitesForUser(userId, io, 'Battle invite cancelled because a player started searching.');
 
-            if (waitingPlayer && String(waitingPlayer.dbUserId) === String(data.userId)) {
+            if (waitingPlayer && String(waitingPlayer.dbUserId) === String(userId)) {
                 socket.emit('matchSearchError', {
                     message: 'You are already searching for a battle.'
                 });
                 return;
             }
 
-            if (waitingPlayer && waitingPlayer.socket.id !== socket.id) {
-                // Match found
-                const opponent = waitingPlayer;
-                waitingPlayer = null;
-                broadcastLobbyStats();
+            try {
+                const user = await User.findById(userId);
+                if (!user) {
+                    socket.emit('matchSearchError', { message: 'User not found.' });
+                    return;
+                }
 
-                createBattle(io, opponent, {
-                    dbUserId: data.userId,
-                    nickname: data.nickname,
-                    avatar: data.avatar,
-                    elo: data.elo,
-                    socket
-                });
-            } else {
-                // Start waiting
-                waitingPlayer = { dbUserId: data.userId, nickname: data.nickname, avatar: data.avatar, elo: data.elo, socket: socket };
-                broadcastLobbyStats();
+                if (waitingPlayer && waitingPlayer.socket.id !== socket.id) {
+                    // Match found
+                    const opponent = waitingPlayer;
+                    waitingPlayer = null;
+                    broadcastLobbyStats();
+
+                    createBattle(io, opponent, {
+                        dbUserId: userId,
+                        nickname: user.nickname,
+                        avatar: user.avatar,
+                        elo: user.elo,
+                        socket
+                    });
+                } else {
+                    // Start waiting
+                    waitingPlayer = { 
+                        dbUserId: userId, 
+                        nickname: user.nickname, 
+                        avatar: user.avatar, 
+                        elo: user.elo, 
+                        socket: socket 
+                    };
+                    broadcastLobbyStats();
+                }
+            } catch (err) {
+                console.error('[SOCKET] findMatch error:', err);
+                socket.emit('matchSearchError', { message: 'Internal server error.' });
             }
         });
 
         socket.on('sendBattleInvite', async (data = {}) => {
             try {
-                const senderId = normalizeUserId(socket.dbUserId || data.userId);
+                const senderId = normalizeUserId(socket.request.session.userId);
                 const targetUserId = normalizeUserId(data.targetUserId);
 
                 if (!senderId || !targetUserId || senderId === targetUserId) {
@@ -471,17 +493,21 @@ module.exports = (io) => {
         });
 
         socket.on('joinGame', async (data) => {
+            const userId = normalizeUserId(socket.request.session.userId);
+            if (!userId) return;
+
             socket.join(data.gameId);
             const game = activeGames.get(data.gameId);
             if (game) {
                 // Update socket ID for the player who just joined (because of page reload)
-                const player = game.players.find(p => String(p.dbUserId) === String(data.userId));
+                const player = game.players.find(p => String(p.dbUserId) === String(userId));
                 if (player) {
                     player.socketId = socket.id;
                     player.ready = true;
                     // Update nickname from session in case it was changed
-                    if (data.nickname) player.nickname = data.nickname;
-                    console.log(`[GAME] Player ${data.nickname} joined the battle (GameID: ${data.gameId})`);
+                    const sessionNickname = socket.request.session.nickname;
+                    if (sessionNickname) player.nickname = sessionNickname;
+                    console.log(`[GAME] Player ${player.nickname} joined the battle (GameID: ${data.gameId})`);
                 } else {
                     console.log(`[GAME] Spectator joined the battle (GameID: ${data.gameId})`);
                 }
@@ -819,17 +845,20 @@ module.exports = (io) => {
         });
 
         socket.on('sendEmoji', (data) => {
+            const userId = normalizeUserId(socket.request.session.userId);
+            if (!userId) return;
+
             const game = activeGames.get(data.gameId);
             if (!game) return;
 
             // Make sure the sender is a player, not a spectator
-            const isPlayer = game.players.some(p => String(p.dbUserId) === String(data.senderId));
+            const isPlayer = game.players.some(p => String(p.dbUserId) === String(userId));
             if (!isPlayer) return;
 
             // Broadcast the emoji to the room
             io.to(data.gameId).emit('receiveEmoji', {
                 emojiId: data.emojiId,
-                senderId: data.senderId
+                senderId: userId
             });
         });
 
@@ -928,9 +957,9 @@ async function switchTurn(gameId, io) {
     currentPlayer.maxEnergy = Math.min(game.round, 10);
     currentPlayer.energy = currentPlayer.maxEnergy;
 
-    // Update ability cooldown
-    if (currentPlayer.ability && currentPlayer.ability.currentCooldown > 0) {
-        currentPlayer.ability.currentCooldown--;
+    // Update ability cooldown for the player who just finished their turn
+    if (finishedPlayer.ability && finishedPlayer.ability.currentCooldown > 0) {
+        finishedPlayer.ability.currentCooldown--;
     }
 
     // Draw cards to 5
