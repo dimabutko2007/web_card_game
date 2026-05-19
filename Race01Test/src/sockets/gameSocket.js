@@ -9,7 +9,7 @@ const Achievement = require('../models/Achievement');
 let waitingPlayer = null;
 const activeGames = new Map();
 const disconnectTimeouts = new Map();
-const onlineUsers = new Map(); // userId -> Set of socket.id
+const onlineUsers = new Map();
 const activeBattleInvites = new Map();
 const BATTLE_INVITE_TIMEOUT_MS = 30000;
 
@@ -933,7 +933,7 @@ function startTimer(gameId, io) {
         io.to(gameId).emit('timerUpdate', { timer: game.timer });
 
         if (game.timer <= 0) {
-            switchTurn(gameId, io); // Keeping this as fire-and-forget inside setInterval for now, or make it async
+            switchTurn(gameId, io);
         }
     }, 1000);
 }
@@ -982,7 +982,6 @@ async function switchTurn(gameId, io) {
     currentPlayer.field.forEach(c => {
         if (c.isFrozen) {
             c.canAttack = false;
-            // Keep isFrozen = true so the icon remains visible during their turn
         } else {
             c.canAttack = true;
         }

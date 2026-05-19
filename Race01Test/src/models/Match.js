@@ -28,8 +28,6 @@ class Match {
     }
 
     static async getHistoryForUser(userId, limit = 20) {
-        // Using query instead of execute for LIMIT or ensuring it's a number
-        // Some mysql2 versions have issues with LIMIT placeholders in execute()
         const [rows] = await db.query(
             `SELECT * FROM matches 
              WHERE winner_id = ? OR loser_id = ? 
@@ -40,7 +38,6 @@ class Match {
     }
 }
 
-// Initialize table on load
 Match.initTable().catch(err => console.error('Failed to init matches table:', err));
 
 module.exports = Match;
