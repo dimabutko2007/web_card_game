@@ -9,6 +9,7 @@ const config = require('./config/config');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+app.set('io', io);
 
 // Middleware
 app.use(express.json());
@@ -26,7 +27,7 @@ const sessionStore = new MySQLStore({
     port: config.DB.PORT
 });
 
-app.use(session({
+const sessionMiddleware = session({
     secret: config.SESSION_SECRET,
     store: sessionStore,
     resave: false,
@@ -35,7 +36,42 @@ app.use(session({
         secure: false,
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
-}));
+});
+
+app.use(sessionMiddleware);
+
+// Share session with socket.io
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, {}, (err) => {
+        if (err) return next(err);
+        
+        const session = socket.request.session;
+        if (session && session.userId) {
+            next();
+        } else {
+            next(new Error('Unauthorized: No active session found'));
+        }
+    });
+});
+
+const User = require('./models/User');
+const Friendship = require('./models/Friendship');
+app.use(async (req, res, next) => {
+    res.locals.User = User;
+    res.locals.session = req.session;
+    if (req.session && req.session.userId) {
+        try {
+            res.locals.pendingRequests = await Friendship.getPendingIncomingRequests(req.session.userId);
+        } catch (err) {
+            console.error('[MIDDLEWARE] Failed to fetch pending requests:', err);
+            res.locals.pendingRequests = [];
+        }
+    } else {
+        res.locals.pendingRequests = [];
+    }
+    next();
+});
+
 
 // Routes
 const authRoutes = require('./routes/auth');

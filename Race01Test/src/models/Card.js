@@ -1,71 +1,276 @@
 const db = require('../config/db');
 
 class Card {
+    /**
+     * Returns all cards in the database, including both starter and shop cards.
+     */
     static async getAll() {
-        const [rows] = await db.execute('SELECT * FROM cards');
+        const [rows] = await db.execute('SELECT * FROM cards ORDER BY cost, name');
         return rows;
     }
 
-    static async getRandomHand(count = 5) {
-        const [rows] = await db.query('SELECT * FROM cards ORDER BY RAND() LIMIT ?', [parseInt(count)]);
+    /**
+     * Returns the 25 starter cards that are granted to every new player.
+     */
+    static async getStarterCards() {
+        const [rows] = await db.execute('SELECT * FROM cards WHERE is_starter = TRUE ORDER BY cost, name');
         return rows;
     }
 
-    static async getBalancedInitialHand(count = 5) {
-        // Fetch 2 random cards with cost 1 or 2
-        const [lowCostCards] = await db.query(
-            'SELECT * FROM cards WHERE cost IN (1, 2) ORDER BY RAND() LIMIT 2'
+    /**
+     * Returns cards that are only available through the shop (not part of the starter deck).
+     */
+    static async getShopCards() {
+        const [rows] = await db.execute('SELECT * FROM cards WHERE is_starter = FALSE ORDER BY cost, shop_price, name');
+        return rows;
+    }
+
+    /**
+     * Returns shop cards that the player has not bought yet.
+     * @param {number} userId
+     */
+    static async getUnownedShopCards(userId) {
+        const [rows] = await db.execute(
+            `SELECT c.* FROM cards c
+             WHERE c.is_starter = FALSE
+               AND NOT EXISTS (
+                   SELECT 1 FROM user_cards uc
+                   WHERE uc.user_id = ? AND uc.card_id = c.id
+               )
+             ORDER BY c.cost, c.shop_price, c.name`,
+            [userId]
         );
+        return rows;
+    }
 
-        const remainingCount = count - lowCostCards.length;
-        let remainingCards = [];
+    /**
+     * Returns all cards currently owned by the player (starter deck + purchased cards).
+     * @param {number} userId
+     */
+    static async getUserCards(userId) {
+        const [rows] = await db.execute(
+            `SELECT c.* FROM cards c
+             INNER JOIN user_cards uc ON uc.card_id = c.id
+             WHERE uc.user_id = ?
+             ORDER BY c.cost, c.name`,
+            [userId]
+        );
+        return rows;
+    }
 
-        if (remainingCount > 0) {
-            const excludedIds = lowCostCards.map(c => c.id);
-            remainingCards = await this.getWeightedRandomCards(remainingCount, lowCostCards);
+    /**
+     * Returns a Set of IDs for all cards in the player's collection for fast lookup.
+     * @param {number} userId
+     */
+    static async getUserCardIds(userId) {
+        const [rows] = await db.execute(
+            'SELECT card_id FROM user_cards WHERE user_id = ?',
+            [userId]
+        );
+        return new Set(rows.map(r => r.card_id));
+    }
+
+    /**
+     * Automatically assigns the initial 25 starter cards to a new player.
+     * Called during the registration process.
+     * @param {number} userId
+     */
+    static async giveStarterCards(userId) {
+        const starters = await this.getStarterCards();
+        if (starters.length === 0) return;
+
+        // Bulk insert all starter cards to the user's collection
+        const values = starters.map(c => [userId, c.id]);
+        await db.query(
+            'INSERT IGNORE INTO user_cards (user_id, card_id) VALUES ?',
+            [values]
+        );
+    }
+
+    /**
+     * Adds a specific card to the user's collection (e.g., after a shop purchase).
+     * @param {number} userId
+     * @param {number} cardId
+     */
+    static async addCardToUser(userId, cardId) {
+        await db.execute(
+            'INSERT IGNORE INTO user_cards (user_id, card_id) VALUES (?, ?)',
+            [userId, cardId]
+        );
+    }
+
+    static async getById(id) {
+        const [rows] = await db.execute('SELECT * FROM cards WHERE id = ?', [id]);
+        return rows[0];
+    }
+
+    /**
+     * Buys a shop card for a player using a transaction.
+     * Validates existence, ownership, and coin balance before saving changes.
+     * @param {number} userId
+     * @param {number|string} cardId
+     */
+    static async purchaseForUser(userId, cardId) {
+        const parsedCardId = Number.parseInt(cardId, 10);
+        if (!Number.isInteger(parsedCardId) || parsedCardId <= 0) {
+            throw this._shopError('CARD_NOT_FOUND', 'Card not found');
         }
 
-        // Combine and shuffle the result
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [cardRows] = await connection.execute(
+                'SELECT * FROM cards WHERE id = ? AND is_starter = FALSE FOR UPDATE',
+                [parsedCardId]
+            );
+            const card = cardRows[0];
+            if (!card) {
+                throw this._shopError('CARD_NOT_FOUND', 'Card not found');
+            }
+
+            const [userRows] = await connection.execute(
+                'SELECT id, coins FROM users WHERE id = ? FOR UPDATE',
+                [userId]
+            );
+            const user = userRows[0];
+            if (!user) {
+                throw this._shopError('USER_NOT_FOUND', 'User not found');
+            }
+
+            const [ownedRows] = await connection.execute(
+                'SELECT id FROM user_cards WHERE user_id = ? AND card_id = ?',
+                [userId, parsedCardId]
+            );
+            if (ownedRows.length > 0) {
+                throw this._shopError('ALREADY_OWNED', 'Card already owned');
+            }
+
+            const price = Number.parseInt(card.shop_price, 10);
+            if (!Number.isInteger(price) || price < 0) {
+                throw this._shopError('CARD_NOT_FOUND', 'Card not found');
+            }
+
+            if (user.coins < price) {
+                throw this._shopError('NOT_ENOUGH_COINS', 'Not enough coins');
+            }
+
+            await connection.execute(
+                'INSERT INTO user_cards (user_id, card_id) VALUES (?, ?)',
+                [userId, parsedCardId]
+            );
+            await connection.execute(
+                'UPDATE users SET coins = coins - ?, coins_spent = coins_spent + ? WHERE id = ?',
+                [price, price, userId]
+            );
+
+            const [updatedUserRows] = await connection.execute(
+                'SELECT coins FROM users WHERE id = ?',
+                [userId]
+            );
+
+            await connection.commit();
+            return {
+                card,
+                coins: updatedUserRows[0].coins
+            };
+        } catch (error) {
+            await connection.rollback();
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw this._shopError('ALREADY_OWNED', 'Card already owned');
+            }
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    /**
+     * Generates a balanced starting hand of 5 cards from the player's personal collection.
+     * Ensures a mix of low-cost and higher-cost cards for a smooth game start.
+     * @param {number} count
+     * @param {number} userId
+     */
+    static async getBalancedInitialHand(count = 5, userId) {
+        const pool = await this.getUserCards(userId);
+
+        const lowLimit = Math.min(2, count);
+        const lowCostCards = this._pickRandom(
+            pool.filter(c => c.cost <= 2),
+            lowLimit
+        );
+
+        const remaining = count - lowCostCards.length;
+        const excludedIds = new Set(lowCostCards.map(c => c.id));
+        const remainingCards = this._weightedRandom(
+            pool.filter(c => !excludedIds.has(c.id)),
+            remaining,
+            lowCostCards
+        );
+
         return [...lowCostCards, ...remainingCards].sort(() => Math.random() - 0.5);
     }
 
-    static async getWeightedRandomCards(count, currentHand = [], excludedCosts = []) {
-        const [allCards] = await db.query('SELECT * FROM cards');
+    /**
+     * Draws N cards from the player's deck using weighted probability.
+     * Helps maintain game balance by soft-capping duplicates of the same energy cost.
+     * @param {number} count
+     * @param {Array}  currentHand  - The player's current hand (to check for cost distribution)
+     * @param {Array}  excludedCosts - List of energy costs to exclude from drawing
+     * @param {number} userId
+     */
+    static async getWeightedRandomCards(count, currentHand = [], excludedCosts = [], userId) {
+        const pool = await this.getUserCards(userId);
+        const available = excludedCosts.length
+            ? pool.filter(c => !excludedCosts.includes(c.cost))
+            : pool;
 
+        return this._weightedRandom(available, count, currentHand);
+    }
+
+    // ─── Internal Helper Methods ────────────────────────────────────────────
+
+    /**
+     * Randomly picks `count` unique cards from a provided pool.
+     */
+    static _pickRandom(pool, count) {
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, count);
+    }
+
+    /**
+     * Performs a weighted random selection of cards.
+     * Implements a "soft cap": if the hand already has 2+ cards of a certain cost,
+     * the probability of drawing another card with the same cost is reduced.
+     */
+    static _weightedRandom(pool, count, currentHand = []) {
         const results = [];
         const workingHand = [...currentHand];
+        const usedIds = new Set();
 
         for (let i = 0; i < count; i++) {
-            // Filter candidates
-            let candidates = allCards.filter(c => !excludedCosts.includes(c.cost));
-
+            const candidates = pool.filter(c => !usedIds.has(c.id));
             if (candidates.length === 0) break;
 
-            // Calculate cost counts in working hand
             const costCounts = {};
             workingHand.forEach(c => {
                 costCounts[c.cost] = (costCounts[c.cost] || 0) + 1;
             });
 
-            // Assign weights
             let totalWeight = 0;
-            const weightedCandidates = candidates.map(card => {
-                let weight = 1.0;
-                // Soft Cap: If 2 or more cards of this cost are already in hand, reduce weight by 70%
-                if (costCounts[card.cost] >= 2) {
-                    weight = 0.3;
-                }
+            const weighted = candidates.map(card => {
+                const weight = (costCounts[card.cost] >= 2) ? 0.3 : 1.0;
                 totalWeight += weight;
                 return { card, weight };
             });
 
-            // Weighted random selection
             let r = Math.random() * totalWeight;
-            for (const item of weightedCandidates) {
+            for (const item of weighted) {
                 r -= item.weight;
                 if (r <= 0) {
                     results.push(item.card);
                     workingHand.push(item.card);
+                    usedIds.add(item.card.id);
                     break;
                 }
             }
@@ -73,9 +278,10 @@ class Card {
         return results;
     }
 
-    static async getById(id) {
-        const [rows] = await db.execute('SELECT * FROM cards WHERE id = ?', [id]);
-        return rows[0];
+    static _shopError(code, message) {
+        const error = new Error(message);
+        error.code = code;
+        return error;
     }
 }
 

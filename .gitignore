@@ -144,6 +144,3 @@ vite.config.ts.timestamp-*
 
 # Ignore all contents of uploads/avatars folder
 Race01Test/src/public/uploads/avatars/*
-
-# But do not ignore .gitkeep file inside this folder
-!Race01Test/src/public/uploads/avatars/.gitkeep

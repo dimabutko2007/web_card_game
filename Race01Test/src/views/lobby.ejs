@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Great Battle - Lobby</title>
+    <title>Dark Realms - Lobby</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/main.css?v=1.2">
+    <link rel="stylesheet" href="/css/achievements.css?v=1.7">
     <style>
         .lobby-content {
             display: flex;
@@ -19,32 +20,38 @@
         }
 
         .user-panel {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            padding: 20px 40px;
-            border-radius: 20px;
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            padding: 30px 60px;
+            border-radius: 27px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 40px;
             animation: fadeIn 0.8s ease-out;
         }
 
         .user-panel img {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 2px solid var(--marvel-red);
+            border: 3px solid rgba(140, 60, 200, 0.7);
+            box-shadow: 0 0 15px rgba(140, 60, 200, 0.5);
             object-fit: cover;
         }
 
         .user-info h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .user-info p {
-            color: rgba(255, 255, 255, 0.6);
-            margin: 0;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 8px 0 0 0;
+            font-size: 1.2rem;
         }
 
         .lobby-actions {
@@ -55,12 +62,11 @@
         .match-btn {
             padding: 20px 60px;
             font-size: 1.5rem;
-            background: linear-gradient(45deg, var(--marvel-red), #ff5a5a);
-            box-shadow: 0 0 20px rgba(226, 54, 54, 0.4);
+            width: 100%;
         }
 
         .match-btn.searching {
-            background: var(--marvel-grey);
+            background: var(--color-grey);
             cursor: not-allowed;
         }
 
@@ -75,101 +81,757 @@
         .nav-links a {
             color: white;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 1.4rem;
             opacity: 0.8;
             transition: opacity 0.3s;
         }
 
         .nav-links a:hover {
             opacity: 1;
-            color: var(--marvel-gold);
+            color: var(--color-gold);
         }
 
         #status-msg {
             margin-top: 20px;
             font-style: italic;
-            color: var(--marvel-gold);
+            color: var(--color-gold);
             height: 24px;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); color: var(--marvel-gold); }
-            50% { transform: scale(1.2); color: #fff; text-shadow: 0 0 10px var(--marvel-gold); }
-            100% { transform: scale(1); color: var(--marvel-gold); }
+            0% {
+                transform: scale(1);
+                color: var(--color-gold);
+            }
+
+            50% {
+                transform: scale(1.2);
+                color: #fff;
+                text-shadow: 0 0 10px var(--color-gold);
+            }
+
+            100% {
+                transform: scale(1);
+                color: var(--color-gold);
+            }
+        }
+
+        .leaderboard-panel {
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 27px;
+            animation: fadeIn 0.8s ease-out;
+            color: white;
+        }
+
+        .leaderboard-panel h3 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 2rem;
+            color: #c084fc;
+            text-shadow: 0 0 10px rgba(147, 51, 234, 0.7);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(140, 60, 200, 0.4);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(140, 60, 200, 0.2);
+        }
+
+        .table-scroll-wrapper {
+            max-height: 420px;
+            overflow-y: auto;
+            border-radius: 10px;
+            padding-right: 5px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-track {
+            background: rgba(40, 0, 70, 0.2);
+            border-radius: 4px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(140, 60, 200, 0.5);
+            border-radius: 4px;
+        }
+
+        .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(140, 60, 200, 0.8);
+        }
+
+        .leaderboard-table th {
+            color: var(--color-gold);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(140, 60, 200, 0.4);
+            position: sticky;
+            top: 0;
+            background: #1a0033;
+            z-index: 10;
+        }
+
+        .leaderboard-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(140, 60, 200, 0.7);
+            object-fit: cover;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        .rank-number {
+            font-weight: bold;
+            color: #e9d5ff;
+            font-size: 1.2rem;
+        }
+
+        .rank-gold {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            font-size: 1.5rem;
+        }
+
+        .rank-silver {
+            color: #c0c0c0;
+            text-shadow: 0 0 10px rgba(192, 192, 192, 0.7);
+            font-size: 1.3rem;
+        }
+
+        .rank-bronze {
+            color: #cd7f32;
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.7);
+            font-size: 1.3rem;
+        }
+
+        .lobby-action-btn {
+            background: rgba(40, 0, 70, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(140, 60, 200, 0.4);
+            color: #e9d5ff;
+            padding: 12px 0;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            flex: 1;
+        }
+
+        .lobby-action-btn:hover {
+            background: rgba(140, 60, 200, 0.4);
+            border-color: #c084fc;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(140, 60, 200, 0.6), inset 0 0 10px rgba(140, 60, 200, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .lobby-action-btn:active {
+            transform: translateY(0);
+        }
+
+        .friends-scroll-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .friends-scroll-wrapper::-webkit-scrollbar-track {
+            background: rgba(40, 0, 70, 0.2);
+            border-radius: 3px;
+        }
+
+        .friends-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(140, 60, 200, 0.4);
+            border-radius: 3px;
+        }
+
+        .friends-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(140, 60, 200, 0.7);
+        }
+
+        @keyframes lobby-pulse {
+            0% {
+                transform: scale(0.85);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.85);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes badgePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+            }
+
+            50% {
+                transform: scale(1.15);
+                box-shadow: 0 0 15px rgba(239, 68, 68, 1);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+            }
         }
     </style>
 </head>
 
-<body>
-    <div class="nav-links">
-        <a href="/profile">Profile</a>
-        <a href="/auth/logout">Logout</a>
-    </div>
+<body style="background: url('/assets/background1.png') no-repeat center center fixed; background-size: cover;">
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(40, 10, 10, 0.95); border: 2px solid #ef4444; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #ef4444; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <span>⚠️</span> Error
+                </h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #fee2e2; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= error %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if (b) b.remove(); }, 5000);</script>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="popup-notification-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(20, 40, 20, 0.95); border: 2px solid #4ade80; border-radius: 12px; padding: 15px 20px; min-width: 280px; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 15px;">
+                <h4 style="color: #4ade80; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <span>✓</span> Success
+                </h4>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0;">&times;</button>
+            </div>
+            <div style="color: #e8f5e9; font-size: 1rem; font-weight: 500; margin-top: 5px;">
+                <%= success %>
+            </div>
+        </div>
+        <script>setTimeout(() => { const b = document.querySelector('.popup-notification-box'); if (b) b.remove(); }, 5000);</script>
+    <% } %>
+
+    <canvas id="bg-particles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
+
+    <button onclick="if(typeof playClickSound === 'function') playClickSound(); setTimeout(() => window.location.reload(), 150)" style="position: fixed; top: 25px; left: 25px; z-index: 1000; background: rgba(40, 0, 70, 0.6); border: 1px solid rgba(140, 60, 200, 0.4); color: #e9d5ff; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; backdrop-filter: blur(5px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);" onmouseover="this.style.background='rgba(140, 60, 200, 0.4)'; this.style.borderColor='#c084fc'; this.style.transform='rotate(180deg) scale(1.1)';" onmouseout="this.style.background='rgba(40, 0, 70, 0.6)'; this.style.borderColor='rgba(140, 60, 200, 0.4)'; this.style.transform='rotate(0deg) scale(1)';" title="Reload Page">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2v6h-6"></path>
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+            <path d="M3 22v-6h6"></path>
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+        </svg>
+    </button>
 
     <div class="container">
         <div class="lobby-content">
-            <h1 style="font-size: 3rem; text-transform: uppercase; letter-spacing: 5px;">Lobby</h1>
+            <h1 class="dark-fantasy-title">Lobby</h1>
 
-            <div class="user-panel">
-                <img src="<%= typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png' %>" alt="Avatar" id="user-avatar">
-                <div class="user-info">
-                    <h2>
-                        <%= nickname %> <span id="user-elo-display" style="color: var(--marvel-gold); font-size: 1rem; margin-left: 10px;">(Elo: <%= elo %>)</span>
-                    </h2>
-                    <p>Ready for battle</p>
+                            <div class="lobby-controls"
+                                style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; margin-top: 50px;">
+
+                                <div class="top-panels"
+                                    style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; width: 100%;">
+                                    <div class="user-section"
+                                        style="display: flex; flex-direction: column; gap: 20px; flex: 1; min-width: 400px; height: 530px; box-sizing: border-box;">
+                                        <div class="user-panel"
+                                            style="justify-content: center; width: 100%; margin: 0; position: relative; padding-left: 40px; padding-right: 40px; box-sizing: border-box;">
+                                            <!-- Coins moved to Armory -->
+                                            <a href="/profile"
+                                                style="display: block; border-radius: 50%; text-decoration: none;"
+                                                title="View Profile">
+                                                <img src="<%= typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png' %>"
+                                                    alt="Avatar" id="user-avatar"
+                                                    style="transition: transform 0.3s, border-color 0.3s; cursor: pointer;"
+                                                    onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='var(--color-gold)';"
+                                                    onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(140, 60, 200, 0.7)';">
+                                            </a>
+                                            <div class="user-info">
+                                                <h2>
+                                                    <a href="/profile"
+                                                        style="color: white; text-decoration: none; transition: color 0.3s;"
+                                                        onmouseover="this.style.color='var(--color-gold)'"
+                                                        onmouseout="this.style.color='white'" title="View Profile">
+                                                        <%= nickname %>
+                                                    </a>
+                                                    <% const myRank=User.getRank(elo); %>
+                                                        <div
+                                                            style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                                                            <img src="/assets/ranks/<%= myRank.icon %>"
+                                                                alt="<%= myRank.name %>" title="<%= myRank.name %>"
+                                                                class="rank-icon-large"
+                                                                style="width: 40px; height: 40px; border: none; box-shadow: none; border-radius: 0;">
+                                                            <span id="user-elo-display"
+                                                                style="color: var(--color-gold); font-size: 1.1rem; font-weight: bold;">
+                                                                <%= elo %>
+                                                            </span>
+                                                        </div>
+                                                </h2>
+                                                <p>Ready for battle</p>
+                                            </div>
+                                            <a href="/auth/logout" class="logout-door-btn" title="Logout"
+                                                style="position: absolute; bottom: 15px; right: 20px; color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.25); border: 1px solid rgba(140, 60, 200, 0.2);"
+                                                onmouseover="this.style.color='#ef4444'; this.style.borderColor='rgba(239, 68, 68, 0.5)'; this.style.background='rgba(239, 68, 68, 0.15)'; this.style.transform='scale(1.1)';"
+                                                onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.background='rgba(0,0,0,0.25)'; this.style.transform='scale(1)';">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                                </svg>
+                                                <!--
+                                                🚪
+                                                -->
+                                            </a>
+                                        </div>
+                                                                                                                        <div class="deck-shop-panel"
+                                            style="position: relative; background: rgba(40, 0, 70, 0.35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(140, 60, 200, 0.25); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8); border-radius: 27px; padding: 25px; width: 100%; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; animation: fadeIn 0.8s ease-out; color: white;">
+                                            <div style="position: absolute; top: 18px; right: 20px; display: flex; align-items: center; gap: 12px; z-index: 10;">
+                                                <button type="button" id="open-shop-btn" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; color: rgba(255,255,255,0.6); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-sizing: border-box; cursor: pointer; font-family: inherit; appearance: none;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.color='#fff'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
+                                                    <span>SHOP</span>
+                                                </button>
+                                                <button type="button" id="open-achievements-btn" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; height: 38px; width: 38px; background: rgba(0,0,0,0.25); border-radius: 50%; border: 1px solid rgba(140, 60, 200, 0.2); text-decoration: none; font-size: 1.15rem; transition: all 0.3s ease; box-sizing: border-box; cursor: pointer; font-family: inherit; appearance: none;" onmouseover="this.style.background='rgba(140, 60, 200, 0.15)'; this.style.borderColor='rgba(140, 60, 200, 0.5)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)'; this.style.transform='scale(1)';" title="Achievements">
+                                                    <span>🏆</span>
+                                                    <span id="achievements-claim-badge" class="achievement-claim-badge" hidden>!</span>
+                                                </button>
+                                                <div class="user-coins" style="display: flex; align-items: center; justify-content: center; height: 38px; padding: 0 16px; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 19px; border: 1px solid rgba(140, 60, 200, 0.2); cursor: default; transition: all 0.3s ease; box-sizing: border-box;" onmouseover="this.style.background='rgba(140, 60, 200, 0.1)'; this.style.borderColor='rgba(140, 60, 200, 0.4)';" onmouseout="this.style.background='rgba(0,0,0,0.25)'; this.style.borderColor='rgba(140, 60, 200, 0.2)';">
+                                                    <img src="/assets/coins.png" alt="Coins" style="width: 18px; height: 18px; border: none; opacity: 0.9; margin: 0;">
+                                                    <span id="lobby-coin-amount" style="color: #ffd700; font-weight: bold; font-size: 1rem; margin-top: 1px;"><%= coins %></span>
+                                                </div>
+                                            </div>
+                                            <h3 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px; text-transform: uppercase; color: #c084fc; text-shadow: 0 0 10px rgba(147, 51, 234, 0.7); text-align: left; border-bottom: 1px solid rgba(140, 60, 200, 0.4); padding-bottom: 10px;">My Cards</h3>
+                                            
+                                            <div class="cards-scroll-wrapper" style="flex: 1; overflow-y: auto; padding-right: 5px; position: relative;">
+                                                <style>
+                                                    .cards-scroll-wrapper::-webkit-scrollbar { width: 6px; }
+                                                    .cards-scroll-wrapper::-webkit-scrollbar-track { background: rgba(40, 0, 70, 0.2); border-radius: 3px; }
+                                                    .cards-scroll-wrapper::-webkit-scrollbar-thumb { background: rgba(140, 60, 200, 0.4); border-radius: 3px; }
+                                                    .cards-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: rgba(140, 60, 200, 0.7); }
+                                                    .armory-card {
+                                                        background: rgba(0,0,0,0.4); border: 1px solid rgba(140, 60, 200, 0.5);
+                                                        border-radius: 8px; padding: 8px; text-align: center;
+                                                        display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+                                                        transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; height: 100%; box-sizing: border-box;
+                                                    }
+                                                    .armory-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(140, 60, 200, 0.4); border-color: #c084fc; }
+                                                    .armory-card-locked {
+                                                        background: rgba(0,0,0,0.2); border: 1px solid rgba(100, 100, 100, 0.3);
+                                                        border-radius: 8px; padding: 8px; text-align: center;
+                                                        display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+                                                        filter: grayscale(100%) opacity(0.5); transition: filter 0.3s; cursor: not-allowed; height: 100%; box-sizing: border-box;
+                                                    }
+                                                    .armory-card-locked:hover { filter: grayscale(80%) opacity(0.8); }
+                                                    .armory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; }
+                                                    .armory-card img, .armory-card-locked img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; object-fit: contain; }
+                                                </style>
+                                                
+                                                <% 
+                                                   const unlockedCards = allCards.filter(c => userCardIds.includes(c.id));
+                                                   const lockedCards = allCards.filter(c => !userCardIds.includes(c.id));
+                                                %>
+                                                
+                                                <div id="owned-cards-grid" class="armory-grid">
+                                                    <% unlockedCards.forEach(card => { %>
+                                                        <div class="armory-card" data-card-id="<%= card.id %>" title="<%= card.name %> (Atk: <%= card.attack %> / Def: <%= card.defense %>)">
+                                                            <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                                                            <div class="armory-card-name"><%= card.name %></div>
+                                                            <div class="card-stats-line" aria-label="Card stats">
+                                                                <span title="Damage">⚔️ <%= card.attack %></span>
+                                                                <span title="HP">❤️ <%= card.defense %></span>
+                                                                <span title="Energy">⚡ <%= card.cost %></span>
+                                                            </div>
+                                                        </div>
+                                                    <% }) %>
+                                                </div>
+                                                
+                                                <% if (lockedCards.length > 0) { %>
+                                                    <div id="locked-cards-section">
+                                                        <div style="margin: 20px 0 15px 0; border-top: 1px dashed rgba(140, 60, 200, 0.4); padding-top: 15px; text-align: center; color: rgba(255,255,255,0.4); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; font-weight: bold;">Locked Cards</div>
+                                                        <div id="locked-cards-grid" class="armory-grid">
+                                                            <% lockedCards.forEach(card => { %>
+                                                                <div class="armory-card-locked" data-card-id="<%= card.id %>" title="<%= card.name %> - Shop Price: <%= card.shop_price %>">
+                                                                    <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                                                                    <div class="armory-card-name" style="color: #ccc;"><%= card.name %></div>
+                                                                    <div class="card-stats-line is-muted" aria-label="Card stats">
+                                                                        <span title="Damage">⚔️ <%= card.attack %></span>
+                                                                        <span title="HP">❤️ <%= card.defense %></span>
+                                                                        <span title="Energy">⚡ <%= card.cost %></span>
+                                                                    </div>
+                                                                </div>
+                                                            <% }) %>
+                                                        </div>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                    <div class="leaderboard-panel" style="flex: 1; min-width: 400px; height: 530px; box-sizing: border-box; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-around; border-bottom: 1px solid rgba(140, 60, 200, 0.4); padding-bottom: 15px; margin-bottom: 20px;">
+                            <h3 id="tab-top-players" style="margin: 0; cursor: pointer; font-size: 1.6rem; color: #c084fc; text-shadow: 0 0 10px rgba(147, 51, 234, 0.7); letter-spacing: 2px; text-transform: uppercase; transition: all 0.3s; border-bottom: none; padding-bottom: 0;" onclick="switchLeaderboardTab('players')">Top Players</h3>
+                            <h3 id="tab-my-friends" style="margin: 0; cursor: pointer; font-size: 1.6rem; color: rgba(192, 132, 252, 0.4); text-shadow: none; letter-spacing: 2px; text-transform: uppercase; transition: all 0.3s; border-bottom: none; padding-bottom: 0; position: relative;" onclick="switchLeaderboardTab('friends')">
+                                My Friends
+                                <% if (typeof pendingRequests !== 'undefined' && pendingRequests.length > 0) { %>
+                                    <span class="lobby-pending-badge" title="<%= pendingRequests.length %> pending requests" style="background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; box-shadow: 0 0 10px #ef4444; animation: badgePulse 1.5s infinite ease-in-out; display: inline-block; position: absolute; top: -10px; right: -20px;">
+                                        <%= pendingRequests.length %>
+                                    </span>
+                                <% } %>
+                            </h3>
+                        </div>
+                        
+                        <!-- Top Players Content -->
+                        <div id="content-top-players" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                            <div class="table-scroll-wrapper" style="flex: 1; overflow-y: auto; max-height: none;">
+                                <table class="leaderboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Player</th>
+                                            <th>Division</th>
+                                            <th>Elo</th>
+                                            <th>Win %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (typeof leaders !== 'undefined' && leaders.length > 0) { %>
+                                            <% leaders.forEach((leader, index)=> {
+                                                const totalGames = leader.wins + leader.losses;
+                                                const winRate = totalGames > 0 ? Math.round((leader.wins / totalGames) * 100) : 0;
+                                                %>
+                                                <tr>
+                                                    <td>
+                                                        <% let rankClass = ''; if (index === 0) rankClass = 'rank-gold'; else if (index === 1) rankClass = 'rank-silver'; else if (index === 2) rankClass = 'rank-bronze'; %>
+                                                        <span class="rank-number <%= rankClass %>">#<%= index + 1 %></span>
+                                                    </td>
+                                                    <td style="text-align: left;">
+                                                        <a href="/profile/<%= leader.nickname %>" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                                                            <img src="<%= leader.avatar || '/assets/default_avatar.png' %>" class="leaderboard-avatar" alt="Avatar">
+                                                            <%= leader.nickname %>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <% const leaderRank = User.getRank(leader.elo); %>
+                                                        <img src="/assets/ranks/<%= leaderRank.icon %>" alt="<%= leaderRank.name %>" title="<%= leaderRank.name %>" class="rank-icon-large" style="width: 35px; height: 35px; border-radius: 0; display: block; margin: 0 auto;">
+                                                    </td>
+                                                    <td style="color: var(--color-gold); font-weight: bold;"><%= leader.elo %></td>
+                                                    <td style="color: #e9d5ff;"><%= winRate %>%</td>
+                                                </tr>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="5" style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">No leaders yet</td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- My Friends Content -->
+                        <div id="content-my-friends" style="flex: 1; min-height: 0; overflow: hidden; display: none; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(140, 60, 200, 0.4); padding-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;" title="Show online friends only">
+                                        <span style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #a78bfa; letter-spacing: 0.5px;">🟢 Online</span>
+                                        <div style="position: relative; display: inline-block; width: 34px; height: 18px;">
+                                            <input type="checkbox" id="lobby-online-filter-checkbox" style="opacity: 0; width: 0; height: 0; position: absolute;" onchange="filterLobbyFriends()">
+                                            <span class="custom-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); border: 1px solid rgba(140,60,200,0.4); border-radius: 18px; transition: .3s;"></span>
+                                            <span class="custom-toggle-dot" style="position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background-color: #a78bfa; border-radius: 50%; transition: .3s;"></span>
+                                        </div>
+                                    </label>
+                                    <button id="toggle-lobby-search-btn" title="Search Friends" style="background: none; border: none; color: #a78bfa; cursor: pointer; font-size: 1.1rem; transition: color 0.3s, transform 0.2s; padding: 0; display: flex; align-items: center;" onmouseover="this.style.color='#fff'; this.style.transform='scale(1.15)'" onmouseout="this.style.color='#a78bfa'; this.style.transform='scale(1)'">🔍</button>
+                                </div>
+                                <a href="/profile/<%= nickname %>/friends" style="color: #a78bfa; text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a78bfa'">View All Friends ➔</a>
+                            </div>
+
+                            <style>
+                                #lobby-online-filter-checkbox:checked~.custom-toggle-slider {
+                                    background-color: rgba(16, 185, 129, 0.25) !important;
+                                    border-color: #10b981 !important;
+                                }
+                                #lobby-online-filter-checkbox:checked~.custom-toggle-dot {
+                                    transform: translateX(16px);
+                                    background-color: #10b981 !important;
+                                    box-shadow: 0 0 8px #10b981;
+                                }
+                            </style>
+
+                            <!-- Friend Search Bar (Toggleable) -->
+                            <div id="lobby-friend-search-container" style="display: none; margin-bottom: 15px; position: relative; width: 100%; transition: all 0.3s ease; opacity: 0; transform: translateY(-10px);">
+                                <input type="text" id="lobby-friend-search-input" placeholder="Search friends by nickname..." style="width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(140, 60, 200, 0.25); padding: 10px 12px 10px 36px; border-radius: 12px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.9rem; transition: border-color 0.3s, box-shadow 0.3s; box-sizing: border-box;" onfocus="this.style.borderColor='#a78bfa'; this.style.boxShadow='0 0 8px rgba(167, 139, 250, 0.15)';" onblur="this.style.borderColor='rgba(140, 60, 200, 0.25)'; this.style.boxShadow='none';">
+                                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(233, 213, 255, 0.4); pointer-events: none; font-size: 0.9rem;">🔍</span>
+                            </div>
+
+                            <style>
+                                .lobby-friend-row {
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between;
+                                    padding: 8px 12px;
+                                    background: rgba(0, 0, 0, 0.25);
+                                    border-radius: 12px;
+                                    transition: border-color 0.3s, background 0.3s;
+                                }
+                                .lobby-friend-row:hover {
+                                    border-color: rgba(140, 60, 200, 0.4) !important;
+                                    background: rgba(40, 0, 70, 0.2) !important;
+                                }
+                                .row-playing { border: 1px solid rgba(168, 85, 247, 0.45); box-shadow: 0 0 10px rgba(168, 85, 247, 0.15); }
+                                .row-online { border: 1px solid rgba(16, 185, 129, 0.35); box-shadow: 0 0 8px rgba(16, 185, 129, 0.1); }
+                                .row-offline { border: 1px solid rgba(140, 60, 200, 0.15); box-shadow: none; }
+                                .avatar-playing { border: 2px solid #c084fc !important; }
+                                .avatar-online { border: 2px solid #10b981 !important; }
+                                .avatar-offline { border: 2px solid rgba(140, 60, 200, 0.6) !important; }
+                                .name-playing { color: #f3e8ff; text-decoration: none; font-size: 1.05rem; font-weight: bold; transition: color 0.2s; }
+                                .name-online { color: #e8f5e9; text-decoration: none; font-size: 1.05rem; font-weight: bold; transition: color 0.2s; }
+                                .name-offline { color: #e9d5ff; text-decoration: none; font-size: 1.05rem; font-weight: bold; transition: color 0.2s; }
+                                .name-playing:hover, .name-online:hover, .name-offline:hover { color: #c084fc !important; }
+                                
+                                .battle-invite-btn {
+                                    width: 34px; height: 34px; flex: 0 0 34px;
+                                    display: inline-flex; align-items: center; justify-content: center;
+                                    border-radius: 9px; border: 1px solid rgba(192, 132, 252, 0.65);
+                                    background: linear-gradient(135deg, rgba(88, 28, 135, 0.92), rgba(40, 0, 70, 0.88));
+                                    color: #f5d0fe; box-shadow: 0 0 12px rgba(168, 85, 247, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.04);
+                                    cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 800; line-height: 1;
+                                    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+                                }
+                                .battle-invite-btn:hover:not(:disabled) {
+                                    transform: translateY(-2px) scale(1.04); border-color: #f0abfc; color: #fff;
+                                    box-shadow: 0 0 18px rgba(217, 70, 239, 0.55), inset 0 0 12px rgba(192, 132, 252, 0.16);
+                                }
+                                .battle-invite-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+                                .battle-invite-btn:disabled { cursor: not-allowed; opacity: 0.42; filter: grayscale(0.45); box-shadow: none; }
+                                .battle-invite-btn.is-sent {
+                                    width: 44px; flex-basis: 44px; font-size: 0.62rem; text-transform: uppercase;
+                                    letter-spacing: 0.4px; opacity: 0.9; color: #e9d5ff;
+                                    background: linear-gradient(135deg, rgba(126, 34, 206, 0.85), rgba(76, 29, 149, 0.85));
+                                    border-color: rgba(216, 180, 254, 0.65); box-shadow: 0 0 14px rgba(168, 85, 247, 0.36);
+                                }
+                                .battle-invite-rating { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 82px; }
+                                
+                                .battle-toast-action {
+                                    flex: 1; border-radius: 7px; padding: 9px 12px; border: 1px solid rgba(255, 255, 255, 0.14);
+                                    color: white; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800;
+                                    letter-spacing: 0.5px; text-transform: uppercase;
+                                    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+                                }
+                                .battle-toast-action:hover { transform: translateY(-1px); }
+                                .battle-toast-accept { background: linear-gradient(45deg, #4ade80, #15803d); box-shadow: 0 0 12px rgba(74, 222, 128, 0.28); }
+                                .battle-toast-decline { background: rgba(255, 255, 255, 0.08); color: #ddd6fe; }
+                                .battle-toast-decline:hover { background: rgba(255, 255, 255, 0.15); }
+                                
+                                @media (max-width: 520px) {
+                                    .battle-invite-rating { min-width: 74px; gap: 5px; }
+                                    .battle-invite-btn { width: 32px; height: 32px; flex-basis: 32px; }
+                                    .battle-invite-btn.is-sent { width: 40px; flex-basis: 40px; }
+                                }
+                            </style>
+
+                            <div class="friends-scroll-wrapper" style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 5px;">
+                                <% if (typeof friends !== 'undefined' && friends.length > 0) { %>
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        <% const sortedFriends = [...friends].sort((a, b) => b.elo - a.elo); %>
+                                        <% sortedFriends.forEach(friend => { %>
+                                            <% const friendRank = User.getRank(friend.elo); %>
+                                            <div class="lobby-friend-row <%= (friend.activeGameId || friend.isPlaying) ? 'row-playing' : (friend.isOnline ? 'row-online' : 'row-offline') %>" data-nickname="<%= friend.nickname.toLowerCase() %>" data-online="<%= (friend.activeGameId || friend.isPlaying || friend.isOnline) ? 'true' : 'false' %>" data-friend-id="<%= friend.id %>" style="display: flex; align-items: center; gap: 15px;">
+                                                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                                                    <div style="position: relative; display: inline-block; width: 40px; height: 40px; flex-shrink: 0;">
+                                                        <img src="<%= friend.avatar || '/assets/default_avatar.png' %>" alt="<%= friend.nickname %>" class="<%= (friend.activeGameId || friend.isPlaying) ? 'avatar-playing' : (friend.isOnline ? 'avatar-online' : 'avatar-offline') %>" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                                        <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                            <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #c084fc; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #c084fc; display: block; animation: spectatePulse 1.5s infinite;"></span>
+                                                        <% } else if (friend.isOnline) { %>
+                                                            <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #1a022d; border-radius: 50%; box-shadow: 0 0 6px #10b981; display: block;"></span>
+                                                        <% } %>
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                        <a href="/profile/<%= friend.nickname %>" class="<%= (friend.activeGameId || friend.isPlaying) ? 'name-playing' : (friend.isOnline ? 'name-online' : 'name-offline') %>" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
+                                                            <%= friend.nickname %>
+                                                        </a>
+                                                        <% if (friend.activeGameId || friend.isPlaying) { %>
+                                                            <span style="font-size: 0.68rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 2px 6px; border-radius: 6px; display: inline-block;">playing</span>
+                                                        <% } %>
+                                                        <% if (friend.activeGameId) { %>
+                                                            <a href="/game/<%= friend.activeGameId %>" class="spectate-badge-link" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; background: linear-gradient(135deg, #a855f7, #6b21a8); color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4); box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 15px rgba(168, 85, 247, 0.7)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px rgba(168, 85, 247, 0.4)';">
+                                                                <span style="font-size: 0.8rem; line-height: 1;">👁️</span>Spec
+                                                            </a>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 132px; flex-shrink: 0;">
+                                                    <% const canBattleInvite = friend.isOnline && !(friend.activeGameId || friend.isPlaying); %>
+                                                    <div class="battle-invite-rating">
+                                                        <img src="/assets/ranks/<%= friendRank.icon %>" alt="<%= friendRank.name %>" title="<%= friendRank.name %>" style="width: 30px; height: 30px; border-radius: 0;">
+                                                        <span style="color: var(--color-gold); font-size: 0.95rem; font-weight: bold; width: 45px; text-align: right;"><%= friend.elo %></span>
+                                                    </div>
+                                                    <button type="button" class="battle-invite-btn" data-friend-id="<%= friend.id %>" data-friend-nickname="<%= friend.nickname %>" data-can-invite="<%= canBattleInvite ? 'true' : 'false' %>" title="<%= canBattleInvite ? 'Invite to battle' : ((friend.activeGameId || friend.isPlaying) ? 'Friend is already in battle' : 'Friend is offline') %>" <%= canBattleInvite ? '' : 'disabled' %>>&#9876;</button>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                    <div id="lobby-no-friends-filtered" style="display: none; text-align: center; padding: 25px; background: rgba(0, 0, 0, 0.2); border-radius: 15px; border: 1px dashed rgba(140, 60, 200, 0.3);">
+                                        <p style="color: rgba(255, 255, 255, 0.5); font-style: italic; margin: 0; font-size: 0.95rem;">No friends matching that nickname found.</p>
+                                    </div>
+                                <% } else { %>
+                                    <div style="text-align: center; padding: 25px; background: rgba(0, 0, 0, 0.2); border-radius: 15px; border: 1px dashed rgba(140, 60, 200, 0.3);">
+                                        <p style="color: rgba(255, 255, 255, 0.5); font-style: italic; margin: 0; font-size: 0.95rem;">No friends yet. Add them from profiles!</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-actions" style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 40px;">
+                    <div id="lobby-stats" style="margin-bottom: 20px; font-size: 1.2rem; color: #e9d5ff; text-shadow: 0 0 10px rgba(147, 51, 234, 0.5); background: rgba(40, 0, 70, 0.4); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(140, 60, 200, 0.3);">
+                        <span style="margin-right: 15px;">🟢 Online: <span id="stat-online">1</span></span>
+                        <span>🔍 Searching: <span id="stat-searching">0</span></span>
+                    </div>
+                    <button id="find-match-btn" class="btn match-btn">Search Battle</button>
+                    <div id="status-msg" style="margin-top: 20px;"></div>
                 </div>
             </div>
-
-            <button id="find-match-btn" class="btn match-btn">Search Battle</button>
-            <div id="status-msg"></div>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const findMatchBtn = document.getElementById('find-match-btn');
-        const statusMsg = document.getElementById('status-msg');
-        let hasActiveGame = false;
+                    <%- include('shop') %>
 
-        // Join personal room for notifications
+                    <% const achievementPayload = {
+                        achievements: typeof achievements !== 'undefined' ? achievements : [],
+                        recentUnlocks: typeof recentAchievementUnlocks !== 'undefined' ? recentAchievementUnlocks : []
+                    }; %>
+
+                    <div id="achievement-toast-root" class="achievement-toast-root" aria-live="polite"></div>
+
+                    <div id="achievements-modal" class="achievements-modal" aria-hidden="true">
+                        <div class="achievements-backdrop" data-achievements-close></div>
+                        <section class="achievements-window" role="dialog" aria-modal="true" aria-labelledby="achievements-title">
+                            <div class="achievements-header">
+                                <div>
+                                    <h2 id="achievements-title">Achievements</h2>
+                                    <div class="achievements-summary">
+                                        <span id="achievements-unlocked-count">0</span>
+                                        <span>/</span>
+                                        <span id="achievements-total-count">0</span>
+                                        <span>unlocked</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="achievements-close-btn" class="achievements-close-btn" aria-label="Close achievements">&times;</button>
+                            </div>
+                            <div id="achievements-category-tabs" class="achievements-category-tabs" aria-label="Achievement categories"></div>
+                            <div id="achievements-list" class="achievements-content achievements-list"></div>
+                        </section>
+                    </div>
+
+                    <script type="application/json" id="achievements-bootstrap"><%- JSON.stringify(achievementPayload).replace(/</g, '\\u003c') %></script>
+
+    <div id="lobby-player-data" data-player="<%= JSON.stringify({ userId: String(userId), nickname: nickname, avatar: typeof avatar !== 'undefined' ? avatar : '/assets/default_avatar.png', elo: elo }) %>" style="display: none;"></div>
+
+                    <script src="/socket.io/socket.io.js"></script>
+                    <script>
+                        const socket = io();
+                        window.lobbySocket = socket;
+                        const findMatchBtn = document.getElementById('find-match-btn');
+                        const statusMsg = document.getElementById('status-msg');
+                        let hasActiveGame = false;
+                        let activeGameId = null;
+                        const lobbyPlayer = JSON.parse(document.getElementById('lobby-player-data').dataset.player);
+                        const pendingBattleInviteTargets = new Map();
+
         socket.emit('joinUserRoom', { userId: '<%= userId %>' });
-
-        // Check for active game on load
         socket.emit('checkActiveGame', { userId: '<%= userId %>' });
+
+        socket.on('lobbyStatsUpdate', (data) => {
+            const statOnline = document.getElementById('stat-online');
+            const statSearching = document.getElementById('stat-searching');
+            if (statOnline) statOnline.textContent = data.online;
+            if (statSearching) statSearching.textContent = data.searching;
+        });
 
         socket.on('activeGameFound', (data) => {
             hasActiveGame = true;
+            activeGameId = data.gameId;
             findMatchBtn.textContent = 'Return to Battle';
             findMatchBtn.classList.add('active-game-button');
             statusMsg.textContent = 'You have an active battle!';
+            refreshBattleInviteButtons();
         });
 
         socket.on('activeGameEnded', () => {
             hasActiveGame = false;
+            activeGameId = null;
             findMatchBtn.textContent = 'Search Battle';
             findMatchBtn.classList.remove('active-game-button');
             statusMsg.textContent = 'Previous battle has ended.';
+            refreshBattleInviteButtons();
         });
 
-        socket.on('statsUpdate', (data) => {
-            const eloDisplay = document.getElementById('user-elo-display');
-            if (eloDisplay) {
-                eloDisplay.textContent = `(Elo: ${data.elo})`;
-                eloDisplay.style.animation = 'pulse 1s ease-in-out';
-                setTimeout(() => eloDisplay.style.animation = '', 1000);
-            }
-        });
+                        socket.on('statsUpdate', (data) => {
+                            const eloDisplay = document.getElementById('user-elo-display');
+                            if (eloDisplay) {
+                                eloDisplay.textContent = `(Elo: ${data.elo})`;
+                                eloDisplay.style.animation = 'pulse 1s ease-in-out';
+                                setTimeout(() => eloDisplay.style.animation = '', 1000);
+                            }
+                            if (typeof data.coins !== 'undefined') {
+                                if (window.Achievements && typeof window.Achievements.updateCoins === 'function') {
+                                    window.Achievements.updateCoins(data.coins);
+                                } else {
+                                    document.querySelectorAll('#lobby-coin-amount, #shop-coin-amount').forEach((coinAmount) => {
+                                        coinAmount.textContent = data.coins;
+                                    });
+                                }
+                            }
+                        });
 
         findMatchBtn.addEventListener('click', () => {
-            if (findMatchBtn.classList.contains('searching')) return;
-
+            if (hasActiveGame && activeGameId) {
+                window.location.href = `/game/${activeGameId}`;
+                return;
+            }
+            if (findMatchBtn.classList.contains('searching')) {
+                socket.emit('cancelSearch');
+                findMatchBtn.classList.remove('searching');
+                findMatchBtn.textContent = 'Search Battle';
+                statusMsg.textContent = 'Search cancelled.';
+                refreshBattleInviteButtons();
+                return;
+            }
+            clearAllBattleInviteButtons();
             findMatchBtn.classList.add('searching');
             findMatchBtn.textContent = 'Searching...';
             statusMsg.textContent = 'Waiting for opponent...';
-
-            socket.emit('findMatch', { 
-                nickname: '<%= nickname %>', 
+            refreshBattleInviteButtons();
+            socket.emit('findMatch', {
+                nickname: '<%= nickname %>',
                 userId: '<%= userId %>',
                 avatar: '<%= typeof avatar !== "undefined" ? avatar : "/assets/default_avatar.png" %>',
                 elo: '<%= elo %>'
@@ -178,11 +840,359 @@
 
         socket.on('matchFound', (data) => {
             statusMsg.textContent = 'Opponent found! Entering battle...';
-            setTimeout(() => {
-                window.location.href = `/game/${data.gameId}`;
-            }, 2000);
+            if (typeof playMatchStartSound === 'function') playMatchStartSound();
+            setTimeout(() => { window.location.href = `/game/${data.gameId}`; }, 2000);
         });
-    </script>
+
+        socket.on('matchSearchError', (data) => {
+            findMatchBtn.classList.remove('searching');
+            findMatchBtn.textContent = 'Search Battle';
+            statusMsg.textContent = data.message || 'Could not start battle search.';
+            refreshBattleInviteButtons();
+        });
+
+        function escapeHtml(value) {
+            const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(value || '').replace(/[&<>"']/g, char => chars[char]);
+        }
+
+        function isSearchingBattle() { return findMatchBtn.classList.contains('searching'); }
+        function getBattleInviteButton(friendId) { return document.querySelector(`.battle-invite-btn[data-friend-id="${friendId}"]`); }
+
+        function setBattleInviteButtonState(friendId, state) {
+            const button = getBattleInviteButton(friendId);
+            if (!button) return;
+            if (!button.dataset.originalLabel) { button.dataset.originalLabel = button.innerHTML.trim(); }
+            if (state === 'sent') {
+                button.disabled = true;
+                button.classList.add('is-sent');
+                button.textContent = 'Sent';
+                button.title = 'Battle invite sent';
+                return;
+            }
+            pendingBattleInviteTargets.delete(String(friendId));
+            button.classList.remove('is-sent');
+            button.innerHTML = button.dataset.originalLabel || '&#9876;';
+            const canInvite = button.dataset.canInvite === 'true';
+            button.disabled = !canInvite || hasActiveGame || isSearchingBattle();
+            button.title = canInvite ? 'Invite to battle' : button.title;
+        }
+
+        function refreshBattleInviteButtons() {
+            document.querySelectorAll('.battle-invite-btn').forEach(button => {
+                const friendId = button.dataset.friendId;
+                if (pendingBattleInviteTargets.has(String(friendId))) {
+                    button.disabled = true;
+                    return;
+                }
+                const canInvite = button.dataset.canInvite === 'true';
+                button.disabled = !canInvite || hasActiveGame || isSearchingBattle();
+            });
+        }
+
+        function clearAllBattleInviteButtons() {
+            [...pendingBattleInviteTargets.keys()].forEach(friendId => setBattleInviteButtonState(friendId, 'idle'));
+            pendingBattleInviteTargets.clear();
+            refreshBattleInviteButtons();
+        }
+
+        function showBattleNotice(message, type = 'info') {
+            const existing = document.getElementById('battle-invite-status-box');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.id = 'battle-invite-status-box';
+            const border = type === 'error' ? '#ef4444' : (type === 'success' ? '#4ade80' : '#a78bfa');
+            const titleColor = type === 'error' ? '#fecaca' : (type === 'success' ? '#bbf7d0' : '#e9d5ff');
+            toast.style.cssText = `position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid ${border}; border-radius: 12px; padding: 14px 18px; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 18px rgba(168,85,247,0.22); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;`;
+            toast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                    <div>
+                        <h4 style="color: ${titleColor}; margin: 0 0 6px 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Battle Invite</h4>
+                        <div style="color: #ddd6fe; font-size: 0.92rem; line-height: 1.35;">${escapeHtml(message)}</div>
+                    </div>
+                    <button type="button" aria-label="Close" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.35rem; line-height: 1; padding: 0;">&times;</button>
+                </div>
+            `;
+            toast.querySelector('button').addEventListener('click', () => toast.remove());
+            document.body.appendChild(toast);
+            setTimeout(() => { if (toast.isConnected) toast.remove(); }, 4500);
+        }
+
+        function closeBattleInvitePopup(inviteId) {
+            const popup = document.getElementById(`battle-invite-${inviteId}`);
+            if (popup) popup.remove();
+        }
+
+        function showBattleInvitePopup(data) {
+            closeBattleInvitePopup(data.inviteId);
+            const sender = data.sender || {};
+            const toast = document.createElement('div');
+            toast.id = `battle-invite-${data.inviteId}`;
+            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.96); border: 2px solid #c084fc; border-radius: 12px; padding: 15px 20px; width: min(350px, calc(100vw - 40px)); box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.55), 0 0 22px rgba(168,85,247,0.32); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
+            toast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
+                    <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Battle Invite</h4>
+                    <button type="button" class="battle-invite-close" aria-label="Close" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0; transition: color 0.2s;">&times;</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <img src="${escapeHtml(sender.avatar || '/assets/default_avatar.png')}" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #e9d5ff; box-shadow: 0 0 12px rgba(192,132,252,0.38);">
+                    <div style="min-width: 0;">
+                        <a href="/profile/${encodeURIComponent(sender.nickname || '')}" style="color: #e9d5ff; text-decoration: none; font-weight: bold; font-size: 1rem; display: block; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sender.nickname)}</a>
+                        <span style="color: #c4b5fd; font-size: 0.82rem; display: block; margin-top: 2px;">${escapeHtml(sender.nickname)} invites you to battle</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="battle-toast-action battle-toast-accept" data-action="accept">Accept</button>
+                    <button type="button" class="battle-toast-action battle-toast-decline" data-action="decline">Decline</button>
+                </div>
+            `;
+            toast.querySelector('.battle-invite-close').addEventListener('click', () => {
+                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                toast.remove();
+            });
+            toast.querySelector('[data-action="accept"]').addEventListener('click', () => {
+                toast.querySelectorAll('button').forEach(button => button.disabled = true);
+                statusMsg.textContent = 'Accepting battle invite...';
+                socket.emit('acceptBattleInvite', { inviteId: data.inviteId });
+            });
+            toast.querySelector('[data-action="decline"]').addEventListener('click', () => {
+                toast.querySelectorAll('button').forEach(button => button.disabled = true);
+                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                toast.remove();
+            });
+            document.body.appendChild(toast);
+        }
+
+        document.querySelectorAll('.battle-invite-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.disabled) return;
+                const friendId = button.dataset.friendId;
+                const friendNickname = button.dataset.friendNickname || 'friend';
+                pendingBattleInviteTargets.set(String(friendId), true);
+                setBattleInviteButtonState(friendId, 'sent');
+                statusMsg.textContent = `Battle invite sent to ${friendNickname}...`;
+                socket.emit('sendBattleInvite', {
+                    targetUserId: friendId,
+                    userId: lobbyPlayer.userId,
+                    nickname: lobbyPlayer.nickname,
+                    avatar: lobbyPlayer.avatar,
+                    elo: lobbyPlayer.elo
+                });
+            });
+        });
+
+        socket.on('battleInviteSent', (data) => {
+            pendingBattleInviteTargets.set(String(data.targetUserId), true);
+            setBattleInviteButtonState(data.targetUserId, 'sent');
+            showBattleNotice(`Battle invite sent to ${data.targetNickname}.`, 'success');
+        });
+
+        socket.on('battleInviteError', (data) => {
+            if (data && data.targetUserId) { setBattleInviteButtonState(data.targetUserId, 'idle'); }
+            showBattleNotice(data.message || 'Failed to send battle invite.', 'error');
+            statusMsg.textContent = data.message || 'Failed to send battle invite.';
+        });
+
+        socket.on('battleInviteReceived', (data) => {
+            if (hasActiveGame || isSearchingBattle()) {
+                socket.emit('declineBattleInvite', { inviteId: data.inviteId });
+                return;
+            }
+            showBattleInvitePopup(data);
+        });
+
+        socket.on('battleInviteAccepted', (data) => {
+            statusMsg.textContent = `Battle invite accepted! Entering battle against ${data.opponentNickname}...`;
+        });
+
+        socket.on('battleInviteDeclined', (data) => {
+            if (data && data.targetUserId) { setBattleInviteButtonState(data.targetUserId, 'idle'); }
+            showBattleNotice(data.message || 'Battle invite declined.', 'info');
+            statusMsg.textContent = data.message || 'Battle invite declined.';
+        });
+
+        socket.on('battleInviteExpired', (data) => {
+            if (data && data.targetUserId) { setBattleInviteButtonState(data.targetUserId, 'idle'); }
+            if (data && data.inviteId) { closeBattleInvitePopup(data.inviteId); }
+            if (data && data.message) { showBattleNotice(data.message, 'info'); }
+        });
+
+        socket.on('battleInviteClosed', (data) => {
+            if (data && data.inviteId) { closeBattleInvitePopup(data.inviteId); }
+        });
+
+        socket.on('battleInviteUnavailable', (data) => {
+            if (data && data.targetUserId) { setBattleInviteButtonState(data.targetUserId, 'idle'); }
+            if (data && data.inviteId) { closeBattleInvitePopup(data.inviteId); }
+            showBattleNotice(data.message || 'Battle invite is no longer available.', 'error');
+            statusMsg.textContent = data.message || 'Battle invite is no longer available.';
+        });
+
+        window.addEventListener('load', () => {
+            if (window.location.search.includes('error=') || window.location.search.includes('success=')) {
+                const url = new URL(window.location);
+                url.searchParams.delete('error');
+                url.searchParams.delete('success');
+                window.history.replaceState({}, document.title, url.pathname + url.search);
+            }
+        });
+
+        socket.on('friendRequestReceived', (data) => {
+            const existing = document.getElementById('friend-request-notification-box');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.id = 'friend-request-notification-box';
+            toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(26, 0, 51, 0.95); border: 2px solid #a78bfa; border-radius: 12px; padding: 15px 20px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInUp 0.5s cubic-bezier(0.1, 0.8, 0.3, 1); font-family: 'Outfit', sans-serif;";
+            toast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
+                    <h4 style="color: #e9d5ff; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">New Friend Request</h4>
+                    <button onclick="document.getElementById('friend-request-notification-box').remove()" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <img src="${data.avatar}" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #e9d5ff;">
+                    <div>
+                        <a href="/profile/${data.nickname}" style="color: #e9d5ff; text-decoration: none; font-weight: bold; font-size: 1rem; display: block; transition: color 0.2s;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#e9d5ff'">${data.nickname}</a>
+                        <span style="color: #aaa; font-size: 0.8rem; display: block; margin-top: 2px;">wants to be your friend!</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <form action="/profile/${data.nickname}/accept-friend" method="POST" style="flex: 1; margin: 0;">
+                        <button type="submit" style="width: 100%; background: linear-gradient(45deg, #4ade80, #15803d); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Accept</button>
+                    </form>
+                    <form action="/profile/${data.nickname}/decline-friend" method="POST" style="flex: 1; margin: 0;">
+                        <button type="submit" style="width: 100%; background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#ccc'">Decline</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const existingBadge = document.querySelector('.lobby-pending-badge');
+            if (existingBadge) {
+                const count = parseInt(existingBadge.textContent) || 0;
+                existingBadge.textContent = count + 1;
+                existingBadge.style.display = 'inline-block';
+            } else {
+                const heading = document.querySelector('.lobby-friends-panel h3');
+                if (heading) {
+                    const badge = document.createElement('span');
+                    badge.className = 'lobby-pending-badge';
+                    badge.title = '1 pending requests';
+                    badge.style.cssText = "background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; box-shadow: 0 0 10px #ef4444; animation: badgePulse 1.5s infinite ease-in-out; display: inline-block; margin-left: 10px;";
+                    badge.textContent = '1';
+                    heading.appendChild(badge);
+                }
+            }
+        });
+
+        const toggleSearchBtn = document.getElementById('toggle-lobby-search-btn');
+        const searchContainer = document.getElementById('lobby-friend-search-container');
+        const lobbySearchInput = document.getElementById('lobby-friend-search-input');
+        const lobbyFriendRows = document.querySelectorAll('.lobby-friend-row');
+        const lobbyNoFriendsMessage = document.getElementById('lobby-no-friends-filtered');
+
+        if (toggleSearchBtn && searchContainer) {
+            toggleSearchBtn.addEventListener('click', () => {
+                if (searchContainer.style.display === 'none') {
+                    searchContainer.style.display = 'block';
+                    searchContainer.offsetHeight;
+                    searchContainer.style.opacity = '1';
+                    searchContainer.style.transform = 'translateY(0)';
+                    if (lobbySearchInput) lobbySearchInput.focus();
+                } else {
+                    searchContainer.style.opacity = '0';
+                    searchContainer.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        searchContainer.style.display = 'none';
+                        if (lobbySearchInput) {
+                            lobbySearchInput.value = '';
+                            lobbySearchInput.dispatchEvent(new Event('input'));
+                        }
+                    }, 300);
+                }
+            });
+        }
+
+        function filterLobbyFriends() {
+            const isOnlineOnly = document.getElementById('lobby-online-filter-checkbox')?.checked;
+            const query = (document.getElementById('lobby-friend-search-input')?.value || '').toLowerCase().trim();
+            let visibleCount = 0;
+            lobbyFriendRows.forEach(row => {
+                const nickname = row.getAttribute('data-nickname');
+                const isOnline = row.getAttribute('data-online') === 'true';
+                if (nickname.includes(query) && (!isOnlineOnly || isOnline)) {
+                    row.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            if (lobbyNoFriendsMessage) {
+                if (visibleCount === 0 && lobbyFriendRows.length > 0) {
+                    lobbyNoFriendsMessage.style.display = 'block';
+                } else {
+                    lobbyNoFriendsMessage.style.display = 'none';
+                }
+            }
+        }
+
+                        if (lobbySearchInput) {
+                            lobbySearchInput.addEventListener('input', filterLobbyFriends);
+                        }
+                    
+                        function switchLeaderboardTab(tab) {
+                            const tabPlayers = document.getElementById('tab-top-players');
+                            const tabFriends = document.getElementById('tab-my-friends');
+                            const contentPlayers = document.getElementById('content-top-players');
+                            const contentFriends = document.getElementById('content-my-friends');
+
+                            if (tab === 'players') {
+                                tabPlayers.style.color = '#c084fc';
+                                tabPlayers.style.textShadow = '0 0 10px rgba(147, 51, 234, 0.7)';
+                                tabFriends.style.color = 'rgba(192, 132, 252, 0.4)';
+                                tabFriends.style.textShadow = 'none';
+                                contentPlayers.style.display = 'flex';
+                                contentFriends.style.display = 'none';
+                            } else {
+                                tabFriends.style.color = '#c084fc';
+                                tabFriends.style.textShadow = '0 0 10px rgba(147, 51, 234, 0.7)';
+                                tabPlayers.style.color = 'rgba(192, 132, 252, 0.4)';
+                                tabPlayers.style.textShadow = 'none';
+                                contentFriends.style.display = 'flex';
+                                contentPlayers.style.display = 'none';
+                            }
+                        }
+
+                    </script>
+                    <script src="/js/achievements.js?v=1.7"></script>
+                    <script src="/js/particles.js"></script>
+                    <style>
+                        @keyframes slideInUp {
+                            from {
+                                transform: translateY(100px);
+                                opacity: 0;
+                            }
+
+                            to {
+                                transform: translateY(0);
+                                opacity: 1;
+                            }
+                        }
+
+                        @keyframes spectatePulse {
+                            0% {
+                                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+                            }
+
+                            70% {
+                                box-shadow: 0 0 0 6px rgba(168, 85, 247, 0);
+                            }
+
+                            100% {
+                                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+                            }
+                        }
+                    </style>
+                    <script src="/js/volume-controls.js"></script>
+                    <script src="/js/sounds.js"></script>
 </body>
 
 </html>
