@@ -599,6 +599,10 @@ module.exports = (io) => {
                         isSpectator: true
                     });
                 }
+            } else {
+                socket.emit('gameCancelled', {
+                    message: 'The game was cancelled due to a server restart. Returning to lobby...'
+                });
             }
         });
 

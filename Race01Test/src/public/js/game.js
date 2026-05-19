@@ -91,7 +91,12 @@ function resize() {
 window.onresize = resize;
 resize();
 
-socket.emit('joinGame', { gameId, nickname, userId: myUserId });
+socket.emit('joinGame', { gameId });
+
+socket.on('gameCancelled', (data) => {
+    alert(data.message || 'The game was cancelled due to a technical error.');
+    window.location.href = '/lobby';
+});
 
 socket.on('startGame', (data) => {
     myPlayerIndex = data.players.findIndex(p => String(p.dbUserId) === String(myUserId));
